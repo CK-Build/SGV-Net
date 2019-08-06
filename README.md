@@ -1,5 +1,5 @@
 # SGV-Net
-Contains SimpleGitVersion.Core and SimpleGitVersion.Cake that support CSemver on .Net platform.
+Contains SimpleGitVersion.Core ![Nuget](https://img.shields.io/nuget/v/SimpleGitVersion.Core?logo=nuget) and SimpleGitVersion.Cake ![Nuget](https://img.shields.io/nuget/v/SimpleGitVersion.Cake?logo=nuget) that support CSemver on .Net platform.
 
 master: [![Build status](https://ci.appveyor.com/api/projects/status/6gjisya5id62i720/branch/master?svg=true)](https://ci.appveyor.com/project/olivier-spinelli/sgv-net/branch/master)
 
