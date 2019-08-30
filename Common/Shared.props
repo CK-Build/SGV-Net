@@ -25,14 +25,6 @@
   </PropertyGroup>
   <!--</StandardProperties>-->
 
-  <!--<ReproducibleBuilds>: See http://blog.paranoidcoding.com/2016/04/05/deterministic-builds-in-roslyn.html.-->
-  <PropertyGroup Condition=" '$(CakeBuild)' == 'true' ">
-    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
-    <Deterministic>true</Deterministic>
-    <PathMap>'$(SolutionDir)'=C:\CKli-World\SimpleGitVersion\SGV-Net</PathMap>
-  </PropertyGroup>
-  <!--</ReproducibleBuilds>-->
-
   <!--<ZeroVersion>: When not building from the CI, assemblies always use the ZeroVersion (see CSemVer.InformationalVersion).-->
   <PropertyGroup Condition=" '$(CakeBuild)' != 'true' ">
     <Version>0.0.0-0</Version>
