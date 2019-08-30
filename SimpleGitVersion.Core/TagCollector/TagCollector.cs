@@ -60,12 +60,13 @@ namespace SimpleGitVersion
 
             if( startingVersionForCSemVer != null )
             {
-                _startingVersionForCSemVer = CSVersion.TryParse( startingVersionForCSemVer, true );
-                if( !_startingVersionForCSemVer.IsValid )
+                var v = CSVersion.TryParse( startingVersionForCSemVer, true );
+                if( !v.IsValid )
                 {
-                    errors.Append( "Invalid StartingVersionForCSemVer. " ).Append( _startingVersionForCSemVer.ErrorMessage ).AppendLine();
+                    errors.Append( "Invalid StartingVersionForCSemVer. " ).Append( v.ErrorMessage ).AppendLine();
                     return;
                 }
+                _startingVersionForCSemVer = v.ToNormalizedForm();
                 if( singleMajor.HasValue && _startingVersionForCSemVer.Major != singleMajor )
                 {
                     errors.Append( "StartingVersionForCSemVer '" )
@@ -144,8 +145,8 @@ namespace SimpleGitVersion
 
         void RegisterOneTag( StringBuilder errors, Commit c, string tagName, int? singleMajor, ref bool startingVersionForCSemVerFound )
         {
-            CSVersion v = CSVersion.TryParse( tagName );
-           if( v.IsValid && (!singleMajor.HasValue || v.Major == singleMajor.Value) )
+            CSVersion v = CSVersion.TryParse( tagName ).ToNormalizedForm();
+            if( v.IsValid && (!singleMajor.HasValue || v.Major == singleMajor.Value) )
             {
                 if( _startingVersionForCSemVer != null )
                 {

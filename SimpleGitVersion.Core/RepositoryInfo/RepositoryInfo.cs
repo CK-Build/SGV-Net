@@ -116,16 +116,10 @@ namespace SimpleGitVersion
         public readonly CIReleaseInfo CIRelease;
 
         /// <summary>
-        /// Gets the NuGet version (short form) that must be used to build this commit point.
+        /// Gets the final version (based on short CSVersion form, see <see cref="CSVersion.IsLongForm"/>) that must be used to build this commit point.
         /// Never null: defaults to <see cref="SVersion.ZeroVersion"/>.
         /// </summary>
-        public readonly SVersion FinalNuGetVersion;
-
-        /// <summary>
-        /// Gets the semantic version (long form) that must be used to build this commit point.
-        /// Never null: defaults to <see cref="SVersion.ZeroVersion"/>.
-        /// </summary>
-        public readonly SVersion FinalSemVersion;
+        public readonly SVersion FinalVersion;
 
         /// <summary>
         /// Gets the standardized information version string that must be used to build this commit point.
@@ -233,7 +227,18 @@ namespace SimpleGitVersion
                                 // There is no release tag on the commit point.
                                 if( ciBuildName != null )
                                 {
-                                    CIRelease = CIReleaseInfo.Create( commit, ciVersionMode, ciBuildName, errors, info.BasicInfo );
+                                    if( ciBuildName.Length > 8 )
+                                    {
+                                        errors.AppendLine( "The branch name must not be longer than 8 characters. " );
+                                        errors.Append( "Adds a VersionName attribute to the branch element in RepositoryInfo.xml with a shorter name: " )
+                                              .AppendLine()
+                                              .Append( $@"<Branch Name=""{ciBuildName}"" VersionName=""{ciBuildName.Substring( 0, 8 )}"" ... />." )
+                                              .AppendLine();
+                                    }
+                                    else
+                                    {
+                                        CIRelease = CIReleaseInfo.Create( commit, ciVersionMode, ciBuildName, info.BasicInfo );
+                                    }
                                 }
                             }
                         }
@@ -243,27 +248,24 @@ namespace SimpleGitVersion
                     // Conclusion:
                     if( CIRelease != null )
                     {
-                        //ContentOrFinalNuGetVersion =
-                        FinalNuGetVersion = CIRelease.BuildVersionNuGet;
-                        FinalSemVersion = CIRelease.BuildVersion;
+                        FinalVersion = CIRelease.BuildVersion;
                     }
                     else if( ValidReleaseTag != null )
                     {
-                        FinalNuGetVersion = SVersion.Parse( ValidReleaseTag.ToString( CSVersionFormat.NuGetPackage ), false );
-                        FinalSemVersion = ValidReleaseTag;
+                        Debug.Assert( !ValidReleaseTag.IsLongForm );
+                        FinalVersion = ValidReleaseTag;
                     }
                 }
             }
             // Handles FinalInformationalVersion and SVersion.ZeroVersion for versions if needed.
-            if( FinalSemVersion == null )
+            if( FinalVersion == null )
             {
-                FinalSemVersion = SVersion.ZeroVersion;
-                FinalNuGetVersion = SVersion.ZeroVersion;
+                FinalVersion = SVersion.ZeroVersion;
                 FinalInformationalVersion = InformationalVersion.ZeroInformationalVersion;
             }
             else
             {
-                FinalInformationalVersion = InformationalVersion.BuildInformationalVersion( FinalSemVersion.NormalizedText, FinalNuGetVersion.NormalizedText, CommitSha, CommitDateUtc );
+                FinalInformationalVersion = FinalVersion.GetInformationalVersion( CommitSha, CommitDateUtc );
             }
         }
 

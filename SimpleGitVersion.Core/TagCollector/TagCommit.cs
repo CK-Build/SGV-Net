@@ -22,7 +22,7 @@ namespace SimpleGitVersion
 
         public TagCommit( Commit c, CSVersion first )
         {
-            Debug.Assert( c != null && first != null && first.IsValid );
+            Debug.Assert( c != null && first != null && first.IsValid && !first.IsLongForm );
             _commitSha = c.Sha;
             _contentSha = c.Tree.Sha;
             _thisTag = first;
@@ -89,7 +89,7 @@ namespace SimpleGitVersion
 
         public void AddCollectedTag( CSVersion t )
         {
-            Debug.Assert( t != null );
+            Debug.Assert( t != null && t.IsValid && !t.IsLongForm );
             if( t.Equals( _thisTag ) )
             {
                 if( t.DefinitionStrength > _thisTag.DefinitionStrength ) _thisTag = t;

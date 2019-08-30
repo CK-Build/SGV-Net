@@ -45,7 +45,7 @@ namespace SimpleGitVersion.Core.Tests
                 logger.Info( "Ignoring DirtyWorkingFolder check." );
                 opt.IgnoreDirtyWorkingFolder = true;
             } );
-            Console.WriteLine( "This repo's SemVer: {0}", info.SafeSemVersion );
+            Console.WriteLine( "This repo's SemVer: {0}", info.SafeVersion );
         }
 
         [Test]
@@ -53,7 +53,7 @@ namespace SimpleGitVersion.Core.Tests
         public void testing_SimpleGitRepositoryInfo_on_other_repository()
         {
             var info = SimpleRepositoryInfo.LoadFromPath( new ConsoleLogger(), @"C:\Dev\CK\CK-Core-Projects\CK-Text" );
-            Console.WriteLine( "This repo's SemVer: {0}", info.SafeSemVersion );
+            Console.WriteLine( "This repo's SemVer: {0}", info.SafeVersion );
         }
     }
 }

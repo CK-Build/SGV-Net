@@ -326,7 +326,7 @@ namespace CodeCake
                     MetadataResource meta = await _sourceRepository.GetResourceAsync<MetadataResource>();
                     foreach( var p in artifacts )
                     {
-                        var pId = new PackageIdentity( p.ArtifactInstance.Artifact.Name, new NuGetVersion( p.ArtifactInstance.Version.ToNuGetPackageString() ) );
+                        var pId = new PackageIdentity( p.ArtifactInstance.Artifact.Name, new NuGetVersion( p.ArtifactInstance.Version.ToNormalizedString() ) );
                         if( await meta.Exists( pId, _sourceCache, logger, CancellationToken.None ) )
                         {
                             Cake.Debug( $" ==> Feed '{Name}' already contains {p.ArtifactInstance}." );
@@ -362,7 +362,7 @@ namespace CodeCake
                     var updater = await _updater;
                     foreach( var p in pushes )
                     {
-                        string packageString = p.Name + "." + p.Version.ToNuGetPackageString();
+                        string packageString = p.Name + "." + p.Version.ToString();
                         var fullPath = ArtifactType.GlobalInfo.ReleasesFolder.AppendPart( packageString + ".nupkg" );
                         await updater.Push(
                             fullPath,
@@ -509,7 +509,7 @@ namespace CodeCake
                         using( HttpRequestMessage req = new HttpRequestMessage( HttpMethod.Post, $"https://pkgs.dev.azure.com/{Organization}/_apis/packaging/feeds/{FeedName}/nuget/packagesBatch?api-version=5.0-preview.1" ) )
                         {
                             req.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue( "Basic", basicAuth );
-                            var body = GetPromotionJSONBody( p.Name, p.Version.ToNuGetPackageString(), view.ToString() );
+                            var body = GetPromotionJSONBody( p.Name, p.Version.ToString(), view.ToString() );
                             req.Content = new StringContent( body, Encoding.UTF8, "application/json" );
                             using( var m = await StandardGlobalInfo.SharedHttpClient.SendAsync( req ) )
                             {

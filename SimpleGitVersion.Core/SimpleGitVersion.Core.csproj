@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="..\Common\Shared.props" />
   <PropertyGroup>
     <TargetFrameworks>net461;netstandard2.0</TargetFrameworks>
@@ -7,7 +7,7 @@
     <PackageTags>Versioning, SemVer, NuGet, CSemVer, InformationalVersion</PackageTags>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="CSemVer" Version="5.2.0" />
+    <PackageReference Include="CSemVer" Version="6.0.0-a02-00-0003-develop" />
     <PackageReference Include="LibGit2Sharp" Version="0.26.0" />
   </ItemGroup>
 </Project>

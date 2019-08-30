@@ -83,9 +83,9 @@ namespace CodeCake
         public string BuildConfiguration => IsRelease ? "Release" : "Debug";
 
         /// <summary>
-        /// Gets the version of the packages: this is the <see cref="RepositoryInfo.FinalNuGetVersion"/>.
+        /// Gets the version of the packages: this is the <see cref="RepositoryInfo.FinalVersion"/>.
         /// </summary>
-        public SVersion Version => _gitInfo.Info.FinalNuGetVersion;
+        public SVersion Version => _gitInfo.Info.FinalVersion;
 
         /// <summary>
         /// Gets whether this is a purely local build.
@@ -189,7 +189,7 @@ namespace CodeCake
                 // Azure (formerly VSTS, formerly VSO) analyzes the stdout to set its build number.
                 // On clash, the default Azure/VSTS/VSO build number is used: to ensure that the actual
                 // version will be always be available we need to inject a uniquifier.
-                string buildVersion = AddSkipped( $"{gitInfo.SafeNuGetVersion}_{DateTime.UtcNow:yyyyMMdd-HHmmss}" );
+                string buildVersion = AddSkipped( $"{gitInfo.SafeVersion}_{DateTime.UtcNow:yyyyMMdd-HHmmss}" );
                 Cake.Information( $"Using VSTS build number: {buildVersion}" );
                 string buildInstruction = $"##vso[build.updatebuildnumber]{buildVersion}";
                 Console.WriteLine();
@@ -201,11 +201,11 @@ namespace CodeCake
             {
                 try
                 {
-                    appVeyor.UpdateBuildVersion( AddSkipped( gitInfo.SafeNuGetVersion ) );
+                    appVeyor.UpdateBuildVersion( AddSkipped( gitInfo.SafeVersion ) );
                 }
                 catch
                 {
-                    appVeyor.UpdateBuildVersion( AddSkipped( $"{gitInfo.SafeNuGetVersion} ({appVeyor.Environment.Build.Number})" ) );
+                    appVeyor.UpdateBuildVersion( AddSkipped( $"{gitInfo.SafeVersion} ({appVeyor.Environment.Build.Number})" ) );
                 }
             }
 
