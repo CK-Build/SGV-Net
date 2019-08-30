@@ -11,7 +11,7 @@
 
   <!--<StandardProperties>-->
   <PropertyGroup>
-    <RepositoryUrl>https://github.com/SimpleGitVersion/SGV-Net.git</RepositoryUrl>
+    <RepositoryUrl>https://github.com/CK-Build/SGV-Net.git</RepositoryUrl>
     <ProductName>CK-Build</ProductName>
     <Company>Signature Code</Company>
     <Authors>Signature Code</Authors>
@@ -25,19 +25,12 @@
   </PropertyGroup>
   <!--</StandardProperties>-->
 
-  <!--<ReproducibleBuilds>: See http://blog.paranoidcoding.com/2016/04/05/deterministic-builds-in-roslyn.html.-->
-  <PropertyGroup Condition=" '$(CakeBuild)' == 'true' ">
-    <Deterministic>true</Deterministic>
-    <PathMap>'$(SolutionDir)'=C:\CKli-World\SimpleGitVersion\SGV-Net</PathMap>
-  </PropertyGroup>
-  <!--</ReproducibleBuilds>-->
-
   <!--<ZeroVersion>: When not building from the CI, assemblies always use the ZeroVersion (see CSemVer.InformationalVersion).-->
   <PropertyGroup Condition=" '$(CakeBuild)' != 'true' ">
     <Version>0.0.0-0</Version>
     <AssemblyVersion>0.0.0</AssemblyVersion>
     <FileVersion>0.0.0.0</FileVersion>
-    <InformationalVersion>0.0.0-0 (0.0.0-0) - SHA1: 0000000000000000000000000000000000000000 - CommitDate: 0001-01-01 00:00:00Z</InformationalVersion>
+    <InformationalVersion>0.0.0-0+0000000000000000000000000000000000000000/0001-01-01 00:00:00Z</InformationalVersion>
   </PropertyGroup>
   <!--</ZeroVersion>-->
 

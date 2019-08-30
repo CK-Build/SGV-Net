@@ -44,7 +44,7 @@ namespace SimpleGitVersion
         }
         static void AddVersionToolArguments( Cake.Core.Tooling.ToolSettings t, SimpleRepositoryInfo info )
         {
-            string version = info.Info.FinalNuGetVersion.NormalizedText;
+            string version = info.Info.FinalVersion.NormalizedText;
             string assemblyVersion = info.MajorMinor;
             string fileVersion = info.FileVersion;
             string informationalVersion = info.Info.FinalInformationalVersion;

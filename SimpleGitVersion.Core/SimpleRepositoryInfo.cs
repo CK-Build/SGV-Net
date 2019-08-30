@@ -106,18 +106,11 @@ namespace SimpleGitVersion
         public DateTime CommitDateUtc { get; private set; }
 
         /// <summary>
-        /// Gets the version in <see cref="CSVersionFormat.Normalized"/> format.
+        /// Gets the version to use in <see cref="CSVersionFormat.Normalized"/> form.
         /// When <see cref="IsValid"/> is false, it contains the error message (the first error line) so that
         /// any attempt to use this to actually package something will fail.
         /// </summary>
-        public string SafeSemVersion { get; private set; }
-
-        /// <summary>
-        /// Gets the NuGet version to use.
-        /// When <see cref="IsValid"/> is false, it contains the error message (the first error line) so that
-        /// any attempt to use this to actually package something will fail.
-        /// </summary>
-        public string SafeNuGetVersion { get; private set; }
+        public string SafeVersion { get; private set; }
 
         /// <summary>
         /// Gets the original tag on the current commit point.
@@ -194,8 +187,7 @@ namespace SimpleGitVersion
                     }
 
                     // Will be replaced by SetInvalidValuesAndLog if needed.
-                    SafeNuGetVersion = info.FinalNuGetVersion.NormalizedTextWithBuildMetaData;
-                    SafeSemVersion = info.FinalSemVersion.NormalizedTextWithBuildMetaData;
+                    SafeVersion = info.FinalVersion.NormalizedTextWithBuildMetaData;
 
                     if( info.CIRelease != null )
                     {
@@ -216,7 +208,7 @@ namespace SimpleGitVersion
                             FileVersion = InformationalVersion.ZeroFileVersion;
                             OrderedVersion = 0;
                         }
-                        logger.Info( $"CI release: '{SafeNuGetVersion}'." );
+                        logger.Info( $"CI release: '{SafeVersion}'." );
                         LogValidVersions( logger, info );
                     }
                     else
@@ -231,7 +223,7 @@ namespace SimpleGitVersion
                             IsValidRelease = true;
                             OriginalTagText = t.ParsedText;
                             SetNumericalVersionValues( t, false );
-                            logger.Info( $"Release: '{SafeNuGetVersion}'." );
+                            logger.Info( $"Release: '{SafeVersion}'." );
                         }
                     }
                 }
@@ -302,8 +294,7 @@ namespace SimpleGitVersion
             PreReleaseFix = 0;
             FileVersion = InformationalVersion.ZeroFileVersion;
             OrderedVersion = 0;
-            SafeNuGetVersion = reason;
-            SafeSemVersion = reason;
+            SafeVersion = reason;
         }
     }
 }
