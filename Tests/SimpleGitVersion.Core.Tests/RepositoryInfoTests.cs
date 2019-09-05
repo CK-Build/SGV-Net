@@ -378,7 +378,7 @@ namespace SimpleGitVersion.Core.Tests
                         new RepositoryInfoOptionsBranch() { Name = "beta", VersionName="beta", CIVersionMode = CIBranchVersionMode.ZeroTimed }
                     }
                 } );
-                Assert.That( i.CIRelease.BuildVersion.NormalizedText, Is.EqualTo( "0.0.0--009y087-beta" ) );
+                Assert.That( i.CIRelease.BuildVersion.NormalizedText, Is.EqualTo( "0.0.0--009y087-beta+v2.0.0" ) );
             }
 
         }
