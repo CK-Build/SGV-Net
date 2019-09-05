@@ -187,7 +187,7 @@ namespace SimpleGitVersion
                     }
 
                     // Will be replaced by SetInvalidValuesAndLog if needed.
-                    SafeVersion = info.FinalVersion.NormalizedTextWithBuildMetaData;
+                    SafeVersion = info.FinalVersion.NormalizedText;
 
                     if( info.CIRelease != null )
                     {
