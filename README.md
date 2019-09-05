@@ -1,4 +1,4 @@
-⚠️This repository has moved to https://github.com/CK-Build/SGV-Net.
+
 # SGV-Net
 Contains SimpleGitVersion.Core ![Nuget](https://img.shields.io/nuget/v/SimpleGitVersion.Core?logo=nuget) and SimpleGitVersion.Cake ![Nuget](https://img.shields.io/nuget/v/SimpleGitVersion.Cake?logo=nuget) that support CSemver on .Net platform.
 
