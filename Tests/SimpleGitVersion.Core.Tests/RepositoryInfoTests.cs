@@ -196,7 +196,8 @@ namespace SimpleGitVersion.Core.Tests
             }
 
             var cAlphaContinue = repoTest.Commits.First( sc => sc.Message.StartsWith( "Dev again in Alpha." ) );
-            // We set 2.0.0 on cReleased. Its content is the same as cAlpha (mege commits with no changes). 
+            // We set 2.0.0 on cReleased. Its content is the same as cAlpha (mege commits with no changes).
+            // To be able to do this we NEED to use the StartingVersionForCSemVer
             //
             // cAlphaContinue
             //   |
@@ -209,6 +210,17 @@ namespace SimpleGitVersion.Core.Tests
             {
                 RepositoryInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
                 {
+                    StartingCommitSha = cReleased.Sha,
+                    OverriddenTags = overrides.Overrides
+                } );
+                i.ReleaseTagError.Should().NotBeNull();
+                i.ValidReleaseTag.Should().BeNull();
+            }
+            // Use the StartingVersionForCSemVer:
+            {
+                RepositoryInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
+                {
+                    StartingVersionForCSemVer = "2.0.0",
                     StartingCommitSha = cReleased.Sha,
                     OverriddenTags = overrides.Overrides
                 } );
