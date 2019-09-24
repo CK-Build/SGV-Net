@@ -1,15 +1,12 @@
 using Cake.Common.Diagnostics;
 using Cake.Common.IO;
 using Cake.Common.Solution;
-using Cake.Common.Solution.Project;
 using Cake.Common.Tools.DotNetCore;
 using Cake.Common.Tools.DotNetCore.Build;
-using Cake.Common.Tools.DotNetCore.Pack;
 using Cake.Common.Tools.DotNetCore.Test;
 using Cake.Common.Tools.NUnit;
 using Cake.Core.IO;
 using CK.Text;
-using CodeCake;
 using CodeCake.Abstractions;
 using SimpleGitVersion;
 using System;
@@ -17,7 +14,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
-using static CodeCake.Build;
 
 namespace CodeCake
 {
@@ -37,7 +33,7 @@ namespace CodeCake
         }
     }
 
-    public partial class DotnetSolution : ISolution
+    public partial class DotnetSolution : ICIWorkflow
     {
         readonly StandardGlobalInfo _globalInfo;
         public readonly string SolutionFileName;
@@ -203,8 +199,8 @@ namespace CodeCake
             }
         }
 
-        void ISolution.Build() => Build();
+        void ICIWorkflow.Build() => Build();
 
-        void ISolution.Test() => Test();
+        void ICIWorkflow.Test() => Test();
     }
 }
