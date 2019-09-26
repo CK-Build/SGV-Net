@@ -444,7 +444,6 @@ namespace CodeCake
                 // The API key for the Credential Provider must be "VSTS".
                 return _azureFeedPAT != null ? "VSTS" : null;
             }
-
         }
 
         /// <summary>
@@ -474,9 +473,11 @@ namespace CodeCake
             /// </summary>
             /// <param name="organization">Name of the organization.</param>
             /// <param name="feedName">Identifier of the feed in Azure, inside the organization.</param>
-            public SignatureVSTSFeed( NuGetArtifactType t, string organization, string feedName )
+            public SignatureVSTSFeed( NuGetArtifactType t, string organization, string feedName, bool isPublicFeed )
                 : base( t, organization + "-" + feedName,
-                        $"https://pkgs.dev.azure.com/{organization}/_packaging/{feedName}/nuget/v3/index.json",
+                      isPublicFeed ?
+                          $"https://pkgs.dev.azure.com/{organization}/Feeds/_packaging/{feedName}/nuget/v3/index.json"
+                        : $"https://pkgs.dev.azure.com/{organization}/_packaging/{feedName}/nuget/v3/index.json",
                         GetSecretKeyName( organization ) )
             {
                 Organization = organization;
