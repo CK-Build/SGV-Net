@@ -473,15 +473,16 @@ namespace CodeCake
             /// </summary>
             /// <param name="organization">Name of the organization.</param>
             /// <param name="feedName">Identifier of the feed in Azure, inside the organization.</param>
-            public SignatureVSTSFeed( NuGetArtifactType t, string organization, string feedName, bool isPublicFeed )
+            public SignatureVSTSFeed( NuGetArtifactType t, string organization, string feedName, string projectName )
                 : base( t, organization + "-" + feedName,
-                      isPublicFeed ?
-                          $"https://pkgs.dev.azure.com/{organization}/Feeds/_packaging/{feedName}/nuget/v3/index.json"
+                      projectName != null ?
+                          $"https://pkgs.dev.azure.com/{organization}/{projectName}/_packaging/{feedName}/nuget/v3/index.json"
                         : $"https://pkgs.dev.azure.com/{organization}/_packaging/{feedName}/nuget/v3/index.json",
                         GetSecretKeyName( organization ) )
             {
                 Organization = organization;
                 FeedName = feedName;
+                ProjectName = projectName;
             }
 
             /// <summary>
@@ -493,6 +494,8 @@ namespace CodeCake
             /// Gets the feed identifier.
             /// </summary>
             public string FeedName { get; }
+
+            public string ProjectName { get; }
 
             /// <summary>
             /// Implements Package promotion in @CI, @Exploratory, @Preview, @Latest and @Stable views.
@@ -507,7 +510,10 @@ namespace CodeCake
                 {
                     foreach( var view in p.Version.PackageQuality.GetLabels() )
                     {
-                        using( HttpRequestMessage req = new HttpRequestMessage( HttpMethod.Post, $"https://pkgs.dev.azure.com/{Organization}/_apis/packaging/feeds/{FeedName}/nuget/packagesBatch?api-version=5.0-preview.1" ) )
+                        var url = ProjectName != null ?
+                              $"https://pkgs.dev.azure.com/{Organization}/{ProjectName}/_apis/packaging/feeds/{FeedName}/nuget/packagesBatch?api-version=5.0-preview.1"
+                            : $"https://pkgs.dev.azure.com/{Organization}/_apis/packaging/feeds/{FeedName}/nuget/packagesBatch?api-version=5.0-preview.1";
+                        using( HttpRequestMessage req = new HttpRequestMessage( HttpMethod.Post, url ) )
                         {
                             req.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue( "Basic", basicAuth );
                             var body = GetPromotionJSONBody( p.Name, p.Version.ToNormalizedString(), view.ToString() );
