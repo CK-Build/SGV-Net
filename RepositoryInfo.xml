@@ -1,9 +1,9 @@
 <RepositoryInfo xmlns="http://csemver.org/schemas/2015">
   <Branches>
     <Branch Name="develop" CIVersionMode="LastReleaseBased" VersionName="develop" />
-    <SingleMajor>1</SingleMajor>
     <Branch Name="develop-NetCore2" VersionName="develop" CIVersionMode="LastReleaseBased" />
   </Branches>
+  <SingleMajor>1</SingleMajor>
   <!--<Debug IgnoreDirtyWorkingFolder="true"/>-->
 
 </RepositoryInfo>
