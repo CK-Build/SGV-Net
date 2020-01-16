@@ -258,3 +258,4 @@ Tests/**/CKSetup-WorkingDir/
 /.vscode/
 
 CodeCakeBuilder/MemoryKey.*.txt
+CodeCakeBuilder/UnitTestsDone.*.txt
