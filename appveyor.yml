@@ -1,19 +1,18 @@
 
 version: build{build}
-image: Visual Studio 2017
+image: Visual Studio 2019
 clone_folder: C:\CKli-World\CK-Build\SGV-Net
 branches:
   only:
     - master
-    - develop
+    - develop-NetCore2
 environment:
   CODECAKEBUILDER_SECRET_KEY:
     secure: 8VAzdXgUQaJyFoU3WLf2iPFV/8zPDm9qV4TfOpx8/rg=
 build_script:
   - dotnet run --project CodeCakeBuilder -nointeraction
 test: off
-install:
-  - ps: ./CodeCakeBuilder/InstallCredentialProvider.ps1
+install: []
 artifacts:
   - path: '**\*.log'
     name: Log file

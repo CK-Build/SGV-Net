@@ -2,6 +2,7 @@
   <Branches>
     <Branch Name="develop" CIVersionMode="LastReleaseBased" VersionName="develop" />
     <SingleMajor>1</SingleMajor>
+    <Branch Name="develop-NetCore2" VersionName="develop" CIVersionMode="LastReleaseBased" />
   </Branches>
   <!--<Debug IgnoreDirtyWorkingFolder="true"/>-->
 
