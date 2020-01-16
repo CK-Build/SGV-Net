@@ -1,7 +1,7 @@
 <RepositoryInfo xmlns="http://csemver.org/schemas/2015">
   <Branches>
     <Branch Name="develop" CIVersionMode="LastReleaseBased" VersionName="develop" />
-
+    <SingleMajor>1</SingleMajor>
   </Branches>
   <!--<Debug IgnoreDirtyWorkingFolder="true"/>-->
 
