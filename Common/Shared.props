@@ -5,7 +5,7 @@
     <IsTestProject Condition="$(MSBuildProjectName.EndsWith('.Tests'))">true</IsTestProject>
     <IsInTestsFolder Condition="$(MSBuildProjectDirectoryNoRoot.Contains('\Tests\'))">true</IsInTestsFolder>
     <!-- SolutionDir is defined by Visual Studio, we unify the behavior here. -->
-    <SolutionDir Condition=" $(SolutionDir) != '' ">$([System.IO.Path]::GetDirectoryName($([System.IO.Path]::GetDirectoryName($(MSBuildThisFileDirectory)))))\</SolutionDir>
+    <SolutionDir Condition=" $(SolutionDir) == '' ">$([System.IO.Path]::GetDirectoryName($([System.IO.Path]::GetDirectoryName($(MSBuildThisFileDirectory)))))\</SolutionDir>
   </PropertyGroup>
   <!--</BasicDefinitions>-->
 
