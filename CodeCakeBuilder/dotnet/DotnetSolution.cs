@@ -5,6 +5,7 @@ using Cake.Common.Tools.DotNetCore;
 using Cake.Common.Tools.DotNetCore.Build;
 using Cake.Common.Tools.DotNetCore.Test;
 using Cake.Common.Tools.NUnit;
+using Cake.Core;
 using Cake.Core.IO;
 using CK.Text;
 using CodeCake.Abstractions;
@@ -132,7 +133,11 @@ namespace CodeCake
                 string assetsJson = File.ReadAllText( objDir.AppendPart( "project.assets.json" ) );
                 bool isNunitLite = assetsJson.Contains( "NUnitLite" );
                 bool isVSTest = assetsJson.Contains( "Microsoft.NET.Test.Sdk" );
-                foreach( NormalizedPath buildDir in Directory.GetDirectories( binDir ) )
+                foreach( NormalizedPath buildDir in
+                    Directory.GetDirectories( binDir )
+                        .Where( p => Directory.EnumerateFiles( p )
+                        .Any() )
+                )
                 {
                     string framework = buildDir.LastPart;
                     string fileWithoutExtension = buildDir.AppendPart( project.Name );
@@ -169,14 +174,19 @@ namespace CodeCake
                         _globalInfo.Cake.Information( $"Testing via VSTest ({framework}): {testBinariesPath}" );
                         if( !_globalInfo.CheckCommitMemoryKey( testBinariesPath ) )
                         {
-                            _globalInfo.Cake.DotNetCoreTest( projectPath, new DotNetCoreTestSettings()
+                            var options = new DotNetCoreTestSettings()
                             {
                                 Configuration = _globalInfo.BuildConfiguration,
                                 Framework = framework,
                                 NoRestore = true,
                                 NoBuild = true,
                                 Logger = "trx"
-                            } );
+                            };
+                            if( _globalInfo.Cake.Environment.GetEnvironmentVariable( "DisableNodeReUse" ) != null )
+                            {
+                                options.ArgumentCustomization = args => args.Append( "/nodeReuse:false" );
+                            }
+                            _globalInfo.Cake.DotNetCoreTest( projectPath, options );
                         }
                     }
 
