@@ -12,11 +12,7 @@ namespace SimpleGitVersion
     {
         readonly IReadOnlyList<TagCommit> _versions;
 
-        internal RepositoryVersions(
-            IEnumerable<TagCommit> collected,
-            StringBuilder errors,
-            CSVersion startingVersionForCSemVer,
-            bool checkCompactExistingVersions )
+        internal RepositoryVersions( IEnumerable<TagCommit> collected, StringBuilder errors, CSVersion? startingVersionForCSemVer, bool checkCompactExistingVersions )
         {
             Debug.Assert( collected.All( c => c.ThisTag != null ) );
             _versions = collected.OrderBy( t => t.ThisTag ).ToList();

@@ -26,7 +26,7 @@ namespace SimpleGitVersion
         /// Can be null if no version information can be found in the repository on or
         /// below this commit point.
         /// </summary>
-        public readonly BasicCommitInfo BasicInfo;
+        public readonly BasicCommitInfo? BasicInfo;
 
         /// <summary>
         /// Gets the possible next versions based on on this commit.
@@ -41,7 +41,7 @@ namespace SimpleGitVersion
 
         internal CommitInfo(
             string sha,
-            BasicCommitInfo basic,
+            BasicCommitInfo? basic,
             IReadOnlyList<CSVersion> possibleVersions,
             IReadOnlyList<CSVersion> nextPossibleVersions)
         {

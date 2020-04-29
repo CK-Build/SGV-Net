@@ -16,20 +16,20 @@ namespace SimpleGitVersion
         /// The commit tag of the commit point.
         /// Can be null.
         /// </summary>
-        public readonly ITagCommit UnfilteredThisCommit;
+        public readonly ITagCommit? UnfilteredThisCommit;
 
         /// <summary>
         /// The best commit associated to the commit point (itself or the best version associated to
         /// the content's commit).
         /// Never null if <see cref="UnfilteredThisCommit"/> is not null.
         /// </summary>
-        public readonly ITagCommit BestCommit;
+        public readonly ITagCommit? BestCommit;
 
         /// <summary>
         /// Gets the best commit tag below. Null if <see cref="BestCommit"/> is better
         /// than any parent commits.
         /// </summary>
-        public readonly ITagCommit BestCommitBelow;
+        public readonly ITagCommit? BestCommitBelow;
 
         /// <summary>
         /// The maximal number of commit points required to reach the <see cref="BestCommitBelow"/>.
@@ -41,9 +41,9 @@ namespace SimpleGitVersion
         /// Gets the best among <see cref="BestCommit"/> and <see cref="BestCommitBelow"/>.
         /// This is never null.
         /// </summary>
-        public ITagCommit MaxCommit => BestCommit?.ThisTag > BestCommitBelow?.ThisTag ? BestCommit : BestCommitBelow;
+        public ITagCommit MaxCommit => (BestCommit?.ThisTag > BestCommitBelow?.ThisTag ? BestCommit : BestCommitBelow)!;
 
-        internal BasicCommitInfo( ITagCommit thisCommit, ITagCommit best, BasicCommitInfo parent )
+        internal BasicCommitInfo( ITagCommit? thisCommit, ITagCommit? best, BasicCommitInfo? parent )
         {
             UnfilteredThisCommit = thisCommit;
             if( best != null )
@@ -52,7 +52,7 @@ namespace SimpleGitVersion
                 if( parent != null )
                 {
                     var maxBelow = parent.MaxCommit;
-                    if( best.ThisTag > maxBelow.ThisTag )
+                    if( best.ThisTag > maxBelow?.ThisTag )
                     {
                         BelowDepth = 0;
                     }
@@ -66,7 +66,7 @@ namespace SimpleGitVersion
             else
             {
                 Debug.Assert( parent != null, "Not both can be null." );
-                BelowDepth = parent.BelowDepth + 1;
+                BelowDepth = parent!.BelowDepth + 1;
                 BestCommitBelow = parent.MaxCommit;
             }
             Debug.Assert( MaxCommit != null );

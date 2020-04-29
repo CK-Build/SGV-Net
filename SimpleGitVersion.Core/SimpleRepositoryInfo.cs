@@ -97,13 +97,15 @@ namespace SimpleGitVersion
 
         /// <summary>
         /// Gets the Sha of the current commit.
+        /// Null if the commit is not valid.
         /// </summary>
-        public string CommitSha { get; private set; }
+        public string? CommitSha => Info.CommitSha;
 
         /// <summary>
         /// Gets the UTC date and time of the current commit.
+        /// Defaults to <see cref="InformationalVersion.ZeroCommitDate"/>.
         /// </summary>
-        public DateTime CommitDateUtc { get; private set; }
+        public DateTime CommitDateUtc => Info.CommitDateUtc;
 
         /// <summary>
         /// Gets the version to use in <see cref="CSVersionFormat.Normalized"/> form.
@@ -116,7 +118,7 @@ namespace SimpleGitVersion
         /// Gets the original tag on the current commit point.
         /// When <see cref="IsValid"/> is false or if there is no tag (ie. we are on a CI build), it is null.
         /// </summary>
-        public string OriginalTagText { get; private set; }
+        public string? OriginalTagText { get; private set; }
 
         /// <summary>
         /// Creates a new <see cref="SimpleRepositoryInfo"/> based on a path (that can be below the folder with the '.git' sub folder). 
@@ -128,7 +130,7 @@ namespace SimpleGitVersion
         /// found, and the <see cref="RepositoryInfoOptions"/> that will be used.
         /// </param>
         /// <returns>An immutable SimpleRepositoryInfo instance.</returns>
-        static public SimpleRepositoryInfo LoadFromPath( ILogger logger, string path, Action<ILogger,bool,RepositoryInfoOptions> optionsChecker = null )
+        static public SimpleRepositoryInfo LoadFromPath( ILogger logger, string path, Action<ILogger,bool,RepositoryInfoOptions>? optionsChecker = null )
         {
             if( logger == null ) throw new ArgumentNullException( nameof( logger ) ); 
             RepositoryInfo info = RepositoryInfo.LoadFromPath( path, gitPath =>
@@ -153,21 +155,25 @@ namespace SimpleGitVersion
             if( info == null ) throw new ArgumentNullException( nameof( info ) );
 
             Info = info;
+            PreReleaseName = string.Empty;
+            FileVersion = InformationalVersion.ZeroFileVersion;
+            SafeVersion = String.Empty;
+
             if( !HandleRepositoryInfoError( logger, info ) )
             {
-                CommitSha = info.CommitSha;
-                CommitDateUtc = info.CommitDateUtc;
+                Debug.Assert( info.CommitInfo != null, "Since there is no repository error." );
                 var t = info.ValidReleaseTag;
                 if( info.IsDirty && !info.Options.IgnoreDirtyWorkingFolder )
                 {
                     SetInvalidValuesAndLog( logger, "Working folder has non committed changes.", false );
-                    logger.Info( info.IsDirtyExplanations );
+                    logger.Info( info.IsDirtyExplanations! );
                 }
                 else
                 {
                     Debug.Assert( info.PossibleVersions != null );
                     if( info.IsDirty )
                     {
+                        Debug.Assert( info.IsDirtyExplanations != null );
                         logger.Warn( "Working folder is Dirty! Checking this has been disabled since RepositoryInfoOptions.IgnoreDirtyWorkingFolder is true." );
                         logger.Warn( info.IsDirtyExplanations );
                     }
@@ -186,7 +192,8 @@ namespace SimpleGitVersion
                         logger.Trace( baseTag != null ? $"Base tag below: {baseTag}" : "No base tag found below." );
                     }
 
-                    // Will be replaced by SetInvalidValuesAndLog if needed.
+                    Debug.Assert( info.FinalVersion.NormalizedText != null, "Since info.FinalVersion is necessarily valid (worst case is the ZeroVersion)." );
+                    // This SafeVersion will be replaced by SetInvalidValuesAndLog below if needed.
                     SafeVersion = info.FinalVersion.NormalizedText;
 
                     if( info.CIRelease != null )
@@ -194,10 +201,15 @@ namespace SimpleGitVersion
                         IsValidCIBuild = true;
                         if( !info.CIRelease.IsZeroTimed )
                         {
-                            SetNumericalVersionValues( info.CIRelease.BaseTag, true );
+                            Debug.Assert( info.CIRelease.BaseTag.AsCSVersion != null, "In LastReleaseBased mode, there is a valid CSVersion base tag." );
+                            SetNumericalVersionValues( info.CIRelease.BaseTag.AsCSVersion!, true );
                         }
                         else
                         {
+                            // ZeroTimed mode: it is "nearly" the ZeroVersion.
+                            // We use everything like the ZeroVersion except that we inject the
+                            // commit info in the InformationalVersion.
+                            Debug.Assert( CommitSha != null, "The commit is valid." );
                             Major = info.CIRelease.BuildVersion.Major;
                             Minor = info.CIRelease.BuildVersion.Minor;
                             Patch = info.CIRelease.BuildVersion.Patch;
@@ -205,7 +217,7 @@ namespace SimpleGitVersion
                             PreReleaseName = String.Empty;
                             PreReleaseNumber = 0;
                             PreReleaseFix = 0;
-                            FileVersion = InformationalVersion.ZeroFileVersion;
+                            FileVersion = SVersion.ZeroVersion.GetInformationalVersion( CommitSha!, CommitDateUtc );
                             OrderedVersion = 0;
                         }
                         logger.Info( $"CI release: '{SafeVersion}'." );
@@ -234,7 +246,7 @@ namespace SimpleGitVersion
 
         void LogValidVersions( ILogger logger, RepositoryInfo info )
         {
-            string opt = null;
+            string? opt = null;
             if( info.Options.OnlyPatch ) opt += "OnlyPatch";
             if( info.Options.SingleMajor.HasValue )
             {
@@ -242,8 +254,7 @@ namespace SimpleGitVersion
                 opt += "SingleMajor = " + info.Options.SingleMajor.ToString();
             }
             if( opt != null ) opt = " (" + opt + ")";
-
-            if( info.PossibleVersions.Count == 0 )
+            if( info.PossibleVersions!.Count == 0 )
             {
                 logger.Info( $"No possible versions {opt}." );
             }

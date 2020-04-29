@@ -22,7 +22,7 @@ namespace SimpleGitVersion.Core.Tests
             foreach( SimpleCommit c in repoTest.Commits )
             {
                 RepositoryInfo i = repoTest.GetRepositoryInfo( c.Sha );
-                Assert.That( i.RepositoryError, Is.Null );
+                Assert.That( i.StartingCommitInfo.Error, Is.Null );
                 Assert.That( i.ReleaseTagError, Is.Null );
                 Assert.That( i.ValidReleaseTag, Is.Null );
                 Assert.That( i.CommitInfo.BasicInfo, Is.Null );
@@ -273,7 +273,7 @@ namespace SimpleGitVersion.Core.Tests
                     StartingCommitSha = cDevInAlpha.Sha,
                     OverriddenTags = overrides.Overrides
                 } );
-               Assert.That( i.ValidReleaseTag, Is.EqualTo( CSVersion.TryParse( "v2.0.0" ) ) );
+                Assert.That( i.ValidReleaseTag, Is.EqualTo( CSVersion.TryParse( "v2.0.0" ) ) );
             }
 
             overrides.MutableAdd( cDevInBeta.Sha, "v1.0.1-beta" );
@@ -317,9 +317,9 @@ namespace SimpleGitVersion.Core.Tests
                 {
                     StartingBranchName = "gamma",
                     OverriddenTags = overrides.Overrides,
-                    Branches = new RepositoryInfoOptionsBranch[]
+                    Branches = 
                     {
-                        new RepositoryInfoOptionsBranch() { Name = "gamma", CIVersionMode = CIBranchVersionMode.LastReleaseBased }
+                        new RepositoryInfoOptionsBranch( "gamma", CIBranchVersionMode.LastReleaseBased )
                     }
                 } );
                 Assert.That( i.ValidReleaseTag, Is.Null );
@@ -331,9 +331,9 @@ namespace SimpleGitVersion.Core.Tests
                 {
                     StartingBranchName = "gamma",
                     OverriddenTags = overrides.Overrides,
-                    Branches = new RepositoryInfoOptionsBranch[]
+                    Branches =
                     {
-                        new RepositoryInfoOptionsBranch() { Name = "gamma", CIVersionMode = CIBranchVersionMode.ZeroTimed }
+                        new RepositoryInfoOptionsBranch( "gamma", CIBranchVersionMode.ZeroTimed )
                     }
                 } );
                 Assert.That( i.CIRelease.BuildVersion.NormalizedText, Is.EqualTo( "0.0.0--009y09h-gamma+v2.0.0" ) );
@@ -344,9 +344,9 @@ namespace SimpleGitVersion.Core.Tests
                 {
                     StartingBranchName = "alpha",
                     OverriddenTags = overrides.Overrides,
-                    Branches = new RepositoryInfoOptionsBranch[]
+                    Branches = 
                     {
-                        new RepositoryInfoOptionsBranch() { Name = "alpha", VersionName="ALPHAAAA", CIVersionMode = CIBranchVersionMode.LastReleaseBased }
+                        new RepositoryInfoOptionsBranch( "alpha", CIBranchVersionMode.LastReleaseBased, "ALPHAAAA" )
                     }
                 } );
                 Assert.That( i.ValidReleaseTag, Is.Null );
@@ -358,9 +358,9 @@ namespace SimpleGitVersion.Core.Tests
                 {
                     StartingBranchName = "alpha",
                     OverriddenTags = overrides.Overrides,
-                    Branches = new RepositoryInfoOptionsBranch[]
+                    Branches = 
                     {
-                        new RepositoryInfoOptionsBranch() { Name = "alpha", VersionName="ALPH", CIVersionMode = CIBranchVersionMode.ZeroTimed }
+                        new RepositoryInfoOptionsBranch( "alpha", CIBranchVersionMode.ZeroTimed, "ALPH" )
                     }
                 } );
                 Assert.That( i.CIRelease.BuildVersion.NormalizedText, Is.EqualTo( "0.0.0--009y6hm-ALPH+v2.0.0" ) );
@@ -371,9 +371,9 @@ namespace SimpleGitVersion.Core.Tests
                 {
                     StartingBranchName = "beta",
                     OverriddenTags = overrides.Overrides,
-                    Branches = new RepositoryInfoOptionsBranch[]
+                    Branches = 
                     {
-                        new RepositoryInfoOptionsBranch() { Name = "beta", VersionName="BBBBBB", CIVersionMode = CIBranchVersionMode.LastReleaseBased }
+                        new RepositoryInfoOptionsBranch( "beta", CIBranchVersionMode.LastReleaseBased, "BBBBBB" )
                     }
                 } );
                 Assert.That( i.ValidReleaseTag, Is.Null );
@@ -385,9 +385,9 @@ namespace SimpleGitVersion.Core.Tests
                 {
                     StartingBranchName = "beta",
                     OverriddenTags = overrides.Overrides,
-                    Branches = new RepositoryInfoOptionsBranch[]
+                    Branches =
                     {
-                        new RepositoryInfoOptionsBranch() { Name = "beta", VersionName="beta", CIVersionMode = CIBranchVersionMode.ZeroTimed }
+                        new RepositoryInfoOptionsBranch( "beta", CIBranchVersionMode.ZeroTimed, "beta" )
                     }
                 } );
                 Assert.That( i.CIRelease.BuildVersion.NormalizedText, Is.EqualTo( "0.0.0--009y087-beta+v2.0.0" ) );
@@ -398,7 +398,7 @@ namespace SimpleGitVersion.Core.Tests
         [TestCase( "v1.0.0", "alpha", null, "1.0.1--0001-alpha" )]
         [TestCase( "v1.0.0", "beta", null, "1.0.1--0001-beta" )]
         [TestCase( "v1.0.0", "parallel-world", "parallel", "1.0.1--0003-parallel" )]
-        [TestCase( "v0.1.0-beta", "alpha", null, "0.1.0-b00-00-0001-alpha")]
+        [TestCase( "v0.1.0-beta", "alpha", null, "0.1.0-b00-00-0001-alpha" )]
         [TestCase( "v0.0.0-rc", "beta", null, "0.0.0-r00-00-0001-beta" )]
         public void CIBuildVersion_from_RealDevInAlpha_commits_ahead_tests( string vRealDevInAlpha, string branchName, string branchVersionName, string ciBuildVersion )
         {
@@ -410,9 +410,9 @@ namespace SimpleGitVersion.Core.Tests
                 {
                     StartingBranchName = branchName,
                     OverriddenTags = overrides.Overrides,
-                    Branches = new RepositoryInfoOptionsBranch[]
+                    Branches =
                     {
-                        new RepositoryInfoOptionsBranch() { Name = branchName, CIVersionMode = CIBranchVersionMode.LastReleaseBased, VersionName = branchVersionName }
+                        new RepositoryInfoOptionsBranch( branchName, CIBranchVersionMode.LastReleaseBased, branchVersionName )
                     }
                 } );
                 Assert.That( i.ValidReleaseTag, Is.Null );
@@ -420,21 +420,21 @@ namespace SimpleGitVersion.Core.Tests
             }
         }
 
-        [TestCase( "v0.0.0-alpha.1.1", "alpha", null, "0.0.0-a01-01-0006-alpha")]
-        [TestCase( "v0.0.0-alpha.2", "alpha", null, "0.0.0-a02-00-0006-alpha")]
-        [TestCase( "v0.0.0-beta", "alpha", null, "0.0.0-b00-00-0006-alpha")]
+        [TestCase( "v0.0.0-alpha.1.1", "alpha", null, "0.0.0-a01-01-0006-alpha" )]
+        [TestCase( "v0.0.0-alpha.2", "alpha", null, "0.0.0-a02-00-0006-alpha" )]
+        [TestCase( "v0.0.0-beta", "alpha", null, "0.0.0-b00-00-0006-alpha" )]
 
-        [TestCase( "v0.0.0-alpha.1.1", "beta", null, "0.0.0-a01-01-0006-beta")]
-        [TestCase( "v0.0.0-alpha.2", "beta", null, "0.0.0-a02-00-0006-beta")]
-        [TestCase( "v0.0.0-beta", "beta", null, "0.0.0-b00-00-0006-beta")]
+        [TestCase( "v0.0.0-alpha.1.1", "beta", null, "0.0.0-a01-01-0006-beta" )]
+        [TestCase( "v0.0.0-alpha.2", "beta", null, "0.0.0-a02-00-0006-beta" )]
+        [TestCase( "v0.0.0-beta", "beta", null, "0.0.0-b00-00-0006-beta" )]
 
-        [TestCase( "v0.0.0-alpha.1.1", "parallel-world", "parallel", "0.0.0-a01-01-0008-parallel")]
-        [TestCase( "v0.0.0-alpha.2", "parallel-world", "parallel", "0.0.0-a02-00-0008-parallel")]
-        [TestCase( "v0.0.0-beta", "parallel-world", "parallel", "0.0.0-b00-00-0008-parallel")]
+        [TestCase( "v0.0.0-alpha.1.1", "parallel-world", "parallel", "0.0.0-a01-01-0008-parallel" )]
+        [TestCase( "v0.0.0-alpha.2", "parallel-world", "parallel", "0.0.0-a02-00-0008-parallel" )]
+        [TestCase( "v0.0.0-beta", "parallel-world", "parallel", "0.0.0-b00-00-0008-parallel" )]
 
-        [TestCase( "v0.0.0-nimp", "f-beta-nothing", "XXX", "0.0.0-a01-00-0004-XXX")]
-        [TestCase( "v0.0.0-dont-care", "f-beta-nothing", "YYYY", "0.0.0-a01-00-0004-YYYY")]
-        [TestCase( "v0.0.0-onDevInAlpha", "f-beta-nothing", "B", "0.0.0-a01-00-0004-B")]
+        [TestCase( "v0.0.0-nimp", "f-beta-nothing", "XXX", "0.0.0-a01-00-0004-XXX" )]
+        [TestCase( "v0.0.0-dont-care", "f-beta-nothing", "YYYY", "0.0.0-a01-00-0004-YYYY" )]
+        [TestCase( "v0.0.0-onDevInAlpha", "f-beta-nothing", "B", "0.0.0-a01-00-0004-B" )]
         public void CIBuildVersion_from_DevInAlpha_commits_ahead_tests( string vDevInAlpha, string branchName, string branchNameVersion, string ciBuildVersion )
         {
             var repoTest = TestHelper.TestGitRepository;
@@ -472,9 +472,9 @@ namespace SimpleGitVersion.Core.Tests
                 {
                     StartingBranchName = branchName,
                     OverriddenTags = overrides.Overrides,
-                    Branches = new RepositoryInfoOptionsBranch[]
+                    Branches = 
                     {
-                        new RepositoryInfoOptionsBranch() { Name = branchName, CIVersionMode = CIBranchVersionMode.LastReleaseBased, VersionName = branchNameVersion }
+                        new RepositoryInfoOptionsBranch( branchName, CIBranchVersionMode.LastReleaseBased, branchNameVersion )
                     }
                 } );
                 Assert.That( i.ValidReleaseTag, Is.Null );
@@ -809,6 +809,34 @@ namespace SimpleGitVersion.Core.Tests
                     StartingVersionForCSemVer = "2.0.0"
                 } );
                 i.ValidReleaseTag.Should().Be( CSVersion.Parse( "2.0.0" ) );
+            }
+        }
+
+        [Test]
+        public void when_there_is_no_versions_below()
+        {
+            var repoTest = TestHelper.TestGitRepository;
+            {
+                var cOrphan = repoTest.Commits.Single( sc => sc.Message.StartsWith( "First in parallel world." ) );
+                RepositoryInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions { StartingCommitSha = cOrphan.Sha } );
+                i.CommitInfo.BasicInfo.Should().BeNull();
+                i.CommitInfo.PossibleVersions.Should().BeEquivalentTo( CSVersion.FirstPossibleVersions );
+                i.CIRelease.Should().BeNull();
+            }
+            {
+                var options = new RepositoryInfoOptions
+                {
+                    StartingBranchName = "alpha",
+                    Branches =
+                    {
+                        new RepositoryInfoOptionsBranch( "alpha", CIBranchVersionMode.ZeroTimed )
+                    }
+                };
+
+                RepositoryInfo i = repoTest.GetRepositoryInfo( options );
+                i.CommitInfo.BasicInfo.Should().BeNull();
+                i.CommitInfo.PossibleVersions.Should().BeEquivalentTo( CSVersion.FirstPossibleVersions );
+                i.CIRelease.Should().NotBeNull();
             }
         }
     }

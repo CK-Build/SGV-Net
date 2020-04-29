@@ -24,7 +24,7 @@ namespace SimpleGitVersion.Core.Tests
             XDocument d = XDocument.Parse( s );
             ValidateAgainstSchema( d );
 
-            RepositoryInfoOptions opt = RepositoryInfoOptions.Read( d.Root );
+            RepositoryInfoOptions opt = new RepositoryInfoOptions( d.Root );
 
             Assert.That( opt.Branches, Is.Empty );
             Assert.That( opt.StartingVersionForCSemVer, Is.EqualTo( "v4.2.0" ) );
@@ -46,7 +46,7 @@ namespace SimpleGitVersion.Core.Tests
             XDocument d = XDocument.Parse( s );
             ValidateAgainstSchema( d );
 
-            RepositoryInfoOptions opt = RepositoryInfoOptions.Read( d.Root );
+            RepositoryInfoOptions opt = new RepositoryInfoOptions( d.Root );
 
             Assert.That( opt.StartingVersionForCSemVer, Is.Null );
             Assert.That( opt.IgnoreModifiedFiles, Is.Empty );
@@ -84,11 +84,11 @@ namespace SimpleGitVersion.Core.Tests
             XDocument d = XDocument.Parse( s );
             ValidateAgainstSchema( d );
 
-            RepositoryInfoOptions opt = RepositoryInfoOptions.Read( d.Root );
+            RepositoryInfoOptions opt = new RepositoryInfoOptions( d.Root );
 
             XDocument d2 = new XDocument( opt.ToXml() );
             ValidateAgainstSchema( d2 );
-            RepositoryInfoOptions opt2 = RepositoryInfoOptions.Read( d2.Root );
+            RepositoryInfoOptions opt2 = new RepositoryInfoOptions( d2.Root );
 
             Assert.That( opt.IgnoreDirtyWorkingFolder, Is.EqualTo( opt2.IgnoreDirtyWorkingFolder ) );
             Assert.That( opt.RemoteName, Is.EqualTo( opt2.RemoteName ) );

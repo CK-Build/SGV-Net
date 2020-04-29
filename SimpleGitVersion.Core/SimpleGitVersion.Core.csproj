@@ -1,13 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <Import Project="..\Common\Shared.props" />
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>netstandard2.1</TargetFramework>
     <Description></Description>
     <PackageIconUrl>https://raw.githubusercontent.com/SimpleGitVersion/SGV-Net/master/SimpleGitVersion.png</PackageIconUrl>
     <PackageTags>Versioning, SemVer, NuGet, CSemVer, InformationalVersion</PackageTags>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="CSemVer" Version="7.0.3--0004-develop" />
+    <PackageReference Include="CSemVer" Version="7.0.3--0005-develop" />
     <PackageReference Include="LibGit2Sharp" Version="0.26.2" />
   </ItemGroup>
 </Project>

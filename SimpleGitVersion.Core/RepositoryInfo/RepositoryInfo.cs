@@ -16,33 +16,34 @@ namespace SimpleGitVersion
     /// It can be obtained by calling static helper <see cref="LoadFromPath(string, RepositoryInfoOptions)"/>
     /// (a <see cref="Repository"/> is created and disposed) or by using its constructor.
     /// </summary>
-    public class RepositoryInfo
+    public partial class RepositoryInfo
     {
         /// <summary>
         /// Gets the solution directory: the one that contains the .git folder.
-        /// Null only if <see cref="RepositoryError"/> is 'No Git repository.'.
+        /// Null only if <see cref="Error"/> is 'No Git repository.'.
         /// It ends with the <see cref="Path.DirectorySeparatorChar"/>.
         /// </summary>
         /// <remarks>
         /// This captures the <see cref="RepositoryInformation.WorkingDirectory"/>.
         /// </remarks>
-        public readonly string GitSolutionDirectory;
+        public readonly string? GitSolutionDirectory;
 
         /// <summary>
-        /// Gets the repository level error if any: it is one line of text or null ('No Git repository.' or 'Unitialized Git repository.').
+        /// Gets the initial commit analysis result.
+        /// Its <see cref="StartingCommit.Error"/> holds the primary error that may prevent any further analysis.
         /// </summary>
-        public readonly string RepositoryError;
+        public readonly StartingCommit StartingCommitInfo;
 
         /// <summary>
         /// Gets the errors related to the release tags.
         /// Null if no errors.
         /// </summary>
-        public readonly string ReleaseTagError;
+        public readonly string? ReleaseTagError;
 
         /// <summary>
-        /// Gets either <see cref="RepositoryError"/> or <see cref="ReleaseTagError"/>.
+        /// Gets either <see cref="StartingCommitInfo"/>'s error or <see cref="ReleaseTagError"/>.
         /// </summary>
-        public string Error => RepositoryError ?? ReleaseTagError;
+        public string? Error => StartingCommitInfo.Error ?? ReleaseTagError;
 
         /// <summary>
         /// Gets whether there are non committed files in the working directory.
@@ -52,26 +53,26 @@ namespace SimpleGitVersion
         /// <summary>
         /// Gets detailed explanations about <see cref="IsDirty"/>.
         /// </summary>
-        public readonly string IsDirtyExplanations;
+        public readonly string? IsDirtyExplanations;
 
         /// <summary>
         /// Gets the existing versions in the repository in ascending
         /// order, filtered by <see cref="RepositoryInfoOptions.SingleMajor"/> if it is defined.
-        /// Null if there is a <see cref="RepositoryError"/> that prevented its computation.
+        /// Null if there is a <see cref="StartingCommitInfo"/>'s error that prevented its computation.
         /// </summary>
-        public readonly IReadOnlyList<ITagCommit> ExistingVersions;
+        public readonly IReadOnlyList<ITagCommit>? ExistingVersions;
 
         /// <summary>
-        /// Gets the commit with a better version for tha exact same content if it exists.
+        /// Gets the commit with a better version for that exact same content if it exists.
         /// This is independent of <see cref="ValidReleaseTag"/>.
         /// </summary>
-        public readonly ITagCommit BetterExistingVersion;
+        public readonly ITagCommit? BetterExistingVersion;
 
         /// <summary>
         /// Gets the release tag. If there is error, this is null.
         /// It is also null if there is actually no release tag on the current commit.
         /// </summary>
-        public readonly CSVersion ValidReleaseTag;
+        public readonly CSVersion? ValidReleaseTag;
 
         /// <summary>
         /// Gets whether the error is the fact that the release tag on the current commit point
@@ -82,30 +83,27 @@ namespace SimpleGitVersion
 
         /// <summary>
         /// Gets the <see cref="SimpleGitVersion.CommitInfo"/> of the current commit point.
-        /// Null if there is a <see cref="RepositoryError"/> or a <see cref="ReleaseTagError"/> that 
-        /// prevented its computation.
+        /// Null if there is a <see cref="Error"/> that prevented its computation.
         /// </summary>
-        public readonly CommitInfo CommitInfo;
+        public readonly CommitInfo? CommitInfo;
 
         /// <summary>
-        /// Null if there is a <see cref="RepositoryError"/> or a <see cref="ReleaseTagError"/> that 
-        /// prevented its computation.
+        /// Null if there is a <see cref="Error"/> that prevented its computation.
         /// When empty, this means that there can not be a valid release tag on the current commit point.
         /// This is the set of filtered versions (<see cref="RepositoryInfoOptions.SingleMajor"/>
         /// and <see cref="RepositoryInfoOptions.OnlyPatch"/> options are applied
         /// on <see cref="CommitInfo"/>.<see cref="CommitInfo.PossibleVersions">PossibleVersions</see>).
         /// </summary>
-        public readonly IReadOnlyList<CSVersion> PossibleVersions;
+        public readonly IReadOnlyList<CSVersion>? PossibleVersions;
 
         /// <summary>
-        /// Null if there is a <see cref="RepositoryError"/> or a <see cref="ReleaseTagError"/> that 
-        /// prevented its computation.
+        /// Null if there is a <see cref="Error"/> that prevented its computation.
         /// These are the versions that may be available to any commit above the current one.
         /// This is the set of filtered versions (<see cref="RepositoryInfoOptions.SingleMajor"/>
         /// and <see cref="RepositoryInfoOptions.OnlyPatch"/> options are applied
         /// on <see cref="CommitInfo"/>.<see cref="CommitInfo.NextPossibleVersions">NextPossibleVersions</see>).
         /// </summary>
-        public readonly IReadOnlyList<CSVersion> NextPossibleVersions;
+        public readonly IReadOnlyList<CSVersion>? NextPossibleVersions;
 
         /// <summary>
         /// Gets CI informations if a CI release can be done.
@@ -113,7 +111,7 @@ namespace SimpleGitVersion
         /// because it is the current branch or <see cref="RepositoryInfoOptions.StartingBranchName"/> specifies it),
         /// the <see cref="RepositoryInfoOptions.StartingCommitSha"/> is null or empty and there is no <see cref="ValidReleaseTag"/>.
         /// </summary>
-        public readonly CIReleaseInfo CIRelease;
+        public readonly CIReleaseInfo? CIRelease;
 
         /// <summary>
         /// Gets the final version (based on short CSVersion form, see <see cref="CSVersion.IsLongForm"/>) that must be used to build this commit point.
@@ -130,7 +128,7 @@ namespace SimpleGitVersion
         /// <summary>
         /// Gets the <see cref="RepositoryInfoOptions"/> that has been used.
         /// </summary>
-        public readonly RepositoryInfoOptions Options;
+        public RepositoryInfoOptions Options => StartingCommitInfo.Options;
 
         /// <summary>
         /// The UTC date and time of the commit.
@@ -142,35 +140,32 @@ namespace SimpleGitVersion
         /// The Sha of the commit.
         /// Null if the commit is not valid.
         /// </summary>
-        public readonly string CommitSha;
+        public readonly string? CommitSha;
 
         /// <summary>
-        /// Initializes a new <see cref="RepositoryInfo"/> on a <see cref="Repository"/>.
+        /// Initializes a new <see cref="RepositoryInfo"/> on a LibGit2Sharp <see cref="Repository"/>.
         /// </summary>
-        /// <param name="r">The rpository (can be invalid and even null).</param>
+        /// <param name="r">The repository (can be invalid and even null).</param>
         /// <param name="options">Optional options.</param>
-        public RepositoryInfo( Repository r, RepositoryInfoOptions options = null )
+        public RepositoryInfo( Repository? r, RepositoryInfoOptions? options = null )
         {
-            Options = options ?? new RepositoryInfoOptions();
             CommitDateUtc = InformationalVersion.ZeroCommitDate;
-            if( r == null ) RepositoryError = "No Git repository.";
-            else
+            SVersion? finalVersion = null;
+            StartingCommitInfo = new StartingCommit( options ??= new RepositoryInfoOptions(), r );
+            if( StartingCommitInfo.Error == null ) 
             {
-                Commit commit;
-                CIBranchVersionMode ciVersionMode;
-                string ciBuildName;
-                RepositoryError = TryFindCommit( options, r, out commit, out ciVersionMode, out ciBuildName );
-                Debug.Assert( (ciVersionMode != CIBranchVersionMode.None) == (ciBuildName != null) );
+                var commit = StartingCommitInfo.Commit;
+                Debug.Assert( (StartingCommitInfo.CIVersionMode != CIBranchVersionMode.None) == (StartingCommitInfo.CIBranchVersionName != null) );
                 if( commit != null )
                 {
                     CommitSha = commit.Sha;
                     CommitDateUtc = commit.Author.When.UtcDateTime;
-                    IsDirtyExplanations = ComputeIsDirty( r, commit, options );
+                    IsDirtyExplanations = ComputeIsDirty( r!, commit, options );
                     if( !IsDirty || options.IgnoreDirtyWorkingFolder )
                     {
                         StringBuilder errors = new StringBuilder();
                         TagCollector collector = new TagCollector( errors,
-                                                                   r,
+                                                                   r!,
                                                                    options.StartingVersionForCSemVer,
                                                                    options.OverriddenTags,
                                                                    options.SingleMajor );
@@ -178,8 +173,7 @@ namespace SimpleGitVersion
                         {
                             ExistingVersions = collector.ExistingVersions.TagCommits;
 
-                            var info = collector.GetCommitInfo( commit );
-                            Debug.Assert( info != null );
+                            CommitInfo info = collector.GetCommitInfo( commit );
 
                             CommitInfo = info;
 
@@ -198,7 +192,7 @@ namespace SimpleGitVersion
                             var thisCommit = info.BasicInfo?.UnfilteredThisCommit;
                             if( info.BasicInfo?.BestCommit?.ThisTag > thisCommit?.ThisTag )
                             {
-                                BetterExistingVersion = info.BasicInfo.BestCommit;
+                                BetterExistingVersion = info.BasicInfo!.BestCommit;
                             }
                             if( thisCommit != null )
                             {
@@ -225,6 +219,8 @@ namespace SimpleGitVersion
                             else
                             {
                                 // There is no release tag on the commit point.
+                                // Are we on a CI-enabled branch?
+                                string? ciBuildName = StartingCommitInfo.CIBranchVersionName;
                                 if( ciBuildName != null )
                                 {
                                     if( ciBuildName.Length > 8 )
@@ -237,7 +233,7 @@ namespace SimpleGitVersion
                                     }
                                     else
                                     {
-                                        CIRelease = CIReleaseInfo.Create( commit, ciVersionMode, ciBuildName, info.BasicInfo );
+                                        CIRelease = CIReleaseInfo.Create( commit, StartingCommitInfo.CIVersionMode, ciBuildName, info.BasicInfo );
                                     }
                                 }
                             }
@@ -248,24 +244,26 @@ namespace SimpleGitVersion
                     // Conclusion:
                     if( CIRelease != null )
                     {
-                        FinalVersion = CIRelease.BuildVersion;
+                        finalVersion = CIRelease.BuildVersion;
                     }
                     else if( ValidReleaseTag != null )
                     {
                         Debug.Assert( !ValidReleaseTag.IsLongForm );
-                        FinalVersion = ValidReleaseTag;
+                        finalVersion = ValidReleaseTag;
                     }
                 }
             }
             // Handles FinalInformationalVersion and SVersion.ZeroVersion for versions if needed.
-            if( FinalVersion == null )
+            if( finalVersion == null )
             {
                 FinalVersion = SVersion.ZeroVersion;
                 FinalInformationalVersion = InformationalVersion.ZeroInformationalVersion;
             }
             else
             {
-                FinalInformationalVersion = FinalVersion.GetInformationalVersion( CommitSha, CommitDateUtc );
+                Debug.Assert( CommitSha != null && finalVersion.IsValid );
+                FinalVersion = finalVersion;
+                FinalInformationalVersion = finalVersion.GetInformationalVersion( CommitSha, CommitDateUtc );
             }
         }
 
@@ -274,8 +272,8 @@ namespace SimpleGitVersion
             readonly Repository _r;
             readonly Commit _commit;
             readonly StatusEntry _entry;
-            Blob _committedBlob;
-            string _committedText;
+            Blob? _committedBlob;
+            string? _committedText;
 
             public ModifiedFile( Repository r, Commit commit, StatusEntry e, string entryFilePath )
             {
@@ -325,14 +323,14 @@ namespace SimpleGitVersion
 
         }
 
-        string ComputeIsDirty( Repository r, Commit commit, RepositoryInfoOptions options )
+        string? ComputeIsDirty( Repository r, Commit commit, RepositoryInfoOptions options )
         {
             RepositoryStatus repositoryStatus = r.RetrieveStatus();
             int addedCount = repositoryStatus.Added.Count();
             int missingCount = repositoryStatus.Missing.Count();
             int removedCount = repositoryStatus.Removed.Count();
             int stagedCount = repositoryStatus.Staged.Count();
-            StringBuilder b = null;
+            StringBuilder? b = null;
             if( addedCount > 0 || missingCount > 0 || removedCount > 0 || stagedCount > 0 )
             {
                 b = new StringBuilder( "Found: " );
@@ -367,75 +365,11 @@ namespace SimpleGitVersion
                         else if( fileCount <= 10 ) b.Append( ", " ).Append( path );
                     }
                 }
-                if( fileCount > 10 ) b.AppendFormat( ", and {0} other file(s)", fileCount - 10 );
+                if( fileCount > 10 ) b!.AppendFormat( ", and {0} other file(s)", fileCount - 10 );
             }
             if( b == null ) return null;
             b.Append( '.' );
             return b.ToString();
-        }
-
-        string TryFindCommit( RepositoryInfoOptions options, Repository r, out Commit commit, out CIBranchVersionMode ciVersionMode, out string branchNameForCIVersion )
-        {
-            ciVersionMode = CIBranchVersionMode.None;
-            commit = null;
-            branchNameForCIVersion = null;
-            string commitSha = options.StartingCommitSha;
-
-            // Find current commit (the head) if none is provided.
-            if( string.IsNullOrWhiteSpace( commitSha ) )
-            {
-                IEnumerable<string> branchNames;
-                if( string.IsNullOrWhiteSpace( options.StartingBranchName ) )
-                {
-                    // locCommit is here because one cannot use an out parameter inside a lambda.
-                    var locCommit = commit = r.Head.Tip;
-                    if( locCommit == null ) return "Unitialized Git repository.";
-                    // Save the branches!
-                    // By doing this, when we are in 'Detached Head' state (the head of the repository is on a commit and not on a branch: git checkout <sha>),
-                    // we can detect that it is the head of a branch and hence apply possible options (mainly CI) for it.
-                    // We take into account only the branches from options.RemoteName remote here.
-                    string branchName = r.Head.FriendlyName;
-                    if( branchName == "(no branch)" )
-                    {
-                        string remotePrefix = options.RemoteName + '/';
-                        branchNames = r.Branches
-                                        .Where( b => b.Tip == locCommit && (!b.IsRemote || b.FriendlyName.StartsWith( remotePrefix )) )
-                                        .Select( b => b.IsRemote ? b.FriendlyName.Substring( remotePrefix.Length ) : b.FriendlyName );
-                    }
-                    else branchNames = new[] { branchName };
-                }
-                else
-                {
-                    string remotePrefix = options.RemoteName + '/';
-                    string localBranchName = options.StartingBranchName.StartsWith( remotePrefix )
-                                                ? options.StartingBranchName.Substring( remotePrefix.Length )
-                                                : options.StartingBranchName;
-                    Branch br = r.Branches[options.StartingBranchName];
-                    if( br == null && ReferenceEquals( localBranchName, options.StartingBranchName ) )
-                    {
-                        string remoteName = remotePrefix + options.StartingBranchName;
-                        br = r.Branches[remoteName];
-                        if( br == null ) return $"Unknown StartingBranchName: '{options.StartingBranchName}' (also tested on remote '{remoteName}').";
-                    }
-                    if( br == null ) return $"Unknown (remote) StartingBranchName: '{options.StartingBranchName}'.";
-                    commit = br.Tip;
-                    branchNames = new[] { localBranchName };
-                }
-                RepositoryInfoOptionsBranch bOpt;
-                if( options.Branches != null
-                    && (bOpt = options.Branches.FirstOrDefault( b => branchNames.Contains( b.Name ) )) != null
-                    && bOpt.CIVersionMode != CIBranchVersionMode.None )
-                {
-                    ciVersionMode = bOpt.CIVersionMode;
-                    branchNameForCIVersion = string.IsNullOrWhiteSpace( bOpt.VersionName ) ? bOpt.Name : bOpt.VersionName;
-                }
-            }
-            else
-            {
-                commit = r.Lookup<Commit>( commitSha );
-                if( commit == null ) return $"Commit '{commitSha}' not found.";
-            }
-            return null;
         }
 
         /// <summary>
@@ -444,7 +378,7 @@ namespace SimpleGitVersion
         /// <param name="path">The path to lookup.</param>
         /// <param name="options">Optional <see cref="RepositoryInfoOptions"/>.</param>
         /// <returns>An immutable RepositoryInfo instance. Never null.</returns>
-        public static RepositoryInfo LoadFromPath( string path, RepositoryInfoOptions options = null )
+        public static RepositoryInfo LoadFromPath( string path, RepositoryInfoOptions? options = null )
         {
             if( path == null ) throw new ArgumentNullException( nameof( path ) );
             path = Repository.Discover( path );
