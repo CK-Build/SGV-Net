@@ -11,18 +11,20 @@ namespace SimpleGitVersion
 {
     class TagCommit : IFullTagCommit
     {
+        readonly static CSVersion InvalidMarker = CSVersion.TryParse( "Invalid TagCommit." );
+
         readonly string _commitSha;
         readonly string _contentSha;
-        TagCommit _bestTagCommit;
-        TagCommit _altBestTagCommit;
+        TagCommit? _bestTagCommit;
+        TagCommit? _altBestTagCommit;
         CSVersion _thisTag;
-        List<CSVersion> _extraCollectedTags;
-        TagCommit _nextSameTree;
-        TagCommit _headSameTree;
+        List<CSVersion>? _extraCollectedTags;
+        TagCommit? _nextSameTree;
+        TagCommit? _headSameTree;
 
         public TagCommit( Commit c, CSVersion first )
         {
-            Debug.Assert( c != null && first != null && first.IsValid && !first.IsLongForm );
+            Debug.Assert( first.IsValid && !first.IsLongForm );
             _commitSha = c.Sha;
             _contentSha = c.Tree.Sha;
             _thisTag = first;
@@ -48,7 +50,7 @@ namespace SimpleGitVersion
         /// <summary>
         /// Gets the best commit. This <see cref="IFullTagCommit"/> if no better version exists on the content.
         /// </summary>
-        public IFullTagCommit BestCommit => _headSameTree != null ? _headSameTree._bestTagCommit : this;
+        public IFullTagCommit BestCommit => _headSameTree != null ? _headSameTree._bestTagCommit! : this;
 
         /// <summary>
         /// Gets the best commit tag for this commit, skipping the given version.
@@ -57,7 +59,7 @@ namespace SimpleGitVersion
         /// </summary>
         /// <param name="v">The version to ignore. Can be null (BestCommit is returned).</param>
         /// <returns>The best commit tag or null.</returns>
-        public ITagCommit GetBestCommitExcept( CSVersion v )
+        public ITagCommit? GetBestCommitExcept( CSVersion? v )
         {
             var best = BestCommit;
             if( best.ThisTag != v ) return best;
@@ -89,7 +91,7 @@ namespace SimpleGitVersion
 
         public void AddCollectedTag( CSVersion t )
         {
-            Debug.Assert( t != null && t.IsValid && !t.IsLongForm );
+            Debug.Assert( t.IsValid && !t.IsLongForm );
             if( t.Equals( _thisTag ) )
             {
                 if( t.DefinitionStrength > _thisTag.DefinitionStrength ) _thisTag = t;
@@ -115,11 +117,11 @@ namespace SimpleGitVersion
                 _thisTag = t;
                 return true;
             }
-            _thisTag = null;
+            _thisTag = InvalidMarker;
             return false;
         }
 
-        CSVersion DoCloseCollect( StringBuilder errors )
+        CSVersion? DoCloseCollect( StringBuilder errors )
         {
             if( _extraCollectedTags == null ) return _thisTag.IsMarkedInvalid ? null : _thisTag;
             _extraCollectedTags.Add( _thisTag );
@@ -162,7 +164,6 @@ namespace SimpleGitVersion
 
         void SetBestTagCommit( TagCommit c )
         {
-            Debug.Assert( c != null );
             _altBestTagCommit = _bestTagCommit ?? this;
             _bestTagCommit = c;
         }
@@ -176,13 +177,13 @@ namespace SimpleGitVersion
                 other._nextSameTree = _nextSameTree;
                 _nextSameTree = other;
                 Debug.Assert( other._bestTagCommit == null );
-                if( _bestTagCommit._thisTag.CompareTo( other._thisTag ) < 0 ) SetBestTagCommit( other );
+                if( _bestTagCommit!._thisTag.CompareTo( other._thisTag ) < 0 ) SetBestTagCommit( other );
             }
             else
             {
                 var firstOther = other._headSameTree;
                 Debug.Assert( firstOther._bestTagCommit != null );
-                if( _bestTagCommit._thisTag.CompareTo( firstOther._bestTagCommit._thisTag ) < 0 )
+                if( _bestTagCommit!._thisTag.CompareTo( firstOther._bestTagCommit!._thisTag ) < 0 )
                 {
                     SetBestTagCommit( firstOther );
                 }

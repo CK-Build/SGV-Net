@@ -1,8 +1,9 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml;
 using System.Xml.Linq;
 
 namespace SimpleGitVersion
@@ -15,8 +16,14 @@ namespace SimpleGitVersion
         /// <summary>
         /// Initializes a new default <see cref="RepositoryInfoOptionsBranch"/> object.
         /// </summary>
-        public RepositoryInfoOptionsBranch()
+        /// <param name="name">Required <see cref="Name"/> of this branch.</param>
+        /// <param name="mode">The CI version mode to use.</param>
+        /// <param name="versionName">The optional name that supersedes the branc name.</param>
+        public RepositoryInfoOptionsBranch( string name, CIBranchVersionMode mode, string? versionName = null )
         {
+            Name = name;
+            CIVersionMode = mode;
+            VersionName = versionName;
         }
 
         /// <summary>
@@ -25,7 +32,7 @@ namespace SimpleGitVersion
         /// <param name="e">The xml element.</param>
         public RepositoryInfoOptionsBranch( XElement e )
         {
-            Name = (string)e.Attribute( SGVSchema.Name ); 
+            Name = (string)e.Attribute( SGVSchema.Name ) ?? throw new XmlException( "Attribute Name is required." ); 
             VersionName = (string)e.Attribute( SGVSchema.VersionName ); 
             var a = e.Attribute( SGVSchema.CIVersionMode );
             CIBranchVersionMode mode;
@@ -57,7 +64,7 @@ namespace SimpleGitVersion
         /// <summary>
         /// Gets or sets an optional name that will be used instead of <see cref="Name"/> in the version.
         /// </summary>
-        public string VersionName { get; set; }
+        public string? VersionName { get; set; }
 
         /// <summary>
         /// Gets or sets the wanted behavior for this branch.

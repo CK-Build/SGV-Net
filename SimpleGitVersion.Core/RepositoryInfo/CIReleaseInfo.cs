@@ -17,11 +17,12 @@ namespace SimpleGitVersion
     public class CIReleaseInfo
     {
         CIReleaseInfo(
-            CSVersion ciBaseTag,
+            SVersion ciBaseTag,
             int ciBaseDepth,
             SVersion ciBuildVersion,
             bool isZeroTimed )
         {
+            Debug.Assert( ciBaseTag.AsCSVersion != null || (ciBaseTag == SVersion.ZeroVersion && isZeroTimed), "If the base tag is a SVersion, it is the ZeroVersion AND we use the ZeroTimed mode." );
             BaseTag = ciBaseTag;
             Depth = ciBaseDepth;
             BuildVersion = ciBuildVersion;
@@ -29,10 +30,11 @@ namespace SimpleGitVersion
         }
 
         /// <summary>
-        /// The base <see cref="CSVersion"/> from which <see cref="BuildVersion"/> is built.
-        /// It is either the previous release or the <see cref="CSVersion.VeryFirstVersion"/>.
+        /// The base <see cref="CSVersion"/> from which <see cref="BuildVersion"/> is built,
+        /// or the <see cref="SVersion.ZeroVersion"/> if no previous tag has been found from the commit.
+        /// When no previous tag has been found (ZeroVersion), then <see cref="IsZeroTimed"/> is necessarily true.
         /// </summary>
-        public readonly CSVersion BaseTag;
+        public readonly SVersion BaseTag;
 
         /// <summary>
         /// The greatest number of commits between the current commit and the deepest occurence 
@@ -51,16 +53,11 @@ namespace SimpleGitVersion
         /// </summary>
         public readonly bool IsZeroTimed;
 
-        internal static CIReleaseInfo Create(
-            Commit commit,
-            CIBranchVersionMode ciVersionMode,
-            string ciBuildName,
-            BasicCommitInfo info )
+        internal static CIReleaseInfo Create( Commit commit, CIBranchVersionMode ciVersionMode, string ciBuildName, BasicCommitInfo? info )
         {
-            Debug.Assert( ciBuildName != null && ciBuildName.Length <= 8 );
+            Debug.Assert( ciBuildName.Length <= 8 );
             var actualBaseTag = info?.MaxCommit.ThisTag;
-            CSVersion ciBaseTag = actualBaseTag ?? CSVersion.VeryFirstVersion;
-            SVersion ciBuildVersion = null;
+            SVersion? ciBuildVersion = null;
 
             // If there is no base release found, we fall back to ZeroTimedBased mode.
             if( ciVersionMode == CIBranchVersionMode.ZeroTimed || actualBaseTag == null )
@@ -73,13 +70,14 @@ namespace SimpleGitVersion
                     vN += "+v" + actualBaseTag;
                 }
                 ciBuildVersion = SVersion.Parse( vN );
-                return new CIReleaseInfo( ciBaseTag, 0, ciBuildVersion, true );
+                return new CIReleaseInfo( SVersion.ZeroVersion, 0, ciBuildVersion, true );
 
             }
-            Debug.Assert( ciVersionMode == CIBranchVersionMode.LastReleaseBased && actualBaseTag != null );
-            CIBuildDescriptor ci = new CIBuildDescriptor { BranchName = ciBuildName, BuildIndex = info.BelowDepth };
+            Debug.Assert( ciVersionMode == CIBranchVersionMode.LastReleaseBased );
+            Debug.Assert( info != null, "Since actualBaseTag is not null." );
+            CIBuildDescriptor ci = new CIBuildDescriptor { BranchName = ciBuildName, BuildIndex = info!.BelowDepth };
             ciBuildVersion = SVersion.Parse( actualBaseTag.ToString( CSVersionFormat.Normalized, ci ), false );
-            return new CIReleaseInfo( ciBaseTag, info.BelowDepth, ciBuildVersion, isZeroTimed: false );
+            return new CIReleaseInfo( actualBaseTag, info.BelowDepth, ciBuildVersion, isZeroTimed: false );
         }
     }
 

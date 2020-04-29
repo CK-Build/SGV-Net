@@ -16,14 +16,14 @@ namespace SimpleGitVersion
     /// </summary>
     partial class TagCollector
     {
-        readonly CSVersion _startingVersionForCSemVer;
+        readonly CSVersion? _startingVersionForCSemVer;
         readonly Dictionary<string, TagCommit> _collector;
-        readonly RepositoryVersions _repoVersions;
+        readonly RepositoryVersions? _repoVersions;
 
         /// <summary>
         /// Gets the minimal version to consider. When null, the whole repository must be valid in terms of release tags.
         /// </summary>
-        public CSVersion StartingVersionForCSemVer => _startingVersionForCSemVer; 
+        public CSVersion? StartingVersionForCSemVer => _startingVersionForCSemVer; 
 
         /// <summary>
         /// Gets a read only and ordered list of the existing versions in the repository. 
@@ -31,7 +31,7 @@ namespace SimpleGitVersion
         /// this existing versions does not contain any version smaller than StartingVersionForCSemVer.
         /// This existing versions must always be compact (ie. no "holes" must exist between them) otherwise an error is added to the collector.
         /// </summary>
-        public RepositoryVersions ExistingVersions => _repoVersions;
+        public RepositoryVersions ExistingVersions => _repoVersions!;
 
         /// <summary>
         /// Initializes a new <see cref="TagCollector"/>.
@@ -46,16 +46,14 @@ namespace SimpleGitVersion
         /// When true, existing versions are checked: one of the valid first version must exist and exisitng versions
         /// must be compact.
         /// </param>
-        public TagCollector(
+        internal TagCollector(
             StringBuilder errors,
             Repository repo,
-            string startingVersionForCSemVer = null,
-            IEnumerable<KeyValuePair<string, IReadOnlyList<string>>> overriddenTags = null,
+            string? startingVersionForCSemVer = null,
+            IEnumerable<KeyValuePair<string, IReadOnlyList<string>>>? overriddenTags = null,
             int? singleMajor = null,
             bool checkValidExistingVersions = false )
         {
-            Debug.Assert( errors != null && repo != null );
-
             _collector = new Dictionary<string, TagCommit>();
 
             if( startingVersionForCSemVer != null )
@@ -95,12 +93,12 @@ namespace SimpleGitVersion
             }
         }
 
-        void RegisterAllTags( StringBuilder errors, Repository repo, IEnumerable<KeyValuePair<string, IReadOnlyList<string>>> overriddenTags, int? singleMajor )
+        void RegisterAllTags( StringBuilder errors, Repository repo, IEnumerable<KeyValuePair<string, IReadOnlyList<string>>>? overriddenTags, int? singleMajor )
         {
             bool startingVersionForCSemVerFound = _startingVersionForCSemVer == null;
             foreach( var tag in repo.Tags )
             {
-                Commit tagCommit = tag.ResolveTarget() as Commit;
+                Commit? tagCommit = tag.ResolveTarget() as Commit;
                 if( tagCommit == null ) continue;
                 RegisterOneTag( errors, tagCommit, tag.FriendlyName, singleMajor, ref startingVersionForCSemVerFound );
             }
@@ -109,7 +107,7 @@ namespace SimpleGitVersion
             {
                 foreach( var k in overriddenTags )
                 {
-                    Commit o = null;
+                    Commit? o = null;
                     if( string.IsNullOrEmpty( k.Key ) )
                     {
                         errors.AppendFormat( "Invalid overriden commit: the key is null or empty." ).AppendLine();
@@ -170,7 +168,7 @@ namespace SimpleGitVersion
 
         void CloseCollect( StringBuilder errors )
         {
-            List<TagCommit> invalidTags = null;
+            List<TagCommit>? invalidTags = null;
             foreach( var c in _collector.Values )
             {
                 if( !c.CloseCollect( errors ) )
@@ -198,7 +196,7 @@ namespace SimpleGitVersion
             else _collector.Add( tagCommit.ContentSha, tagCommit );
         }
 
-        TagCommit GetCommit( string sha )
+        TagCommit? GetCommit( string sha )
         {
             TagCommit t;
             _collector.TryGetValue( sha, out t );

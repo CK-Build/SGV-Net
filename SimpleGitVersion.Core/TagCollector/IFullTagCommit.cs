@@ -27,7 +27,7 @@ namespace SimpleGitVersion
         /// </summary>
         /// <param name="v">The version to ignore.</param>
         /// <returns>The best commit tag or null.</returns>
-        ITagCommit GetBestCommitExcept( CSVersion v );
+        ITagCommit? GetBestCommitExcept( CSVersion v );
 
         /// <summary>
         /// Gets all <see cref="IFullTagCommit"/> with the same content.

@@ -13,7 +13,7 @@ namespace SimpleGitVersion
     /// </summary>
     public class RepositoryInfoOptions
     {
-        string _remoteName;
+        string? _remoteName;
 
         /// <summary>
         /// Initializes a new <see cref="RepositoryInfoOptions"/>.
@@ -21,6 +21,53 @@ namespace SimpleGitVersion
         public RepositoryInfoOptions()
         {
             IgnoreModifiedFiles = new HashSet<string>( PathComparer.Default );
+            Branches = new List<RepositoryInfoOptionsBranch>();
+        }
+
+        /// <summary>
+        /// Initializes a new <see cref="RepositoryInfoOptions"/> from its Xml representation.
+        /// </summary>
+        /// <param name="e">The XElement.</param>
+        public RepositoryInfoOptions( XElement e )
+            : this()
+        {
+            IgnoreDirtyWorkingFolder = (bool?)e.Element( SGVSchema.Debug )?.Attribute( SGVSchema.IgnoreDirtyWorkingFolder ) ?? false;
+            StartingVersionForCSemVer = (string)e.Element( SGVSchema.StartingVersionForCSemVer );
+            SingleMajor = (int?)e.Element( SGVSchema.SingleMajor );
+            OnlyPatch = (bool?)e.Element( SGVSchema.OnlyPatch ) ?? false;
+            Branches.AddRange( e.Elements( SGVSchema.Branches )
+                                .Elements( SGVSchema.Branch )
+                                .Select( b => new RepositoryInfoOptionsBranch( b ) ) );
+            IgnoreModifiedFiles.UnionWith( e.Elements( SGVSchema.IgnoreModifiedFiles ).Elements( SGVSchema.Add ).Select( i => i.Value ) );
+            RemoteName = (string)e.Element( SGVSchema.RemoteName );
+        }
+
+        /// <summary>
+        /// Gets this options as an Xml element.
+        /// </summary>
+        /// <returns>The XElement.</returns>
+        public XElement ToXml()
+        {
+            return new XElement( SGVSchema.RepositoryInfo,
+                                    IgnoreDirtyWorkingFolder
+                                        ? new XElement( SGVSchema.Debug, new XAttribute( SGVSchema.IgnoreDirtyWorkingFolder, "true" ) )
+                                        : null,
+                                    StartingVersionForCSemVer != null ? new XElement( SGVSchema.StartingVersionForCSemVer, StartingVersionForCSemVer ) : null,
+                                    SingleMajor.HasValue
+                                        ? new XElement( SGVSchema.SingleMajor, SingleMajor.Value.ToString() )
+                                        : null,
+                                    OnlyPatch
+                                        ? new XElement( SGVSchema.OnlyPatch, "true" )
+                                        : null,
+                                    IgnoreModifiedFiles.Count > 0
+                                        ? new XElement( SGVSchema.IgnoreModifiedFiles,
+                                                            IgnoreModifiedFiles.Where( f => !string.IsNullOrWhiteSpace( f ) ).Select( f => new XElement( SGVSchema.Add, f ) ) )
+                                        : null,
+                                    Branches != null
+                                        ? new XElement( SGVSchema.Branches,
+                                                            Branches.Where( b => b != null ).Select( b => b.ToXml() ) )
+                                        : null,
+                                    RemoteName != "origin" ? new XElement( SGVSchema.RemoteName, RemoteName ) : null );
         }
 
         /// <summary>
@@ -28,14 +75,14 @@ namespace SimpleGitVersion
         /// When null (the default) or empty, the <see cref="StartingBranchName"/> is used.
         /// This property must be used programmatically: it does not appear in the Xml file.
         /// </summary>
-        public string StartingCommitSha { get; set; }
+        public string? StartingCommitSha { get; set; }
 
         /// <summary>
         /// Gets or sets the branch whose name will be analyzed. Applies only when <see cref="StartingCommitSha"/> is null or empty.
         /// When null (the default) or empty, the current head is used.
         /// This property must be used programmatically: it does not appear in the Xml file.
         /// </summary>
-        public string StartingBranchName { get; set; }
+        public string? StartingBranchName { get; set; }
 
         /// <summary>
         /// Gets or sets an enumerable of commits' sha with tags. Defaults to null.
@@ -47,14 +94,14 @@ namespace SimpleGitVersion
         /// <remarks>
         /// A dictionary of string to list of sting can be directly assigned to this property.
         /// </remarks>
-        public IEnumerable<KeyValuePair<string, IReadOnlyList<string>>> OverriddenTags { get; set; }
+        public IEnumerable<KeyValuePair<string, IReadOnlyList<string>>>? OverriddenTags { get; set; }
 
         /// <summary>
         /// Gets or sets a version from which CSemVer rules are enforced.
         /// When set, any version before this one are silently ignored.
         /// This is useful to accommodate an existing repository that did not use Simple Git Versioning by easily forgetting the past.
         /// </summary>
-        public string StartingVersionForCSemVer { get; set; }
+        public string? StartingVersionForCSemVer { get; set; }
 
         /// <summary>
         /// Gets or sets the only major version that must be released.
@@ -72,13 +119,13 @@ namespace SimpleGitVersion
         /// <summary>
         /// Gets or sets branches informations.
         /// </summary>
-        public IList<RepositoryInfoOptionsBranch> Branches { get; set; }
+        public List<RepositoryInfoOptionsBranch> Branches { get; }
 
         /// <summary>
         /// Gets a set of paths for which local modifications are ignored.
         /// It is empty by default.
         /// </summary>
-        public ISet<string> IgnoreModifiedFiles { get; private set; }
+        public ISet<string> IgnoreModifiedFiles { get; }
 
         /// <summary>
         /// Gets or sets a filter for modified file: when null, all <see cref="IWorkingFolderModifiedFile"/>
@@ -86,7 +133,7 @@ namespace SimpleGitVersion
         /// This hook is called only if the file does not appear in <see cref="IgnoreModifiedFiles"/>.
         /// </summary>
         /// <value>The file filter.</value>
-        public Func<IWorkingFolderModifiedFile, bool> IgnoreModifiedFilePredicate { get; set; }
+        public Func<IWorkingFolderModifiedFile, bool>? IgnoreModifiedFilePredicate { get; set; }
 
         /// <summary>
         /// Gets or sets whether all modified files must be processed: when false (the default), as soon as a modified file 
@@ -101,8 +148,11 @@ namespace SimpleGitVersion
         /// </summary>
         public string RemoteName
         {
-            get { return string.IsNullOrWhiteSpace( _remoteName ) ? "origin" : _remoteName; }
-            set { _remoteName = value; }
+            get => _remoteName ?? "origin";
+            set
+            {
+                _remoteName = string.IsNullOrWhiteSpace( value ) ? null : value;
+            }
         }
 
         /// <summary>
@@ -118,65 +168,8 @@ namespace SimpleGitVersion
         /// <returns>Returns a configured <see cref="RepositoryInfoOptions"/>.</returns>
         public static RepositoryInfoOptions Read( string existingFilePath )
         {
-            return Read( XDocument.Load( existingFilePath ).Root );
+            return new RepositoryInfoOptions( XDocument.Load( existingFilePath ).Root );
         }
 
-        /// <summary>
-        /// Gets this options as an Xml element.
-        /// </summary>
-        /// <returns>The XElement.</returns>
-        public XElement ToXml()
-        {
-            return new XElement( SGVSchema.RepositoryInfo,
-                                    IgnoreDirtyWorkingFolder 
-                                        ? new XElement( SGVSchema.Debug, new XAttribute( SGVSchema.IgnoreDirtyWorkingFolder, "true" ) ) 
-                                        : null,
-                                    StartingVersionForCSemVer != null ? new XElement( SGVSchema.StartingVersionForCSemVer, StartingVersionForCSemVer ) : null,
-                                    SingleMajor.HasValue
-                                        ? new XElement( SGVSchema.SingleMajor, SingleMajor.Value.ToString() )
-                                        : null,
-                                    OnlyPatch
-                                        ? new XElement( SGVSchema.OnlyPatch, "true" )
-                                        : null,
-                                    IgnoreModifiedFiles.Count > 0
-                                        ? new XElement( SGVSchema.IgnoreModifiedFiles,
-                                                            IgnoreModifiedFiles.Where( f=> !string.IsNullOrWhiteSpace(f) ).Select( f => new XElement( SGVSchema.Add, f ) ) )
-                                        : null,
-                                    Branches != null
-                                        ? new XElement( SGVSchema.Branches,
-                                                            Branches.Where( b => b != null ).Select( b => b.ToXml() ) )
-                                        : null,
-                                    RemoteName != "origin" ? new XElement( SGVSchema.RemoteName, RemoteName ) : null );
-        }
-
-        /// <summary>
-        /// Reads <see cref="RepositoryInfoOptions"/> from a xml element.
-        /// </summary>
-        /// <param name="e">Xml element.</param>
-        /// <returns>Returns a configured <see cref="RepositoryInfoOptions"/>.</returns>
-        public static RepositoryInfoOptions Read( XElement e )
-        {
-            var info = new RepositoryInfoOptions();
-
-            info.IgnoreDirtyWorkingFolder = (bool?)e.Element( SGVSchema.Debug )
-                                                    ?.Attribute( SGVSchema.IgnoreDirtyWorkingFolder ) ?? false;
-
-            info.StartingVersionForCSemVer = (string)e.Element( SGVSchema.StartingVersionForCSemVer );
-
-
-            info.SingleMajor = (int?)e.Element( SGVSchema.SingleMajor );
-
-            info.OnlyPatch = (bool?)e.Element( SGVSchema.OnlyPatch ) ?? false;
-
-            info.Branches = e.Elements( SGVSchema.Branches )
-                                    .Elements( SGVSchema.Branch )
-                                    .Select( b => new RepositoryInfoOptionsBranch( b ) ).ToList();
-
-            info.IgnoreModifiedFiles.UnionWith( e.Elements( SGVSchema.IgnoreModifiedFiles ).Elements( SGVSchema.Add ).Select( i => i.Value ) );
-
-            info.RemoteName = (string)e.Element( SGVSchema.RemoteName );
-
-            return info;
-        }
     }
 }
