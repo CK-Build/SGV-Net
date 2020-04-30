@@ -11,7 +11,7 @@ namespace SimpleGitVersion
         /// <summary>
         /// Captures the first analysis of a repository based on a <see cref="RepositoryInfoOptions"/>.
         /// </summary>
-        public readonly struct StartingCommit
+        public readonly struct StartingCommitInfo
         {
             /// <summary>
             /// Gets the options from which this starting commit information is derived.
@@ -29,39 +29,45 @@ namespace SimpleGitVersion
             public readonly Commit? Commit;
 
             /// <summary>
-            /// Gets the name of the repository branches that have been considered.
-            /// This is null if <see cref="RepositoryInfoOptions.StartingCommitSha"/> has been specified (or if a
-            /// repository error occured).
+            /// Gets the name of the branches that have been considered.
+            /// This is null if <see cref="RepositoryInfoOptions.StartingCommitSha"/> has been specified (or if an
+            /// <see cref="Error"/> occurred).
             /// </summary>
             public readonly IReadOnlyCollection<string>? ConsideredBranchNames;
 
             /// <summary>
-            /// Gets the mode to use for CI build: this comes from the <see cref="RepositoryInfoOptions.Branches"/>
-            /// and the <see cref="ConsideredBranchNames"/>.
+            /// Gets the found branch option among the <see cref="RepositoryInfoOptions.Branches"/> based
+            /// on the <see cref="ConsideredBranchNames"/> that must be used.
             /// </summary>
-            public readonly CIBranchVersionMode CIVersionMode;
+            public readonly RepositoryInfoOptionsBranch? FoundBranchOption;
 
             /// <summary>
-            /// Gets the branch name to use in final version name for CI build: this comes from the <see cref="RepositoryInfoOptions.Branches"/>
-            /// (this is the <see cref="RepositoryInfoOptionsBranch.VersionName"/> or the <see cref="RepositoryInfoOptionsBranch.Name"/>) and
-            /// the <see cref="ConsideredBranchNames"/>.
-            /// This is null if a CI enabled branch has not been found in the options.
+            /// Gets the mode to use for CI build: this comes from the <see cref="FoundBranchOption"/>.
+            /// </summary>
+            public CIBranchVersionMode CIVersionMode => FoundBranchOption?.CIVersionMode ?? CIBranchVersionMode.None;
+
+            /// <summary>
+            /// Gets the branch name to use in final version name for CI build: this comes from the <see cref="FoundBranchOption"/>
+            /// (this is the <see cref="RepositoryInfoOptionsBranch.VersionName"/> or the <see cref="RepositoryInfoOptionsBranch.Name"/>).
             /// Note that this name's length has not been checked.
             /// </summary>
-            public readonly string? CIBranchVersionName;
+            public string? CIBranchVersionName => FoundBranchOption == null
+                                                    ? null
+                                                    : String.IsNullOrWhiteSpace( FoundBranchOption.VersionName )
+                                                        ? FoundBranchOption.Name
+                                                        : FoundBranchOption.VersionName;
 
             /// <summary>
-            /// Initializes a new <see cref="StartingCommit"/>.
+            /// Initializes a new <see cref="StartingCommitInfo"/>.
             /// </summary>
             /// <param name="options">The options to use.</param>
             /// <param name="r">The LibGit2Sharp's repository.</param>
-            public StartingCommit( RepositoryInfoOptions options, Repository? r )
+            public StartingCommitInfo( RepositoryInfoOptions options, Repository? r )
             {
                 Options = options;
-                CIVersionMode = CIBranchVersionMode.None;
+                FoundBranchOption = null;
                 ConsideredBranchNames = null;
                 Commit = null;
-                CIBranchVersionName = null;
                 if( r == null )
                 {
                     Error = "No Git repository.";
@@ -85,7 +91,7 @@ namespace SimpleGitVersion
                         // Save the branches!
                         // By doing this, when we are in 'Detached Head' state (the head of the repository is on a commit and not on a branch: git checkout <sha>),
                         // we can detect that it is the head of a branch and hence apply possible options (mainly CI) for it.
-                        // We take into account only the branches from options.RemoteName remote here.
+                        // We take into account the local branches and only the branches from options.RemoteName remote here.
                         string branchName = r.Head.FriendlyName;
                         if( branchName == "(no branch)" )
                         {
@@ -102,6 +108,7 @@ namespace SimpleGitVersion
                     }
                     else
                     {
+                        // A StartingBranchName has been specified.
                         string remotePrefix = options.RemoteName + '/';
                         string localBranchName = options.StartingBranchName!.StartsWith( remotePrefix )
                                                     ? options.StartingBranchName.Substring( remotePrefix.Length )
@@ -126,13 +133,9 @@ namespace SimpleGitVersion
                         branchNames = new[] { localBranchName };
                     }
                     ConsideredBranchNames = branchNames;
-                    RepositoryInfoOptionsBranch bOpt;
-                    if( options.Branches != null
-                        && (bOpt = options.Branches.FirstOrDefault( b => branchNames.Contains( b.Name ) )) != null
-                        && bOpt.CIVersionMode != CIBranchVersionMode.None )
+                    if( options.Branches != null )
                     {
-                        CIVersionMode = bOpt.CIVersionMode;
-                        CIBranchVersionName = String.IsNullOrWhiteSpace( bOpt.VersionName ) ? bOpt.Name : bOpt.VersionName;
+                        FoundBranchOption = options.Branches.FirstOrDefault( b => branchNames.Contains( b.Name ) );
                     }
                     Error = null;
                 }
@@ -141,11 +144,17 @@ namespace SimpleGitVersion
                     Commit = r.Lookup<Commit>( commitSha );
                     if( Commit == null )
                     {
-                        Error = $"Commit '{commitSha}' not found.";
+                        Error = $"Unable to find StartingCommitSha '{commitSha}' commit.";
                     }
                     else
                     {
                         Error = null;
+                        // Here we may find the branches to which this Commit belong and populates the ConsideredBranchNames with them.
+                        // If not empty, this set of branch names should be confronted to the options.Branches and then
+                        // a CIVersionMode and CIBranchVersionName will be available.
+                        //
+                        // This would enable the possibility to compute a CI build number for any commit instead of the only 2 scenario
+                        // currently supported: for a StartingBranchName or for the repository's head. 
                     }
                 }
             }

@@ -17,6 +17,7 @@ namespace SimpleGitVersion
 
         FilteredView GetCommitView( CSVersion? excluded )
         {
+            Debug.Assert( ExistingVersions != null, "No error." );
             Debug.Assert( excluded == null || ExistingVersions.Versions.Any( t => t.ThisTag == excluded ) );
             if( excluded == null )
             {
@@ -32,12 +33,13 @@ namespace SimpleGitVersion
 
         public CommitInfo GetCommitInfo( Commit c )
         {
+            Debug.Assert( ExistingVersions != null, "No error." );
             BasicCommitInfo? basic = GetCommitView( null ).GetInfo( c );
 
             IReadOnlyList<CSVersion> nextPossibleVersions;
             IReadOnlyList<CSVersion> possibleVersions;
             // Special case: there is no existing versions but there is a startingVersionForCSemVer,
-            // every commit may be the first one. 
+            // every commit may be this starting version. 
             if( _startingVersionForCSemVer != null && ExistingVersions.Versions.Count == 0 )
             {
                 possibleVersions = nextPossibleVersions = new[] { _startingVersionForCSemVer };
@@ -70,6 +72,7 @@ namespace SimpleGitVersion
 
         List<CSVersion> GetPossibleVersions( CSVersion? baseVersion, CSVersion? excluded )
         {
+            Debug.Assert( ExistingVersions != null, "No error." );
             // The base version can be null here: a null version tag correctly generates 
             // the very first possible versions (and the comparison operators handle null).
             IEnumerable<IFullTagCommit> allVersions = ExistingVersions.Versions;

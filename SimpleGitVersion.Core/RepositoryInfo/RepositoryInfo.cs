@@ -16,7 +16,7 @@ namespace SimpleGitVersion
     /// It can be obtained by calling static helper <see cref="LoadFromPath(string, RepositoryInfoOptions)"/>
     /// (a <see cref="Repository"/> is created and disposed) or by using its constructor.
     /// </summary>
-    public partial class RepositoryInfo
+    public partial class RepositoryInfo : IRepositoryInfo
     {
         /// <summary>
         /// Gets the solution directory: the one that contains the .git folder.
@@ -30,23 +30,19 @@ namespace SimpleGitVersion
 
         /// <summary>
         /// Gets the initial commit analysis result.
-        /// Its <see cref="StartingCommit.Error"/> holds the primary error that may prevent any further analysis.
+        /// Its <see cref="StartingCommitInfo.Error"/> holds the primary error that may prevent any further analysis.
         /// </summary>
-        public readonly StartingCommit StartingCommitInfo;
+        public readonly StartingCommitInfo StartingCommit;
 
         /// <summary>
-        /// Gets the errors related to the release tags.
-        /// Null if no errors.
+        /// Gets either the <see cref="StartingCommit"/>'s error or any error that occurred during
+        /// the subsequent analysis.
         /// </summary>
-        public readonly string? ReleaseTagError;
-
-        /// <summary>
-        /// Gets either <see cref="StartingCommitInfo"/>'s error or <see cref="ReleaseTagError"/>.
-        /// </summary>
-        public string? Error => StartingCommitInfo.Error ?? ReleaseTagError;
+        public string? Error { get; }
 
         /// <summary>
         /// Gets whether there are non committed files in the working directory.
+        /// This may or may be 
         /// </summary>
         public bool IsDirty => IsDirtyExplanations != null;
 
@@ -56,30 +52,30 @@ namespace SimpleGitVersion
         public readonly string? IsDirtyExplanations;
 
         /// <summary>
-        /// Gets the existing versions in the repository in ascending
-        /// order, filtered by <see cref="RepositoryInfoOptions.SingleMajor"/> if it is defined.
-        /// Null if there is a <see cref="StartingCommitInfo"/>'s error that prevented its computation.
+        /// Gets the existing versions in the repository in ascending order, filtered by <see cref="RepositoryInfoOptions.SingleMajor"/> if it is defined.
+        /// Null if an <see cref="Error"/> prevented its computation.
+        /// <para>
+        /// Unicity of tags is always checked: version polymorphisms are considered (optional 'v' prefix, short/long forms and similar normalizations).
+        /// </para>
+        /// <para>
+        /// If checking existing versions have been asked then:
+        /// <list type="bullet">
+        ///   <item>If there is no <see cref="StartingVersionForCSemVer"/>, the first version must be one of the <see cref="CSVersion.FirstPossibleVersions"/>.</item>
+        ///   <item>If there is a <see cref="StartingVersionForCSemVer"/>, the first version must be this starting one.</item>
+        ///   <item>Existing versions must always be compact (ie. no "holes" must exist between them).</item>
+        /// </list>
+        /// </para>
         /// </summary>
         public readonly IReadOnlyList<ITagCommit>? ExistingVersions;
 
-        /// <summary>
-        /// Gets the commit with a better version for that exact same content if it exists.
-        /// This is independent of <see cref="ValidReleaseTag"/>.
-        /// </summary>
-        public readonly ITagCommit? BetterExistingVersion;
+        /// <inheritdoc/>
+        public ITagCommit? BetterExistingVersion { get; }
 
-        /// <summary>
-        /// Gets the release tag. If there is error, this is null.
-        /// It is also null if there is actually no release tag on the current commit.
-        /// </summary>
-        public readonly CSVersion? ValidReleaseTag;
+        /// <inheritdoc/>
+        public ITagCommit? BestCommitBelow { get; }
 
-        /// <summary>
-        /// Gets whether the error is the fact that the release tag on the current commit point
-        /// is not one of the <see cref="PossibleVersions"/>. An error that describes this appears 
-        /// in <see cref="ReleaseTagError"/>
-        /// </summary>
-        public readonly bool ReleaseTagIsNotPossibleError;
+        /// <inheritdoc/>
+        public CSVersion? ValidReleaseTag { get; }
 
         /// <summary>
         /// Gets the <see cref="SimpleGitVersion.CommitInfo"/> of the current commit point.
@@ -88,30 +84,26 @@ namespace SimpleGitVersion
         public readonly CommitInfo? CommitInfo;
 
         /// <summary>
-        /// Null if there is a <see cref="Error"/> that prevented its computation.
-        /// When empty, this means that there can not be a valid release tag on the current commit point.
+        /// When empty, this means that there cannot be a valid release tag on the current commit point.
+        /// Null when an <see cref="Error"/> prevented its computation.
         /// This is the set of filtered versions (<see cref="RepositoryInfoOptions.SingleMajor"/>
         /// and <see cref="RepositoryInfoOptions.OnlyPatch"/> options are applied
         /// on <see cref="CommitInfo"/>.<see cref="CommitInfo.PossibleVersions">PossibleVersions</see>).
         /// </summary>
-        public readonly IReadOnlyList<CSVersion>? PossibleVersions;
+        public IReadOnlyList<CSVersion>? PossibleVersions { get; }
 
         /// <summary>
-        /// Null if there is a <see cref="Error"/> that prevented its computation.
         /// These are the versions that may be available to any commit above the current one.
+        /// Null when a <see cref="StartingCommit"/>'s error or <see cref="CommitAnalyzingError"/> prevented its computation.
         /// This is the set of filtered versions (<see cref="RepositoryInfoOptions.SingleMajor"/>
         /// and <see cref="RepositoryInfoOptions.OnlyPatch"/> options are applied
         /// on <see cref="CommitInfo"/>.<see cref="CommitInfo.NextPossibleVersions">NextPossibleVersions</see>).
+        /// Empty if there is a <see cref="Error"/> that prevented its computation.
         /// </summary>
-        public readonly IReadOnlyList<CSVersion>? NextPossibleVersions;
+        public IReadOnlyList<CSVersion>? NextPossibleVersions { get; }
 
-        /// <summary>
-        /// Gets CI informations if a CI release can be done.
-        /// Not null only if we are on a branch that is enabled in <see cref="RepositoryInfoOptions.Branches"/> (either 
-        /// because it is the current branch or <see cref="RepositoryInfoOptions.StartingBranchName"/> specifies it),
-        /// the <see cref="RepositoryInfoOptions.StartingCommitSha"/> is null or empty and there is no <see cref="ValidReleaseTag"/>.
-        /// </summary>
-        public readonly CIReleaseInfo? CIRelease;
+        /// <inheritdoc />
+        public CIReleaseInfo? CIRelease { get; }
 
         /// <summary>
         /// Gets the final version (based on short CSVersion form, see <see cref="CSVersion.IsLongForm"/>) that must be used to build this commit point.
@@ -128,7 +120,7 @@ namespace SimpleGitVersion
         /// <summary>
         /// Gets the <see cref="RepositoryInfoOptions"/> that has been used.
         /// </summary>
-        public RepositoryInfoOptions Options => StartingCommitInfo.Options;
+        public RepositoryInfoOptions Options => StartingCommit.Options;
 
         /// <summary>
         /// The UTC date and time of the commit.
@@ -151,109 +143,156 @@ namespace SimpleGitVersion
         {
             CommitDateUtc = InformationalVersion.ZeroCommitDate;
             SVersion? finalVersion = null;
-            StartingCommitInfo = new StartingCommit( options ??= new RepositoryInfoOptions(), r );
-            if( StartingCommitInfo.Error == null ) 
+            StartingCommit = new StartingCommitInfo( options ??= new RepositoryInfoOptions(), r );
+            if( StartingCommit.Error != null )
             {
-                var commit = StartingCommitInfo.Commit;
-                Debug.Assert( (StartingCommitInfo.CIVersionMode != CIBranchVersionMode.None) == (StartingCommitInfo.CIBranchVersionName != null) );
-                if( commit != null )
+                Error = StartingCommit.Error;
+            }
+            else
+            {
+                Commit? commit = StartingCommit.Commit;
+                Debug.Assert( r != null && commit != null, "Since there is no error, there is a repo and a commit." );
+                Debug.Assert( (StartingCommit.CIVersionMode != CIBranchVersionMode.None) == (StartingCommit.CIBranchVersionName != null) );
+                CommitSha = commit.Sha;
+                CommitDateUtc = commit.Author.When.UtcDateTime;
+                IsDirtyExplanations = ComputeIsDirty( r, commit, options );
+
+                StringBuilder errors = new StringBuilder();
+                if( IsDirty && !options.IgnoreDirtyWorkingFolder )
                 {
-                    CommitSha = commit.Sha;
-                    CommitDateUtc = commit.Author.When.UtcDateTime;
-                    IsDirtyExplanations = ComputeIsDirty( r!, commit, options );
-                    if( !IsDirty || options.IgnoreDirtyWorkingFolder )
+                    errors.AppendLine( "Working folder has non committed changes." );
+                    errors.Append( IsDirtyExplanations );
+                }
+                else 
+                {
+                    TagCollector collector = new TagCollector( errors,
+                                                               r,
+                                                               options.StartingVersionForCSemVer,
+                                                               options.OverriddenTags,
+                                                               options.SingleMajor );
+                    if( errors.Length == 0 )
                     {
-                        StringBuilder errors = new StringBuilder();
-                        TagCollector collector = new TagCollector( errors,
-                                                                   r!,
-                                                                   options.StartingVersionForCSemVer,
-                                                                   options.OverriddenTags,
-                                                                   options.SingleMajor );
-                        if( errors.Length == 0 )
+                        Debug.Assert( collector.ExistingVersions != null );
+
+                        ExistingVersions = collector.ExistingVersions.TagCommits;
+                        CommitInfo info = collector.GetCommitInfo( commit );
+                        CommitInfo = info;
+
+                        var rawPossible = info.PossibleVersions;
+                        IEnumerable<CSVersion> possibles = rawPossible;
+                        if( options.OnlyPatch ) possibles = possibles.Where( v => v.IsPatch );
+                        if( options.SingleMajor.HasValue ) possibles = possibles.Where( v => v.Major == options.SingleMajor.Value );
+                        PossibleVersions = possibles != rawPossible ? possibles.ToList() : rawPossible;
+
+                        var rawNextPossible = info.NextPossibleVersions;
+                        IEnumerable<CSVersion> nextPossibles = rawNextPossible;
+                        if( options.OnlyPatch ) nextPossibles = nextPossibles.Where( v => v.IsPatch );
+                        if( options.SingleMajor.HasValue ) nextPossibles = nextPossibles.Where( v => v.Major == options.SingleMajor.Value );
+                        NextPossibleVersions = nextPossibles != rawNextPossible ? nextPossibles.ToList() : rawNextPossible;
+
+                        ITagCommit? thisReleaseTag = null;
+                        if( info.BasicInfo != null )
                         {
-                            ExistingVersions = collector.ExistingVersions.TagCommits;
+                            thisReleaseTag = info.BasicInfo.UnfilteredThisCommit;
 
-                            CommitInfo info = collector.GetCommitInfo( commit );
-
-                            CommitInfo = info;
-
-                            var rawPossible = info.PossibleVersions;
-                            IEnumerable<CSVersion> possibles = rawPossible;
-                            if( options.OnlyPatch ) possibles = possibles.Where( v => v.IsPatch );
-                            if( options.SingleMajor.HasValue ) possibles = possibles.Where( v => v.Major == options.SingleMajor.Value );
-                            PossibleVersions = possibles != rawPossible ? possibles.ToList() : rawPossible;
-
-                            var rawNextPossible = info.NextPossibleVersions;
-                            IEnumerable<CSVersion> nextPossibles = rawNextPossible;
-                            if( options.OnlyPatch ) nextPossibles = nextPossibles.Where( v => v.IsPatch );
-                            if( options.SingleMajor.HasValue ) nextPossibles = nextPossibles.Where( v => v.Major == options.SingleMajor.Value );
-                            NextPossibleVersions = nextPossibles != rawNextPossible ? nextPossibles.ToList() : rawNextPossible;
-
-                            var thisCommit = info.BasicInfo?.UnfilteredThisCommit;
-                            if( info.BasicInfo?.BestCommit?.ThisTag > thisCommit?.ThisTag )
+                            BestCommitBelow = info.BasicInfo.BestCommitBelow;
+                            if( info.BasicInfo.BestCommit?.ThisTag > thisReleaseTag?.ThisTag )
                             {
-                                BetterExistingVersion = info.BasicInfo!.BestCommit;
+                                BetterExistingVersion = info.BasicInfo.BestCommit;
                             }
-                            if( thisCommit != null )
+                        }
+                        if( thisReleaseTag != null )
+                        {
+                            if( PossibleVersions.Contains( thisReleaseTag.ThisTag ) )
                             {
-                                if( PossibleVersions.Contains( thisCommit.ThisTag ) )
-                                {
-                                    ValidReleaseTag = thisCommit.ThisTag;
-                                }
-                                else
-                                {
-                                    ReleaseTagIsNotPossibleError = true;
-                                    errors.Append( "Release tag '" )
-                                            .Append( thisCommit.ThisTag.ParsedText )
-                                            .AppendLine( "' is not valid here. " );
-                                    errors.Append( "Valid tags are: " )
-                                            .Append( string.Join( ", ", PossibleVersions ) )
-                                            .AppendLine();
-                                    if( PossibleVersions != rawPossible
-                                        && rawPossible.Contains( thisCommit.ThisTag ) )
-                                    {
-                                        errors.AppendLine( "Note: this version is invalid because of <SingleMajor> or <OnlyPatch> setting in RepositoryInfo.xml." );
-                                    }
-                                }
+                                ValidReleaseTag = thisReleaseTag.ThisTag;
                             }
                             else
                             {
-                                // There is no release tag on the commit point.
-                                // Are we on a CI-enabled branch?
-                                string? ciBuildName = StartingCommitInfo.CIBranchVersionName;
-                                if( ciBuildName != null )
+                                errors.Append( "Release tag '" )
+                                        .Append( thisReleaseTag.ThisTag )
+                                        .AppendLine( "' is not valid here. " );
+                                errors.Append( "Valid tags are: " )
+                                        .AppendJoin( ", ", PossibleVersions )
+                                        .AppendLine();
+                                if( PossibleVersions != rawPossible && rawPossible.Contains( thisReleaseTag.ThisTag ) )
                                 {
-                                    if( ciBuildName.Length > 8 )
-                                    {
-                                        errors.AppendLine( "The branch name must not be longer than 8 characters. " );
-                                        errors.Append( "Adds a VersionName attribute to the branch element in RepositoryInfo.xml with a shorter name: " )
-                                              .AppendLine()
-                                              .Append( $@"<Branch Name=""{ciBuildName}"" VersionName=""{ciBuildName.Substring( 0, 8 )}"" ... />." )
-                                              .AppendLine();
-                                    }
-                                    else
-                                    {
-                                        CIRelease = CIReleaseInfo.Create( commit, StartingCommitInfo.CIVersionMode, ciBuildName, info.BasicInfo );
-                                    }
+                                    errors.AppendLine( "Note: this version is invalid because of <SingleMajor> or <OnlyPatch> setting in RepositoryInfo.xml." );
                                 }
                             }
                         }
-                        if( errors.Length > 0 ) ReleaseTagError = errors.ToString();
-                    }
-
-                    // Conclusion:
-                    if( CIRelease != null )
-                    {
-                        finalVersion = CIRelease.BuildVersion;
-                    }
-                    else if( ValidReleaseTag != null )
-                    {
-                        Debug.Assert( !ValidReleaseTag.IsLongForm );
-                        finalVersion = ValidReleaseTag;
+                        else
+                        {
+                            // There is no release tag on the commit point.
+                            // Are we on a CI-enabled branch?
+                            string? ciBuildName = StartingCommit.CIBranchVersionName;
+                            if( ciBuildName != null && ciBuildName.Length <= 8 )
+                            {
+                                CIRelease = CIReleaseInfo.Create( commit, StartingCommit.CIVersionMode, ciBuildName, info.BasicInfo );
+                            }
+                            else
+                            {
+                                errors.Append( "No release tag found and CI build is not possible: " );
+                                if( ciBuildName != null )
+                                {
+                                    errors.AppendLine( "the branch name must not be longer than 8 characters. " )
+                                          .AppendLine( "Adds a VersionName attribute to the branch element in RepositoryInfo.xml with a shorter name: " )
+                                          .AppendLine( "<Branches>" )
+                                          .AppendLine( $@"  <Branch Name=""{ciBuildName}"" VersionName=""{ciBuildName.Substring( 0, 8 )}"" ... />." )
+                                          .AppendLine( "</Branches>" );
+                                }
+                                else if( StartingCommit.ConsideredBranchNames == null )
+                                {
+                                    errors.AppendLine( $"no CI branches have been considered since an explicit StartingCommitSha = '{options.StartingCommitSha}' has been specified." );
+                                }
+                                else if( StartingCommit.ConsideredBranchNames.Count == 0 )
+                                {
+                                    Debug.Assert( options.StartingBranchName == null, "If the StartingBranchName has not been found, it's in StartingCommit.Error." );
+                                    errors.AppendLine( "no branches reference the current repository's head commit." );
+                                }
+                                else if( StartingCommit.FoundBranchOption == null )
+                                {
+                                    errors.Append( "no CI Branch information defined for " );
+                                    if( StartingCommit.ConsideredBranchNames.Count == 1 )
+                                    {
+                                        errors.Append( "branch '" ).Append( StartingCommit.ConsideredBranchNames.First() );
+                                    }
+                                    else
+                                    {
+                                        errors.Append( "any of the branches '" ).AppendJoin( "', '", StartingCommit.ConsideredBranchNames );
+                                    }
+                                    errors.AppendLine( "'." )
+                                          .AppendLine( "Adds a Branch element in RepositoryInfo.xml with the branch name of interest, for instance:" )
+                                          .AppendLine( "<Branches>" )
+                                          .AppendLine( @"  <Branch Name=""develop"" CIVersionMode=""LastReleaseBased"" />." )
+                                          .AppendLine( @"  <Branch Name=""exploratory"" CIVersionMode=""ZeroTimed"" VersionName=""explo"" />." )
+                                          .AppendLine( @"  <Branch Name=""fx/new-computation"" CIVersionMode=""ZeroTimed"" VersionName=""explo"" />." )
+                                          .AppendLine( "</Branches>" );
+                                }
+                                else
+                                {
+                                    errors.AppendLine( $@"configured CI branch '{StartingCommit.FoundBranchOption.Name}' found explicitly states that CIVersionMode=""None""." )
+                                          .AppendLine( @"Use CIVersionMode=""ZeroTimed"" or CIVersionMode=""LastReleaseBased"" to enable CI build on this branch." );
+                                }
+                            }
+                        }
                     }
                 }
+
+                // Conclusion:
+                if( ValidReleaseTag != null )
+                {
+                    Debug.Assert( !ValidReleaseTag.IsLongForm );
+                    finalVersion = ValidReleaseTag;
+                }
+                else if( CIRelease != null )
+                {
+                    finalVersion = CIRelease.BuildVersion;
+                }
+                if( errors.Length > 0 ) Error = errors.ToString();
             }
-            // Handles FinalInformationalVersion and SVersion.ZeroVersion for versions if needed.
+
+            Debug.Assert( (Error != null) != (finalVersion != null), "If there is an error, then there is a no final version. And vice versa." );
             if( finalVersion == null )
             {
                 FinalVersion = SVersion.ZeroVersion;
@@ -264,6 +303,75 @@ namespace SimpleGitVersion
                 Debug.Assert( CommitSha != null && finalVersion.IsValid );
                 FinalVersion = finalVersion;
                 FinalInformationalVersion = finalVersion.GetInformationalVersion( CommitSha, CommitDateUtc );
+            }
+        }
+
+        /// <summary>
+        /// Logs messages that express the state of this <see cref="RepositoryInfo"/>.
+        /// </summary>
+        /// <param name="logger">A target logger.</param>
+        public void Explain( ILogger logger )
+        {
+            if( logger == null ) throw new ArgumentNullException( nameof( logger ) );
+            if( Error != null )
+            {
+                logger.Error( Error );
+                if( PossibleVersions != null ) LogPossibleVersions( logger );
+            }
+            else
+            {
+                Debug.Assert( CommitInfo != null );
+                if( IsDirty )
+                {
+                    Debug.Assert( IsDirtyExplanations != null );
+                    logger.Warn( "Working folder is Dirty! Checking this has been disabled since IgnoreDirtyWorkingFolder option is true." );
+                    logger.Warn( IsDirtyExplanations );
+                }
+                var basic = CommitInfo.BasicInfo;
+                if( basic == null )
+                {
+                    logger.Info( "No version information found on or below this commit." );
+                }
+                else
+                {
+                    logger.Info( ValidReleaseTag != null ? $"Tag: {ValidReleaseTag}" : "No tag found on the commit itself." );
+                    logger.Info( BestCommitBelow != null ? $"Base tag below: {BestCommitBelow}" : "No base tag found below this commit." );
+                    if( BetterExistingVersion != null )
+                    {
+                        logger.Warn( $"This commit has already been released with version '{BetterExistingVersion.ThisTag}', by commit '{BetterExistingVersion.CommitSha}'." );
+                    }
+                }
+                if( CIRelease != null )
+                {
+                    logger.Info( $"CI release: '{FinalVersion.NormalizedText}' ({(CIRelease.IsZeroTimed ? nameof( CIBranchVersionMode.ZeroTimed ) : nameof( CIBranchVersionMode.LastReleaseBased ))})." );
+                    LogPossibleVersions( logger );
+                }
+                else
+                {
+                    Debug.Assert( ValidReleaseTag != null, "Otherwise there is an Error." );
+                    logger.Info( $"Release: '{FinalVersion.NormalizedText}'." );
+                }
+            }
+
+            void LogPossibleVersions( ILogger logger )
+            {
+                Debug.Assert( PossibleVersions != null );
+                string? opt = null;
+                if( Options.OnlyPatch ) opt += "OnlyPatch";
+                if( Options.SingleMajor.HasValue )
+                {
+                    if( opt != null ) opt += ", ";
+                    opt += "SingleMajor = " + Options.SingleMajor.ToString();
+                }
+                if( opt != null ) opt = " (" + opt + ")";
+                if( PossibleVersions.Count == 0 )
+                {
+                    logger.Info( $"No possible versions {opt}." );
+                }
+                else
+                {
+                    logger.Info( $"Possible version(s) {opt}: {string.Join( ", ", PossibleVersions )}" );
+                }
             }
         }
 
@@ -408,5 +516,37 @@ namespace SimpleGitVersion
             }
         }
 
+
+        /// <summary>
+        /// Creates a new <see cref="RepositoryInfo"/> based on a path (that can be below the folder with the '.git' sub folder). 
+        /// </summary>
+        /// <param name="path">The path to lookup.</param>
+        /// <param name="logger">Logger that will be used.</param>
+        /// <param name="optionsChecker">
+        /// Optional action that accepts the logger, a boolean that is true if a RepositoryInfo.xml has been 
+        /// found, and the <see cref="RepositoryInfoOptions"/> that will be used.
+        /// </param>
+        /// <returns>A RepositoryInfo instance.</returns>
+        static public RepositoryInfo LoadFromPath( ILogger logger, string path, Action<ILogger, bool, RepositoryInfoOptions>? optionsChecker = null )
+        {
+            if( logger == null ) throw new ArgumentNullException( nameof( logger ) );
+            return LoadFromPath( path, gitPath =>
+            {
+                string optionFile = Path.Combine( gitPath, "RepositoryInfo.xml" );
+                bool fileExists = File.Exists( optionFile );
+                var options = fileExists ? RepositoryInfoOptions.Read( optionFile ) : new RepositoryInfoOptions();
+                if( optionsChecker == null )
+                {
+                    if( !fileExists ) logger.Info( "File RepositoryInfo.xml not found: using default options to read repository information." );
+                    else logger.Info( "Using RepositoryInfo.xml: " + options.ToXml().ToString() );
+                }
+                else
+                {
+                    logger.Info( fileExists ? "RepositoryInfo.xml loaded." : "File RepositoryInfo.xml not found. Creating default RepositoryInfoOptions object." );
+                    optionsChecker.Invoke( logger, fileExists, options );
+                }
+                return options;
+            } );
+        }
     }
 }

@@ -22,10 +22,9 @@ namespace SimpleGitVersion.Core.Tests
             foreach( SimpleCommit c in repoTest.Commits )
             {
                 RepositoryInfo i = repoTest.GetRepositoryInfo( c.Sha );
-                Assert.That( i.StartingCommitInfo.Error, Is.Null );
-                Assert.That( i.ReleaseTagError, Is.Null );
-                Assert.That( i.ValidReleaseTag, Is.Null );
-                Assert.That( i.CommitInfo.BasicInfo, Is.Null );
+                i.Error.Should().StartWith( "No release tag found and CI build is not possible:" );
+                i.ValidReleaseTag.Should().BeNull();
+                i.CommitInfo.BasicInfo.Should().BeNull();
                 CollectionAssert.AreEqual( CSVersion.FirstPossibleVersions, i.PossibleVersions );
                 CollectionAssert.AreEqual( CSVersion.FirstPossibleVersions, i.NextPossibleVersions );
             }
@@ -109,7 +108,7 @@ namespace SimpleGitVersion.Core.Tests
 
             {
                 RepositoryInfo i = repoTest.GetRepositoryInfo( cOK.Sha, overrides );
-                Assert.That( i.ReleaseTagError, Is.Not.Null );
+                i.Error.Should().Match( "Release tag '*' is not valid here.*" );
             }
             {
                 RepositoryInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
@@ -118,7 +117,7 @@ namespace SimpleGitVersion.Core.Tests
                     OverriddenTags = overrides.Overrides,
                     StartingVersionForCSemVer = "4.0.3-beta"
                 } );
-                Assert.That( i.ReleaseTagError, Is.Null );
+                Assert.That( i.Error, Is.Null );
                 Assert.That( i.ValidReleaseTag.ToString(), Is.EqualTo( "4.0.3-b" ) );
                 //Assert.That( i.CommitVersionInfo.PreviousCommit, Is.Null );
                 CollectionAssert.AreEqual( i.PossibleVersions.Select( t => t.ToString() ), new[] { "4.0.3-b" } );
@@ -131,7 +130,7 @@ namespace SimpleGitVersion.Core.Tests
                     OverriddenTags = overrides.Overrides,
                     StartingVersionForCSemVer = "4.0.3-beta"
                 } );
-                Assert.That( i.ReleaseTagError, Is.Null );
+                i.Error.Should().StartWith( "No release tag found and CI build is not possible:" );
                 Assert.That( i.CommitInfo.BasicInfo.BestCommitBelow.ThisTag.ToString(), Is.EqualTo( "4.0.3-b" ) );
                 Assert.That( i.ValidReleaseTag, Is.Null );
                 CollectionAssert.Contains( i.PossibleVersions.Select( t => t.ToString() ), "4.0.3-b00-01", "4.0.3-b01", "4.0.3-d", "4.0.3", "4.1.0-r", "4.1.0", "5.0.0" );
@@ -146,7 +145,7 @@ namespace SimpleGitVersion.Core.Tests
                     OverriddenTags = overrides.Overrides,
                     StartingVersionForCSemVer = "4.0.3-beta"
                 } );
-                Assert.That( i.ReleaseTagError, Is.Null );
+                i.Error.Should().StartWith( "No release tag found and CI build is not possible:" );
                 Assert.That( i.CommitInfo.BasicInfo, Is.Null );
                 Assert.That( i.ValidReleaseTag, Is.Null );
                 CollectionAssert.IsEmpty( i.PossibleVersions );
@@ -159,7 +158,7 @@ namespace SimpleGitVersion.Core.Tests
                     OverriddenTags = overrides.Overrides,
                     StartingVersionForCSemVer = "4.0.3-beta"
                 } );
-                Assert.That( i.ReleaseTagError, Is.Null );
+                i.Error.Should().StartWith( "No release tag found and CI build is not possible:" );
                 Assert.That( i.CommitInfo.BasicInfo, Is.Null );
                 Assert.That( i.ValidReleaseTag, Is.Null );
                 CollectionAssert.IsEmpty( i.PossibleVersions );
@@ -189,7 +188,7 @@ namespace SimpleGitVersion.Core.Tests
                     StartingCommitSha = cReleased.Sha,
                     OverriddenTags = overrides.Overrides
                 } );
-                Assert.That( i.ReleaseTagError, Is.Null );
+                i.Error.Should().Contain( "No release tag found and CI build is not possible: no CI branches have been considered since an explicit StartingCommitSha = " );
                 Assert.That( i.CommitInfo.BasicInfo.BestCommitBelow.ThisTag, Is.EqualTo( v1beta ) );
                 Assert.That( i.ValidReleaseTag, Is.Null );
                 CollectionAssert.AreEqual( v1beta.GetDirectSuccessors(), i.PossibleVersions );
@@ -213,7 +212,7 @@ namespace SimpleGitVersion.Core.Tests
                     StartingCommitSha = cReleased.Sha,
                     OverriddenTags = overrides.Overrides
                 } );
-                i.ReleaseTagError.Should().NotBeNull();
+                i.Error.Should().Contain( "is not valid here." );
                 i.ValidReleaseTag.Should().BeNull();
             }
             // Use the StartingVersionForCSemVer:
@@ -224,7 +223,7 @@ namespace SimpleGitVersion.Core.Tests
                     StartingCommitSha = cReleased.Sha,
                     OverriddenTags = overrides.Overrides
                 } );
-                Assert.That( i.ReleaseTagError, Is.Null );
+                Assert.That( i.Error, Is.Null );
                 Assert.That( i.ValidReleaseTag.ToString(), Is.EqualTo( "2.0.0" ) );
             }
             // Subsequent developments of alpha branch now starts after 2.0.0, for instance 2.1.0-beta.
@@ -236,7 +235,7 @@ namespace SimpleGitVersion.Core.Tests
                     OverriddenTags = overrides.Overrides
                 } );
                 var tagged = CSVersion.TryParse( "2.1.0-beta" );
-                Assert.That( i.ReleaseTagError, Is.Null );
+                Assert.That( i.Error, Is.Null );
                 Assert.That( i.ValidReleaseTag, Is.EqualTo( tagged ) );
                 // alpha branch can continue with any successors v2.0.0.
                 CollectionAssert.AreEqual( CSVersion.TryParse( "2.0.0" ).GetDirectSuccessors(), i.PossibleVersions );
@@ -658,7 +657,7 @@ namespace SimpleGitVersion.Core.Tests
                     StartingCommitSha = cFix.Sha
                 } );
                 // Above OR on the fix of the fumble commit, any successor of the 5.0.0 is possible
-                // This iw where BetterExistingVersion must be checked!
+                // This is where BetterExistingVersion must be checked!
                 Assert.That( i.BetterExistingVersion.ThisTag, Is.EqualTo( v5 ) );
                 CollectionAssert.AreEqual( v5.GetDirectSuccessors(), i.PossibleVersions );
                 CollectionAssert.AreEqual( v5.GetDirectSuccessors(), i.NextPossibleVersions );
@@ -777,7 +776,7 @@ namespace SimpleGitVersion.Core.Tests
                     OverriddenTags = overrides.Overrides,
                     StartingCommitSha = cExtra.Sha
                 } );
-                Assert.That( i.ReleaseTagIsNotPossibleError );
+                Assert.That( i.Error != null );
                 CollectionAssert.AreEqual( v44a.GetDirectSuccessors().Where( v => v < v5rc ), i.PossibleVersions );
                 // But the v10.0.0 tag exits, the versions above cExtra are
                 CollectionAssert.AreEqual( v10.GetDirectSuccessors(), i.NextPossibleVersions );

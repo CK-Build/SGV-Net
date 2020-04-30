@@ -44,6 +44,7 @@ namespace SimpleGitVersion
 
         internal IReadOnlyList<TagCommit> TagCommits => _versions;
 
-        public IReadOnlyList<IFullTagCommit> Versions => _versions; 
+        public IReadOnlyList<IFullTagCommit> Versions => _versions;
+
     }
 }

@@ -22,7 +22,7 @@ namespace Code.Cake
         static public void RunCmdSuccessful( this ICakeContext context, string commandLine )
         {
             int r = RunCmd( context, commandLine );
-            if( r != 0 ) throw new Exception( "An error occured in command: " + commandLine );
+            if( r != 0 ) throw new Exception( "An error occurred in command: " + commandLine );
         }
 
         /// <summary>

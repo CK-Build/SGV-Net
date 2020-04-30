@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -111,7 +112,7 @@ namespace SimpleGitVersion
         public int? SingleMajor { get; set; }
 
         /// <summary>
-        /// Gets or sets the whether patch only versions must be released.
+        /// Gets or sets the whether only patch versions must be released.
         /// This is typically for LTS (fix only) branches. 
         /// </summary>
         public bool OnlyPatch { get; set; }
@@ -146,6 +147,7 @@ namespace SimpleGitVersion
         /// Gets or sets the name of the remote repository that will be considered when
         /// working with branches. Defaults to "origin" (can never be null or empty).
         /// </summary>
+        [AllowNull]
         public string RemoteName
         {
             get => _remoteName ?? "origin";

@@ -1,11 +1,11 @@
-﻿using CSemVer;
+using CSemVer;
 using System.Collections.Generic;
 
 namespace SimpleGitVersion
 {
 
     /// <summary>
-    /// Describes a commit in the repository with its <see cref="CSVersion"/>.
+    /// Describes a commit in the repository with its associated <see cref="CSVersion"/>.
     /// </summary>
     public interface ITagCommit
     {

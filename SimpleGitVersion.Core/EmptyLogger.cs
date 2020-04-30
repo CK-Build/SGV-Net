@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -26,10 +26,6 @@ namespace SimpleGitVersion
         }
 
         void ILogger.Info( string msg )
-        {
-        }
-
-        void ILogger.Trace( string msg )
         {
         }
     }

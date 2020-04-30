@@ -23,7 +23,6 @@ namespace CodeCake
     public class StandardGlobalInfo
     {
         readonly ICakeContext _ctx;
-        readonly SimpleRepositoryInfo _gitInfo;
         readonly HashSet<ICIWorkflow> _solutions = new HashSet<ICIWorkflow>();
         List<ArtifactPush> _artifactPushes;
         bool _ignoreNoArtifactsToProduce;
@@ -32,13 +31,10 @@ namespace CodeCake
         {
             SharedHttpClient = new HttpClient();
         }
-        public StandardGlobalInfo( ICakeContext ctx, SimpleRepositoryInfo gitInfo )
+        public StandardGlobalInfo( ICakeContext ctx, ICommitBuildInfo finalBuildInfo )
         {
             _ctx = ctx;
-            _gitInfo = gitInfo;
-            // We build in Debug for any prerelease except "rc": the last prerelease step is in Release.
-            IsRelease = gitInfo.IsValidRelease
-                           && (gitInfo.PreReleaseName.Length == 0 || gitInfo.PreReleaseName == "rc");
+            BuildInfo = finalBuildInfo;
             ReleasesFolder = "CodeCakeBuilder/Releases";
             Directory.CreateDirectory( ReleasesFolder );
         }
@@ -54,9 +50,13 @@ namespace CodeCake
         public ICakeContext Cake => _ctx;
 
         /// <summary>
-        /// Gets the SimpleRepositoryInfo.
+        /// Gets the <see cref="ICommitBuildInfo"/> for this commit.
+        /// This holds the <see cref="ICommitBuildInfo.CommitSha"/> and <see cref="ICommitBuildInfo.CommitDateUtc"/> of this commit.
+        /// If <see cref="ICommitBuildInfo.Version"/> is the <see cref="SVersion.ZeroVersion"/> then this is not really a
+        /// valid build.
         /// </summary>
-        public SimpleRepositoryInfo GitInfo => _gitInfo;
+        public ICommitBuildInfo BuildInfo { get; }
+
 
         IEnumerable<ICIPublishWorkflow> SolutionProducingArtifacts => Solutions.OfType<ICIPublishWorkflow>();
 
@@ -69,23 +69,6 @@ namespace CodeCake
         /// Gets the release folder: "CodeCakeBuilder/Releases".
         /// </summary>
         public NormalizedPath ReleasesFolder { get; }
-
-        /// <summary>
-        /// Gets or sets if the build is a release
-        /// By defaults, a <see cref="PackageQuality.Release"/> and "rc" prerealease are in "Release" and
-        /// all other versions are in "Debug".
-        /// </summary>
-        public bool IsRelease { get; set; }
-
-        /// <summary>
-        /// Gets the "Release" or "Debug" based on <see cref="IsRelease"/>.
-        /// </summary>
-        public string BuildConfiguration => IsRelease ? "Release" : "Debug";
-
-        /// <summary>
-        /// Gets the version of the packages: this is the <see cref="RepositoryInfo.FinalVersion"/>.
-        /// </summary>
-        public SVersion Version => _gitInfo.Info.FinalVersion;
 
         /// <summary>
         /// Gets whether this is a purely local build.
@@ -133,7 +116,6 @@ namespace CodeCake
         /// </summary>
         public bool NoArtifactsToProduce => !GetArtifactPushList().Any();
 
-
         /// <summary>
         /// Gets a read only list of all the pushes of artifacts for all <see cref="ArtifactType"/>.
         /// </summary>
@@ -166,11 +148,11 @@ namespace CodeCake
 
         #region Memory key support.
 
-        string MemoryFilePath => $"CodeCakeBuilder/MemoryKey.{GitInfo.CommitSha}.txt";
+        string MemoryFilePath => $"CodeCakeBuilder/MemoryKey.{BuildInfo.CommitSha}.txt";
 
         public void WriteCommitMemoryKey( NormalizedPath key )
         {
-            if( GitInfo.IsValid ) File.AppendAllLines( MemoryFilePath, new[] { key.ToString() } );
+            if( !BuildInfo.IsZeroCommit() ) File.AppendAllLines( MemoryFilePath, new[] { key.ToString() } );
         }
 
         public bool CheckCommitMemoryKey( NormalizedPath key )
@@ -180,9 +162,9 @@ namespace CodeCake
                         : false;
             if( done )
             {
-                if( !GitInfo.IsValid )
+                if( BuildInfo.IsZeroCommit() )
                 {
-                    Cake.Information( $"Dirty commit. Key exists but is ignored: {key}" );
+                    Cake.Information( $"Zero commit. Key exists but is ignored: {key}" );
                     done = false;
                 }
                 else
@@ -215,12 +197,12 @@ namespace CodeCake
         {
             string AddSkipped( string s ) => ShouldStop ? s + " (Skipped)" : s;
 
-            string ComputeAzurePipelineUpdateBuildVersion( SimpleRepositoryInfo gitInfo )
+            string ComputeAzurePipelineUpdateBuildVersion( ICommitBuildInfo buildInfo )
             {
                 // Azure (formerly VSTS, formerly VSO) analyzes the stdout to set its build number.
                 // On clash, the default Azure/VSTS/VSO build number is used: to ensure that the actual
                 // version will be always be available we need to inject a uniquifier.
-                string buildVersion = AddSkipped( $"{gitInfo.SafeVersion}_{DateTime.UtcNow:yyyyMMdd-HHmmss}" );
+                string buildVersion = AddSkipped( $"{buildInfo.Version}_{DateTime.UtcNow:yyyyMMdd-HHmmss}" );
                 Cake.Information( $"Using VSTS build number: {buildVersion}" );
                 return $"##vso[build.updatebuildnumber]{buildVersion}";
             }
@@ -238,12 +220,12 @@ namespace CodeCake
             {
                 if( appVeyor.IsRunningOnAppVeyor ) //Warning: 
                 {
-                    appVeyor.UpdateBuildVersion( AddSkipped( _gitInfo.SafeVersion ) );
+                    appVeyor.UpdateBuildVersion( AddSkipped( BuildInfo.Version.ToString() ) );
                 }
 
                 if( vsts.IsRunningOnAzurePipelinesHosted || vsts.IsRunningOnAzurePipelines )
                 {
-                    string azureVersion = ComputeAzurePipelineUpdateBuildVersion( _gitInfo );
+                    string azureVersion = ComputeAzurePipelineUpdateBuildVersion( BuildInfo );
                     AzurePipelineUpdateBuildVersion( azureVersion );
                 }
             }

@@ -12,16 +12,16 @@ namespace CodeCake
         /// </summary>
         /// <param name="gitInfo">The git info.</param>
         /// <returns>A new info object.</returns>
-        StandardGlobalInfo CreateStandardGlobalInfo( SimpleRepositoryInfo gitInfo )
+        StandardGlobalInfo CreateStandardGlobalInfo( ICommitBuildInfo buildInfo )
         {
-            var result = new StandardGlobalInfo( Cake, gitInfo );
+            var result = new StandardGlobalInfo( Cake, buildInfo );
             // By default:
-            if( !gitInfo.IsValid )
+            if( !buildInfo.IsZeroCommit() )
             {
                 if( Cake.InteractiveMode() != InteractiveMode.NoInteraction
                     && Cake.ReadInteractiveOption( "PublishDirtyRepo", "Repository is not ready to be published. Proceed anyway?", 'Y', 'N' ) == 'Y' )
                 {
-                    Cake.Warning( "GitInfo is not valid, but you choose to continue..." );
+                    Cake.Warning( "Zero version is not valid, but you choose to continue..." );
                     result.IgnoreNoArtifactsToProduce = true;
                 }
                 else
@@ -43,7 +43,7 @@ namespace CodeCake
             else
             {
                 // gitInfo is valid: it is either ci or a release build. 
-                var v = gitInfo.Info.FinalVersion;
+                var v = buildInfo.Version;
                 // If a /LocalFeed/ directory exists above, we publish the packages in it.
                 var localFeedRoot = Cake.FindSiblingDirectoryAbove( Cake.Environment.WorkingDirectory.FullPath, "LocalFeed" );
                 if( localFeedRoot != null )

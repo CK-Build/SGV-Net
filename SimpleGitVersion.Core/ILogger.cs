@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -24,35 +24,10 @@ namespace SimpleGitVersion
         void Warn( string msg );
 
         /// <summary>
-        /// Logs an informational message.
+        /// Logs a trace or informational message.
         /// </summary>
-        /// <param name="msg">Information message.</param>
+        /// <param name="msg">Message.</param>
         void Info( string msg );
-
-        /// <summary>
-        /// Logs a trace.
-        /// </summary>
-        /// <param name="msg">Trace message.</param>
-        void Trace( string msg );
     }
 
-    static class ILoggerExtensions
-    {
-        static public void Error( this ILogger @this, string msg, params object[] parameters )
-        {
-            @this.Error( string.Format( msg, parameters ) );
-        }
-        static public void Warn( this ILogger @this, string msg, params object[] parameters )
-        {
-            @this.Warn( string.Format( msg, parameters ) );
-        }
-        static public void Info( this ILogger @this, string msg, params object[] parameters )
-        {
-            @this.Info( string.Format( msg, parameters ) );
-        }
-        static public void Trace( this ILogger @this, string msg, params object[] parameters )
-        {
-            @this.Trace( string.Format( msg, parameters ) );
-        }
-    }
 }
