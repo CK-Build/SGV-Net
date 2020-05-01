@@ -32,9 +32,9 @@ namespace SimpleGitVersion
         /// <param name="e">The xml element.</param>
         public RepositoryInfoOptionsBranch( XElement e )
         {
-            Name = (string)e.Attribute( SGVSchema.Name ) ?? throw new XmlException( "Attribute Name is required." ); 
-            VersionName = (string)e.Attribute( SGVSchema.VersionName ); 
-            var a = e.Attribute( SGVSchema.CIVersionMode );
+            Name = (string?)e.Attribute( SGVSchema.Name ) ?? (string?)e.Attribute( OldXmlSchema.Name ) ?? throw new XmlException( "Attribute Name is required." ); 
+            VersionName = (string?)e.Attribute( SGVSchema.VersionName ) ?? (string?)e.Attribute( OldXmlSchema.VersionName ); 
+            var a = e.Attribute( SGVSchema.CIVersionMode ) ?? e.Attribute( OldXmlSchema.CIVersionMode );
             CIBranchVersionMode mode;
             if( a != null && Enum.TryParse<CIBranchVersionMode>( a.Value, true, out mode ) ) 
             {
@@ -50,8 +50,8 @@ namespace SimpleGitVersion
         {
             return new XElement( SGVSchema.Branch,
                                     new XAttribute( SGVSchema.Name, Name ),
-                                    VersionName != null ? new XAttribute( SGVSchema.VersionName, VersionName ) : null,
-                                    new XAttribute( SGVSchema.CIVersionMode, CIVersionMode.ToString() )
+                                    new XAttribute( SGVSchema.CIVersionMode, CIVersionMode.ToString() ),
+                                    VersionName != null ? new XAttribute( SGVSchema.VersionName, VersionName ) : null
                                );
         }
 

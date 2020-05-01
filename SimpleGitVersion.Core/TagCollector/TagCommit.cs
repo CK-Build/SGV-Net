@@ -132,8 +132,7 @@ namespace SimpleGitVersion
             if( best.Count == 0 ) return null;
             if( best.Count > 1 )
             {
-                errors.AppendFormat( $"Commit '{CommitSha}' has {best.Count} different released version tags. Delete some of them or create +invalid tag(s) if they are already pushed to a remote repository." )
-                      .AppendLine();
+                errors.AppendLine( $"Commit '{CommitSha}' has {best.Count} different released version tags. Delete some of them or create +invalid tag(s) if they are already pushed to a remote repository." );
                 return null;
             }
             return best[0];

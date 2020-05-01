@@ -36,38 +36,68 @@ namespace SimpleGitVersion
             Debug.Assert( ExistingVersions != null, "No error." );
             BasicCommitInfo? basic = GetCommitView( null ).GetInfo( c );
 
+            // Default to null.
+            ITagCommit? alreadyExistingVersion = null;
+            ITagCommit? bestCommitBelow = null;
+
             IReadOnlyList<CSVersion> nextPossibleVersions;
             IReadOnlyList<CSVersion> possibleVersions;
-            // Special case: there is no existing versions but there is a startingVersionForCSemVer,
-            // every commit may be this starting version. 
-            if( _startingVersionForCSemVer != null && ExistingVersions.Versions.Count == 0 )
+            // Special case: there is no existing versions but there is a startingVersion, every commit may be
+            // this starting version (and alreadyExistingVersion and bestCommitBelow are obviously null). 
+            if( _startingVersion != null && ExistingVersions.Versions.Count == 0 )
             {
-                possibleVersions = nextPossibleVersions = new[] { _startingVersionForCSemVer };
+                possibleVersions = nextPossibleVersions = new[] { _startingVersion };
             }
             else
             {
-                nextPossibleVersions = GetPossibleVersions( basic?.MaxCommit.ThisTag, null );
-                bool thisHasCommit = basic?.UnfilteredThisCommit != null;
-                // Special case: there is no existing versions (other than this one that is skipped if it exists) but
-                // there is a startingVersionForCSemVer, every commit may be the first one. 
-                if( _startingVersionForCSemVer != null
-                    && ExistingVersions.Versions.Count == 1
-                    && thisHasCommit )
+                if( basic == null )
                 {
-                    possibleVersions = new[] { _startingVersionForCSemVer };
+                    // No information at all on this commit (means it has no versions on or below, even based on its content).
+                    // We compute the next possible versions based on null: the first CSemVer versions will be considered
+                    // and this is also the PossibleVersions.
+                    // The alreadyExistingVersion and bestCommitBelow remain null.
+                    possibleVersions = nextPossibleVersions = GetPossibleVersions( null, null );
                 }
                 else
                 {
-                    if( thisHasCommit )
+                    // Some information exist: the MaxCommit exists necessarily. We can compute the next versions based on it.
+                    nextPossibleVersions = GetPossibleVersions( basic.MaxCommit.ThisTag, null );
+                    // If there is no tag on the commit itself, then:
+                    // - The PossibleVersions are the same as the next ones.
+                    // - The alreadyExistingVersion and bestCommitBelow come from this commit.
+                    if( basic.UnfilteredThisCommit == null )
                     {
-                        var excluded = basic!.UnfilteredThisCommit!.ThisTag;
-                        var noVersion = GetCommitView( excluded ).GetInfo( c );
-                        possibleVersions = GetPossibleVersions( noVersion?.MaxCommit.ThisTag, excluded );
+                        possibleVersions = nextPossibleVersions;
+                        alreadyExistingVersion = basic.BestCommit;
+                        bestCommitBelow = basic.BestCommitBelow;
                     }
-                    else possibleVersions = nextPossibleVersions;
+                    else
+                    {
+                        // Special case: there is no existing versions (other than this tag on the commit itself) but there is a
+                        // StartingVersion, every commit may be the first one (and alreadyExistingVersion and bestCommitBelow remain null). 
+                        if( _startingVersion != null && ExistingVersions.Versions.Count == 1 )
+                        {
+                            possibleVersions = new[] { _startingVersion };
+                        }
+                        else
+                        {
+                            // Since this commit is tagged, to compute the PossibleVersions,  we must do as if this tag doesn't exist at all.
+                            // This is where we need the "View" that excludes this version.
+                            var excluded = basic.UnfilteredThisCommit.ThisTag;
+                            var noThisVersion = GetCommitView( excluded ).GetInfo( c );
+                            // Since we excluded this tag, there may be... nothing: noThisVersion can be null.
+                            // The BestCommit of this noThisVersion is our high level AlreadyExistingVersion and
+                            // its BestCommitBelow is also our high level BestCommitBelow.
+                            bestCommitBelow = noThisVersion?.BestCommitBelow;
+                            // The possible versions for this commit is computed based on noThisVersion's MaxCommit. 
+                            alreadyExistingVersion = noThisVersion?.BestCommit;
+                            possibleVersions = GetPossibleVersions( noThisVersion?.MaxCommit.ThisTag, excluded );
+                        }
+                    }
+
                 }
             }
-            return new CommitInfo( c.Sha, basic, possibleVersions, nextPossibleVersions );
+            return new CommitInfo( c.Sha, basic, alreadyExistingVersion, bestCommitBelow, possibleVersions, nextPossibleVersions );
         }
 
         List<CSVersion> GetPossibleVersions( CSVersion? baseVersion, CSVersion? excluded )
@@ -79,7 +109,7 @@ namespace SimpleGitVersion
             if( excluded != null ) allVersions = allVersions.Where( c => c.ThisTag != excluded ); 
             var nextReleased = allVersions.FirstOrDefault( c => c.ThisTag > baseVersion );
             var successors = CSVersion.GetDirectSuccessors( false, baseVersion );
-            return successors.Where( v => v > _startingVersionForCSemVer
+            return successors.Where( v => v > _startingVersion
                                               && (nextReleased == null || v < nextReleased.ThisTag) )
                              .ToList();
         }

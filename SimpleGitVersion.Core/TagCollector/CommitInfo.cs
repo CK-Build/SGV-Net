@@ -29,6 +29,17 @@ namespace SimpleGitVersion
         public readonly BasicCommitInfo? BasicInfo;
 
         /// <summary>
+        /// Gets the commit with the version for that exact same content if it exists.
+        /// </summary>
+        public readonly ITagCommit? AlreadyExistingVersion;
+
+        /// <summary>
+        /// Gets the previous version, that is the best version associated to a commit
+        /// below this commit.
+        /// </summary>
+        public readonly ITagCommit? BestCommitBelow;
+
+        /// <summary>
         /// Gets the possible next versions based on on this commit.
         /// </summary>
         public readonly IReadOnlyList<CSVersion> NextPossibleVersions;
@@ -42,13 +53,20 @@ namespace SimpleGitVersion
         internal CommitInfo(
             string sha,
             BasicCommitInfo? basic,
+            ITagCommit? alreadyExistingVersion,
+            ITagCommit? bestCommitBelow,
             IReadOnlyList<CSVersion> possibleVersions,
             IReadOnlyList<CSVersion> nextPossibleVersions)
         {
             CommitSha = sha;
             BasicInfo = basic;
+            AlreadyExistingVersion = alreadyExistingVersion;
+            BestCommitBelow = bestCommitBelow;
             NextPossibleVersions = nextPossibleVersions;
             PossibleVersions = possibleVersions;
+
+            Debug.Assert( AlreadyExistingVersion == null || BasicInfo?.UnfilteredThisCommit == null || AlreadyExistingVersion.ThisTag != BasicInfo?.UnfilteredThisCommit.ThisTag,
+                          "AlreadyExistingVersion is independent of the release tag, except that, if both exist, they are necessarily different." );
         }
     }
 }

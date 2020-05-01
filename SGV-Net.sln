@@ -1,11 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.26430.12
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30011.22
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{9CD47A9D-B076-4579-95D5-E69419EF1F2A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleGitVersion.Cake", "SimpleGitVersion.Cake\SimpleGitVersion.Cake.csproj", "{FE78A6B1-778C-48B2-9D93-4FBCDC5191AB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SimpleGitVersion.Cake", "SimpleGitVersion.Cake\SimpleGitVersion.Cake.csproj", "{FE78A6B1-778C-48B2-9D93-4FBCDC5191AB}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{F51DE93D-639B-44CB-9A39-34D4D6CA9B3C}"
 	ProjectSection(SolutionItems) = preProject
@@ -18,11 +18,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		SimpleGitVersion.png = SimpleGitVersion.png
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleGitVersion.Core.Tests", "Tests\SimpleGitVersion.Core.Tests\SimpleGitVersion.Core.Tests.csproj", "{86B0C218-3BF3-4A33-B4E2-D44D712DDF59}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SimpleGitVersion.Core.Tests", "Tests\SimpleGitVersion.Core.Tests\SimpleGitVersion.Core.Tests.csproj", "{86B0C218-3BF3-4A33-B4E2-D44D712DDF59}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CodeCakeBuilder", "CodeCakeBuilder\CodeCakeBuilder.csproj", "{FD4817B6-3CD7-4E74-AA10-7CA95FDFCF2D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CodeCakeBuilder", "CodeCakeBuilder\CodeCakeBuilder.csproj", "{FD4817B6-3CD7-4E74-AA10-7CA95FDFCF2D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleGitVersion.Core", "SimpleGitVersion.Core\SimpleGitVersion.Core.csproj", "{399B4720-DA22-4435-8FA4-ECCE1BDBEBB4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SimpleGitVersion.Core", "SimpleGitVersion.Core\SimpleGitVersion.Core.csproj", "{399B4720-DA22-4435-8FA4-ECCE1BDBEBB4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -37,9 +37,9 @@ namespace SimpleGitVersion
             return RepositoryInfo.LoadFromPath( Path, options );
         }
         
-        public RepositoryInfo GetRepositoryInfo( string commitSha, TagsOverride tags = null )
+        public RepositoryInfo GetRepositoryInfo( string headCommit, TagsOverride tags = null )
         {
-            return RepositoryInfo.LoadFromPath( Path, new RepositoryInfoOptions { StartingCommitSha = commitSha, OverriddenTags = tags != null ? tags.Overrides : null } );
+            return RepositoryInfo.LoadFromPath( Path, new RepositoryInfoOptions { HeadCommit = headCommit, OverriddenTags = tags != null ? tags.Overrides : null } );
         }
     }
 }

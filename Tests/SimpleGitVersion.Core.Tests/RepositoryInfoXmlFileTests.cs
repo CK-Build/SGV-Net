@@ -1,3 +1,4 @@
+using FluentAssertions;
 using NUnit.Framework;
 using System;
 using System.IO;
@@ -11,7 +12,7 @@ namespace SimpleGitVersion.Core.Tests
     {
 
         [Test]
-        public void reading_repository_info_xml_file_StartingVersionForCSemVer_and_IgnoreModifiedFiles()
+        public void OLD_FORMAT_reading_repository_info_xml_file_StartingVersionForCSemVer_and_IgnoreModifiedFiles()
         {
             string s =
 @"<?xml version=""1.0"" encoding=""utf-8""?>
@@ -22,18 +23,27 @@ namespace SimpleGitVersion.Core.Tests
     </IgnoreModifiedFiles>
 </RepositoryInfo>";
             XDocument d = XDocument.Parse( s );
-            ValidateAgainstSchema( d );
 
             RepositoryInfoOptions opt = new RepositoryInfoOptions( d.Root );
 
+            opt.XmlMigrationRequired.Should().BeTrue();
             Assert.That( opt.Branches, Is.Empty );
-            Assert.That( opt.StartingVersionForCSemVer, Is.EqualTo( "v4.2.0" ) );
-            Assert.That( opt.StartingCommitSha, Is.Null );
+            Assert.That( opt.StartingVersion, Is.EqualTo( "v4.2.0" ) );
+            Assert.That( opt.HeadCommit, Is.Null );
             CollectionAssert.AreEquivalent( opt.IgnoreModifiedFiles, new[] { "SharedKey.snk" } );
+
+            var expected = XElement.Parse( @"
+<SimpleGitVersion StartingVersion=""v4.2.0"">
+  <IgnoreModifiedFiles>
+    <Add>SharedKey.snk</Add>
+  </IgnoreModifiedFiles>
+  <Branches />
+</SimpleGitVersion>" );
+            XElement.DeepEquals( opt.ToXml(), expected ).Should().BeTrue();
         }
 
         [Test]
-        public void reading_repository_info_xml_file_Branches()
+        public void OLD_FORMAT_reading_repository_info_xml_file_Branches()
         {
             string s =
 @"<?xml version=""1.0"" encoding=""utf-8""?>
@@ -44,11 +54,9 @@ namespace SimpleGitVersion.Core.Tests
     </Branches>
 </RepositoryInfo>";
             XDocument d = XDocument.Parse( s );
-            ValidateAgainstSchema( d );
-
             RepositoryInfoOptions opt = new RepositoryInfoOptions( d.Root );
 
-            Assert.That( opt.StartingVersionForCSemVer, Is.Null );
+            Assert.That( opt.StartingVersion, Is.Null );
             Assert.That( opt.IgnoreModifiedFiles, Is.Empty );
             Assert.That( opt.Branches.Count, Is.EqualTo( 2 ) );
 
@@ -59,12 +67,23 @@ namespace SimpleGitVersion.Core.Tests
             Assert.That( opt.Branches[1].Name, Is.EqualTo( "exploratory" ) );
             Assert.That( opt.Branches[1].CIVersionMode, Is.EqualTo( CIBranchVersionMode.ZeroTimed ) );
             Assert.That( opt.Branches[1].VersionName, Is.EqualTo( "Preview" ) );
+
+            var expected = XElement.Parse( @"
+<SimpleGitVersion>
+    <Branches>
+        <Branch Name=""develop"" CIVersionMode=""LastReleaseBased"" />
+        <Branch Name=""exploratory"" CIVersionMode=""ZeroTimed"" VersionName=""Preview"" />
+    </Branches>
+</SimpleGitVersion>" );
+
+            XElement.DeepEquals( opt.ToXml(), expected ).Should().BeTrue();
+
         }
 
         [Test]
-        public void full_repository_info_to_xml_is_valid_according_to_schema()
+        public void OLD_FORMAT_full_repository_info_to_xml_is_valid_according_to_schema()
         {
-            string s =
+            string oldString =
 @"<?xml version=""1.0"" encoding=""utf-8""?>
 <RepositoryInfo xmlns=""http://csemver.org/schemas/2015"">
     <Debug IgnoreDirtyWorkingFolder=""true"" />
@@ -81,34 +100,81 @@ namespace SimpleGitVersion.Core.Tests
     </IgnoreModifiedFiles>
 	<RemoteName>not-the-origin</RemoteName>
 </RepositoryInfo>";
-            XDocument d = XDocument.Parse( s );
-            ValidateAgainstSchema( d );
+            XDocument dOld = XDocument.Parse( oldString );
+            RepositoryInfoOptions oldOpt = new RepositoryInfoOptions( dOld.Root );
 
-            RepositoryInfoOptions opt = new RepositoryInfoOptions( d.Root );
+            XDocument d2Old = new XDocument( oldOpt.ToXml() );
+            RepositoryInfoOptions oldOpt2 = new RepositoryInfoOptions( d2Old.Root );
 
-            XDocument d2 = new XDocument( opt.ToXml() );
-            ValidateAgainstSchema( d2 );
-            RepositoryInfoOptions opt2 = new RepositoryInfoOptions( d2.Root );
+            Assert.That( oldOpt.IgnoreDirtyWorkingFolder, Is.EqualTo( oldOpt2.IgnoreDirtyWorkingFolder ) );
+            Assert.That( oldOpt.RemoteName, Is.EqualTo( oldOpt2.RemoteName ) );
+            Assert.That( oldOpt.StartingVersion, Is.EqualTo( oldOpt2.StartingVersion ) );
+            Assert.That( oldOpt.Branches.Count, Is.EqualTo( oldOpt2.Branches.Count ) );
+            Assert.That( oldOpt.IgnoreModifiedFiles.Count, Is.EqualTo( oldOpt2.IgnoreModifiedFiles.Count ) );
+            Assert.That( oldOpt.OnlyPatch, Is.True );
+            Assert.That( oldOpt.SingleMajor, Is.EqualTo( 3 ) );
 
-            Assert.That( opt.IgnoreDirtyWorkingFolder, Is.EqualTo( opt2.IgnoreDirtyWorkingFolder ) );
-            Assert.That( opt.RemoteName, Is.EqualTo( opt2.RemoteName ) );
-            Assert.That( opt.StartingVersionForCSemVer, Is.EqualTo( opt2.StartingVersionForCSemVer ) );
-            Assert.That( opt.Branches.Count, Is.EqualTo( opt2.Branches.Count ) );
-            Assert.That( opt.IgnoreModifiedFiles.Count, Is.EqualTo( opt2.IgnoreModifiedFiles.Count ) );
-            Assert.That( opt.OnlyPatch, Is.True );
-            Assert.That( opt.SingleMajor, Is.EqualTo( 3 ) );
+
+            var xOptions = XElement.Parse( @"
+<SimpleGitVersion StartingVersion=""v4.2.0"" SingleMajor=""3"" OnlyPatch=""true"" RemoteName=""not-the-origin"">
+  <Debug IgnoreDirtyWorkingFolder=""true"" />
+  <IgnoreModifiedFiles>
+    <Add>SharedKey.snk</Add>
+  </IgnoreModifiedFiles>
+  <Branches>
+    <Branch Name=""develop"" CIVersionMode=""LastReleaseBased"" />
+    <Branch Name=""exploratory"" CIVersionMode=""ZeroTimed"" VersionName=""Preview"" />
+    <Branch Name=""other"" CIVersionMode=""None"" />
+  </Branches>
+</SimpleGitVersion>" );
+
+            XElement.DeepEquals( oldOpt.ToXml(), xOptions ).Should().BeTrue();
+
+            var opt = new RepositoryInfoOptions( xOptions );
+            var opt2 = new RepositoryInfoOptions( opt.ToXml() );
+            opt2.Should().BeEquivalentTo( opt );
+
         }
 
-        private static void ValidateAgainstSchema( XDocument d )
+        [Test]
+        public void RepositoryInfoOptions_with_all_options()
         {
-            XmlSchema schema = XmlSchema.Read( File.OpenRead( TestHelper.RepositoryXSDPath ), ( o, e ) => { throw new Exception( "Invalid xsd." ); } );
-            XmlSchemaSet set = new XmlSchemaSet();
-            set.Add( schema );
-            d.Validate( set, ( o, e ) => 
-            {
-                throw new Exception( "Invalid document:" + e.Message );
-            } );
+            var xOptions = XElement.Parse( @"
+<SimpleGitVersion
+        StartingVersion=""v4.2.0""
+        SingleMajor=""3""
+        OnlyPatch=""true""
+        RemoteName=""not-the-origin""
+        IgnoreAlreadyExistingVersion=""true""
+        CheckExistingVersions=""true"" >
+  <Debug IgnoreDirtyWorkingFolder=""true"" />
+  <IgnoreModifiedFiles>
+    <Add>SharedKey.snk</Add>
+  </IgnoreModifiedFiles>
+  <Branches>
+    <Branch Name=""develop"" CIVersionMode=""LastReleaseBased"" />
+    <Branch Name=""exploratory"" CIVersionMode=""ZeroTimed"" VersionName=""Preview"" />
+    <Branch Name=""other"" CIVersionMode=""None"" />
+  </Branches>
+</SimpleGitVersion>" );
+
+            var opt = new RepositoryInfoOptions( xOptions );
+            var opt2 = new RepositoryInfoOptions( opt.ToXml() );
+            opt2.Should().BeEquivalentTo( opt );
+
+            opt.StartingVersion.Should().Be( "v4.2.0" );
+            opt.SingleMajor.Should().Be( 3 );
+            opt.OnlyPatch.Should().BeTrue();
+            opt.RemoteName.Should().Be( "not-the-origin" );
+            opt.IgnoreAlreadyExistingVersion.Should().BeTrue();
+            opt.CheckExistingVersions.Should().BeTrue();
+            opt.IgnoreDirtyWorkingFolder.Should().BeTrue();
+            opt.IgnoreModifiedFiles.Should().BeEquivalentTo( "SharedKey.snk" );
+            opt.Branches.Should().HaveCount( 3 );
+            opt.Branches.Should().ContainEquivalentOf( new RepositoryInfoOptionsBranch( "develop", CIBranchVersionMode.LastReleaseBased ) );
+            opt.Branches.Should().ContainEquivalentOf( new RepositoryInfoOptionsBranch( "exploratory", CIBranchVersionMode.ZeroTimed, "Preview" ) );
+            opt.Branches.Should().ContainEquivalentOf( new RepositoryInfoOptionsBranch( "other", CIBranchVersionMode.None ) );
         }
 
     }
-    }
+}

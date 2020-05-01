@@ -9,6 +9,27 @@ namespace SimpleGitVersion
     {
         ICommitBuildInfo? _commitBuildInfo;
 
+        /// <summary>
+        /// Central strategy that choose a build configuration (typically "Debug" or "Release") based on a <see cref="SVersion"/>
+        /// and a <see cref="RepositoryInfoOptions"/>.
+        /// Defaults to <see cref="DefaultBuildConfigurationSelector(SVersion, RepositoryInfoOptions)"/>.
+        /// </summary>
+        public static Func<SVersion, RepositoryInfoOptions, string> BuildConfigurationSelector = DefaultBuildConfigurationSelector;
+
+        /// <summary>
+        /// Default implementation of <see cref="BuildConfigurationSelector"/>: "Debug" for every one, but "Release" for stable release
+        /// (no <see cref="SVersion.Prerelease"/>) and for <see cref="CSVersion"/> with <see cref="CSVersion.PrereleaseName"/> "rc".
+        /// </summary>
+        /// <param name="finalVersion">The version.</param>
+        /// <param name="options">The options to consider (currently unused by this implementation).</param>
+        /// <returns>The build configuration to use.</returns>
+        public static string DefaultBuildConfigurationSelector( SVersion finalVersion, RepositoryInfoOptions options )
+        {
+            return finalVersion.Prerelease.Length == 0 || finalVersion.AsCSVersion?.PrereleaseName == "rc"
+                                       ? "Release"
+                                       : "Debug";
+        }
+
         class RepoCommitBuildInfo : ICommitBuildInfo
         {
             readonly RepositoryInfo _info;
@@ -17,25 +38,28 @@ namespace SimpleGitVersion
             {
                 Debug.Assert( info != null );
                 _info = info;
-                BuildConfiguration = info.FinalVersion.Prerelease.Length == 0 || info.FinalVersion.AsCSVersion?.PrereleaseName == "rc"
-                                       ? "Release"
-                                       : "Debug";
+                
+                BuildConfiguration = BuildConfigurationSelector( info.FinalVersion, info.Options );
                 AssemblyVersion = $"{info.FinalVersion.Major}.{info.FinalVersion.Minor}";
-                if( info.CIRelease != null )
+                if( info.Error == null )
                 {
-                    if( info.CIRelease.IsZeroTimed )
+                    if( info.CIRelease != null )
                     {
-                        FileVersion = CSemVer.InformationalVersion.ZeroFileVersion;
+                        if( info.CIRelease.IsZeroTimed )
+                        {
+                            FileVersion = CSemVer.InformationalVersion.ZeroFileVersion;
+                        }
+                        else
+                        {
+                            Debug.Assert( info.CIRelease.BaseTag.AsCSVersion != null, "In LastReleaseBased mode, there is always a valid CSVersion base tag." );
+                            FileVersion = info.CIRelease.BaseTag.AsCSVersion.ToStringFileVersion( true );
+                        }
                     }
-                    else
+                    else 
                     {
-                        Debug.Assert( info.CIRelease.BaseTag.AsCSVersion != null, "In LastReleaseBased mode, there is a valid CSVersion base tag." );
-                        FileVersion = info.CIRelease.BaseTag.AsCSVersion.ToStringFileVersion( true );
+                        Debug.Assert( info.ReleaseTag != null );
+                        FileVersion = info.ReleaseTag.ToStringFileVersion( false );
                     }
-                }
-                else if( info.ValidReleaseTag != null )
-                {
-                    FileVersion = info.ValidReleaseTag.ToStringFileVersion( false );
                 }
                 else
                 {

@@ -17,30 +17,31 @@ namespace SimpleGitVersion
     public interface IRepositoryInfo
     {
         /// <summary>
-        /// Gets either <see cref="RepositoryInfo.StartingCommitInfo.Error"/> or <see cref="RepositoryInfo.CommitAnalyzingError"/>.
+        /// Gets either <see cref="RepositoryInfo.StartingCommitInfo.Error"/> or a subsequent analysis error.
         /// Null if no error occurred.
         /// </summary>
         string? Error { get; }
 
         /// <summary>
         /// Gets the version directly associated to this commit.
-        /// This is null if there is actually no release tag on the current commit.
+        /// Null if there is no release tag on the current commit (or an <see cref="Error"/> occured).
         /// </summary>
-        CSVersion? ValidReleaseTag { get; }
+        CSVersion? ReleaseTag { get; }
 
         /// <summary>
-        /// Gets CI informations if a CI release can be done: <see cref="ValidReleaseTag"/> is necessarily null.
+        /// Gets CI informations if a CI release can be done: <see cref="ReleaseTag"/> is necessarily null.
         /// Not null only if we are on a branch that is enabled in <see cref="RepositoryInfoOptions.Branches"/> (either 
-        /// because it is the current branch or <see cref="RepositoryInfoOptions.StartingBranchName"/> specifies it),
-        /// and the <see cref="RepositoryInfoOptions.StartingCommitSha"/> is null or empty.
+        /// because it is the current branch or <see cref="RepositoryInfoOptions.HeadBranchName"/> specifies it),
+        /// and the <see cref="RepositoryInfoOptions.HeadCommit"/> is null or empty.
         /// </summary>
         CIReleaseInfo? CIRelease { get; }
 
         /// <summary>
-        /// Gets the commit with a better version for that exact same content if it exists.
-        /// This is independent of <see cref="ValidReleaseTag"/>.
+        /// Gets the commit with the version for that exact same content if it exists.
+        /// This is independent of <see cref="ReleaseTag"/> (except that, if both exist, they are
+        /// necessarily different).
         /// </summary>
-        ITagCommit? BetterExistingVersion { get; }
+        ITagCommit? AlreadyExistingVersion { get; }
 
         /// <summary>
         /// Gets the previous version, that is the best version associated to a commit

@@ -16,19 +16,21 @@ namespace SimpleGitVersion
     /// </summary>
     partial class TagCollector
     {
-        readonly CSVersion? _startingVersionForCSemVer;
+        readonly CSVersion? _startingVersion;
         readonly Dictionary<string, TagCommit> _collector;
         readonly RepositoryVersions? _repoVersions;
 
         /// <summary>
         /// Gets the minimal version to consider. When null, the whole repository must be valid in terms of release tags.
         /// </summary>
-        public CSVersion? StartingVersionForCSemVer => _startingVersionForCSemVer;
+        public CSVersion? StartingVersion => _startingVersion;
 
         /// <summary>
         /// See <see cref="RepositoryInfo.ExistingVersions"/>.
         /// </summary>
         public RepositoryVersions? ExistingVersions => _repoVersions;
+
+        public readonly RepositoryInfo.ErrorCodeStatus ErrorCode;
 
         /// <summary>
         /// Initializes a new <see cref="TagCollector"/>.
@@ -36,66 +38,74 @@ namespace SimpleGitVersion
         /// </summary>
         /// <param name="errors">A collector of errors. One line per error.</param>
         /// <param name="repo">The Git repository.</param>
-        /// <param name="startingVersionForCSemVer">Vesion tags lower than this version will be ignored.</param>
+        /// <param name="startingVersion">Vesion tags lower than this version will be ignored.</param>
         /// <param name="overriddenTags">Optional commits with associated tags that are applied as if they exist in the repository.</param>
         /// <param name="singleMajor">Optional major filter.</param>
-        /// <param name="checkExistingVersions">When true, existing versions are checked: see <see cref="ExistingVersions"/>.</param>
         internal TagCollector(
             StringBuilder errors,
             Repository repo,
-            string? startingVersionForCSemVer = null,
+            string? startingVersion = null,
             IEnumerable<KeyValuePair<string, IReadOnlyList<string>>>? overriddenTags = null,
             int? singleMajor = null,
             bool checkExistingVersions = false )
         {
             _collector = new Dictionary<string, TagCommit>();
 
-            if( startingVersionForCSemVer != null )
+            if( startingVersion != null )
             {
-                var v = CSVersion.TryParse( startingVersionForCSemVer, true );
+                var v = CSVersion.TryParse( startingVersion, true );
                 if( !v.IsValid )
                 {
-                    errors.Append( "Invalid StartingVersionForCSemVer. " ).Append( v.ErrorMessage ).AppendLine();
+                    ErrorCode = RepositoryInfo.ErrorCodeStatus.InvalidStartingVersion;
+                    errors.Append( "Invalid StartingVersion. " ).Append( v.ErrorMessage ).AppendLine();
                     return;
                 }
-                _startingVersionForCSemVer = v.ToNormalizedForm();
-                if( singleMajor.HasValue && _startingVersionForCSemVer.Major > singleMajor )
+                _startingVersion = v.ToNormalizedForm();
+                if( singleMajor.HasValue && _startingVersion.Major > singleMajor )
                 {
-                    errors.Append( "StartingVersionForCSemVer '" )
-                          .Append( _startingVersionForCSemVer )
+                    ErrorCode = RepositoryInfo.ErrorCodeStatus.StartingVersionConflictsWithSingleMajor;
+                    errors.Append( "StartingVersion '" )
+                          .Append( _startingVersion )
                           .Append( "'is defined, its major must not be greater than defined SingleMajor = " ).Append( singleMajor ).Append( "." )
                           .AppendLine();
                     return;
                 }
             }
             // Register all tags.
-            RegisterAllTags( errors, repo, overriddenTags, singleMajor, checkExistingVersions );
+            ErrorCode = RegisterAllTags( errors, repo, overriddenTags, singleMajor, checkExistingVersions );
+            if( ErrorCode != RepositoryInfo.ErrorCodeStatus.None ) return;
 
             // Resolves multiple tags on the same commit.
-            CloseCollect( errors );
+            if( !CloseCollect( errors ) )
+            {
+                ErrorCode = RepositoryInfo.ErrorCodeStatus.MultipleVersionTagConflict;
+                return;
+            }
 
             // Sorts TagCommit, optionally checking the existing versions. 
-            _repoVersions = new RepositoryVersions( _collector.Values, errors, _startingVersionForCSemVer, checkExistingVersions );
-
-            // Register content.
-            if( errors.Length == 0 )
+            _repoVersions = new RepositoryVersions( _collector.Values, errors );
+            if( checkExistingVersions )
             {
-                foreach( var tc in _repoVersions.TagCommits )
-                {
-                    RegisterContent( tc );
-                }
+                ErrorCode = _repoVersions.CheckExistingVersions( errors, _startingVersion );
+                return;
+            }
+
+            // Register content (if no error occured).
+            foreach( var tc in _repoVersions.TagCommits )
+            {
+                RegisterContent( tc );
             }
         }
 
-        void RegisterAllTags( StringBuilder errors, Repository repo, IEnumerable<KeyValuePair<string, IReadOnlyList<string>>>? overriddenTags, int? singleMajor, bool checkExistingVersions )
+        RepositoryInfo.ErrorCodeStatus RegisterAllTags( StringBuilder errors, Repository repo, IEnumerable<KeyValuePair<string, IReadOnlyList<string>>>? overriddenTags, int? singleMajor, bool checkExistingVersions )
         {
-            bool startingVersionForCSemVerFound = _startingVersionForCSemVer == null;
             foreach( var tag in repo.Tags )
             {
                 Commit? tagCommit = tag.ResolveTarget() as Commit;
                 if( tagCommit == null ) continue;
-                RegisterOneTag( errors, tagCommit, tag.FriendlyName, singleMajor, ref startingVersionForCSemVerFound );
+                RegisterOneTag( tagCommit, tag.FriendlyName, singleMajor );
             }
+
             // Applies overrides (if any) as if they exist in the repository.
             if( overriddenTags != null )
             {
@@ -104,7 +114,8 @@ namespace SimpleGitVersion
                     Commit? o = null;
                     if( string.IsNullOrEmpty( k.Key ) )
                     {
-                        errors.AppendFormat( "Invalid overriden commit: the key is null or empty." ).AppendLine();
+                        errors.Append( "Invalid overriden commit: the key is null or empty." ).AppendLine();
+                        return RepositoryInfo.ErrorCodeStatus.InvalidOverriddenTag;
                     }
                     else if( k.Key.Equals( "head", StringComparison.OrdinalIgnoreCase ) )
                     {
@@ -117,39 +128,30 @@ namespace SimpleGitVersion
                         if( o == null )
                         {
                             errors.AppendFormat( "Overriden commit '{0}' does not exist.", k.Key ).AppendLine();
+                            return RepositoryInfo.ErrorCodeStatus.InvalidOverriddenTag;
                         }
                     }
                     if( o != null )
                     {
                         foreach( string tagName in k.Value )
                         {
-                            RegisterOneTag( errors, o, tagName, singleMajor, ref startingVersionForCSemVerFound );
+                            RegisterOneTag( o, tagName, singleMajor );
                         }
                     }
                 }
             }
-            if( !startingVersionForCSemVerFound && checkExistingVersions )
-            {
-                Debug.Assert( _startingVersionForCSemVer != null && _startingVersionForCSemVer.IsValid );
-                errors.AppendFormat( "Unable to find StartingVersionForCSemVer = '{0}'. A commit must be tagged with it.", _startingVersionForCSemVer ).AppendLine();
-            }
+            return RepositoryInfo.ErrorCodeStatus.None;
         }
 
-        void RegisterOneTag( StringBuilder errors, Commit c, string tagName, int? singleMajor, ref bool startingVersionForCSemVerFound )
+        void RegisterOneTag( Commit c, string tagName, int? singleMajor )
         {
             CSVersion v = CSVersion.TryParse( tagName ).ToNormalizedForm();
             if( v.IsValid && (!singleMajor.HasValue || v.Major == singleMajor.Value) )
             {
-                if( _startingVersionForCSemVer != null )
+                if( _startingVersion != null && _startingVersion.CompareTo( v ) > 0 )
                 {
-                    int cmp = _startingVersionForCSemVer.CompareTo( v );
-                    if( cmp == 0 ) startingVersionForCSemVerFound = true;
-                    else if( cmp > 0 )
-                    {
-                        // This version is smaller than the StartingVersionForCSemVer:
-                        // we ignore it.
-                        return;
-                    }
+                    // This version is smaller than the StartingVersion: we ignore it.
+                    return;
                 }
                 TagCommit tagCommit;
                 if( _collector.TryGetValue( c.Sha, out tagCommit ) )
@@ -160,7 +162,7 @@ namespace SimpleGitVersion
             }
         }
 
-        void CloseCollect( StringBuilder errors )
+        bool CloseCollect( StringBuilder errors )
         {
             List<TagCommit>? invalidTags = null;
             foreach( var c in _collector.Values )
@@ -177,7 +179,9 @@ namespace SimpleGitVersion
                 {
                     _collector.Remove( c.CommitSha );
                 }
+                return false;
             }
+            return true;
         }
 
         void RegisterContent( TagCommit tagCommit )

@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Xml.Linq;
 using LibGit2Sharp;
 
 namespace SimpleGitVersion
@@ -19,9 +21,15 @@ namespace SimpleGitVersion
             public readonly RepositoryInfoOptions Options;
 
             /// <summary>
-            /// Gets the fatal error text if locating this starting commit failed: when not null, it is one line of text like 'No Git repository.' or 'Unitialized Git repository.'.
+            /// Gets the fatal error text if locating this starting commit failed: when not null, it is one line of
+            /// text like 'No Git repository.' or 'Unitialized Git repository.'.
             /// </summary>
             public readonly string? Error;
+
+            /// <summary>
+            /// Error code of the <see cref="Error"/>.
+            /// </summary>
+            public readonly RepositoryInfo.ErrorCodeStatus ErrorCode;
 
             /// <summary>
             /// Gets the commit. Null if it has not been resolved.
@@ -30,10 +38,8 @@ namespace SimpleGitVersion
 
             /// <summary>
             /// Gets the name of the branches that have been considered.
-            /// This is null if <see cref="RepositoryInfoOptions.StartingCommitSha"/> has been specified (or if an
-            /// <see cref="Error"/> occurred).
             /// </summary>
-            public readonly IReadOnlyCollection<string>? ConsideredBranchNames;
+            public readonly IReadOnlyCollection<string> ConsideredBranchNames;
 
             /// <summary>
             /// Gets the found branch option among the <see cref="RepositoryInfoOptions.Branches"/> based
@@ -66,25 +72,35 @@ namespace SimpleGitVersion
             {
                 Options = options;
                 FoundBranchOption = null;
-                ConsideredBranchNames = null;
+                ConsideredBranchNames = Array.Empty<string>();
                 Commit = null;
+                if( options.XmlMigrationRequired )
+                {
+                    ErrorCode = ErrorCodeStatus.OptionsXmlMigrationRequired;
+                    Error = "Repository.xml format has changed. No more namespace and new SimpleGitVersion chile element so that other components can easily use this central configuration file." + Environment.NewLine
+                            + "It should be:" + Environment.NewLine
+                            + new XDocument( new XElement( XNamespace.None + "RepositoryInfo", options.ToXml() ) ).ToString();
+                    return;
+                }
                 if( r == null )
                 {
+                    ErrorCode = ErrorCodeStatus.InitNoGitRepository;
                     Error = "No Git repository.";
                     return;
                 }
-                string? commitSha = options.StartingCommitSha;
+                string? objectish = options.HeadCommit;
 
+                IReadOnlyCollection<string>? branchNames = null;
                 // Find current commit (the head) if none is provided.
-                if( String.IsNullOrWhiteSpace( commitSha ) )
+                if( String.IsNullOrWhiteSpace( objectish ) )
                 {
-                    IReadOnlyCollection<string> branchNames;
-                    if( String.IsNullOrWhiteSpace( options.StartingBranchName ) )
+                    if( String.IsNullOrWhiteSpace( options.HeadBranchName ) )
                     {
                         // locCommit is here because one cannot use an out parameter inside a lambda.
-                        var locCommit = Commit = r.Head.Tip;
-                        if( locCommit == null )
+                        Commit = r.Head.Tip;
+                        if( Commit == null )
                         {
+                            ErrorCode = ErrorCodeStatus.InitUnitializedGitRepository;
                             Error = "Unitialized Git repository.";
                             return;
                         }
@@ -95,11 +111,7 @@ namespace SimpleGitVersion
                         string branchName = r.Head.FriendlyName;
                         if( branchName == "(no branch)" )
                         {
-                            string remotePrefix = options.RemoteName + '/';
-                            branchNames = r.Branches
-                                           .Where( b => b.Tip == locCommit && (!b.IsRemote || b.FriendlyName.StartsWith( remotePrefix )) )
-                                           .Select( b => b.IsRemote ? b.FriendlyName.Substring( remotePrefix.Length ) : b.FriendlyName )
-                                           .ToArray();
+                            branchNames = FindBranches( Commit, options, r );
                         }
                         else
                         {
@@ -108,54 +120,66 @@ namespace SimpleGitVersion
                     }
                     else
                     {
-                        // A StartingBranchName has been specified.
+                        Debug.Assert( options.HeadBranchName != null, "A HeadBranchName has been specified." );
                         string remotePrefix = options.RemoteName + '/';
-                        string localBranchName = options.StartingBranchName!.StartsWith( remotePrefix )
-                                                    ? options.StartingBranchName.Substring( remotePrefix.Length )
-                                                    : options.StartingBranchName;
-                        Branch br = r.Branches[options.StartingBranchName];
-                        if( br == null && ReferenceEquals( localBranchName, options.StartingBranchName ) )
+                        string localBranchName = options.HeadBranchName.StartsWith( remotePrefix )
+                                                    ? options.HeadBranchName.Substring( remotePrefix.Length )
+                                                    : options.HeadBranchName;
+                        Branch br = r.Branches[options.HeadBranchName];
+                        if( br == null && ReferenceEquals( localBranchName, options.HeadBranchName ) )
                         {
-                            string remoteName = remotePrefix + options.StartingBranchName;
+                            string remoteName = remotePrefix + options.HeadBranchName;
                             br = r.Branches[remoteName];
                             if( br == null )
                             {
-                                Error = $"Unknown StartingBranchName: '{options.StartingBranchName}' (also tested on remote '{remoteName}').";
+                                ErrorCode = ErrorCodeStatus.InitHeadBranchNameNotFound;
+                                Error = $"Unknown HeadBranchName: '{options.HeadBranchName}' (also tested on remote '{remoteName}').";
                                 return;
                             }
                         }
                         if( br == null )
                         {
-                            Error = $"Unknown (remote) StartingBranchName: '{options.StartingBranchName}'.";
+                            ErrorCode = ErrorCodeStatus.InitHeadRemoteBranchNameNotFound;
+                            Error = $"Unknown (remote) HeadBranchName: '{options.HeadBranchName}'.";
                             return;
                         }
                         Commit = br.Tip;
                         branchNames = new[] { localBranchName };
                     }
+                    ErrorCode = ErrorCodeStatus.None;
+                    Error = null;
+                }
+                else
+                {
+                    Commit = r.Lookup( objectish )?.Peel<Commit>();
+                    if( Commit == null )
+                    {
+                        ErrorCode = ErrorCodeStatus.InitHeadCommitNotFound;
+                        Error = $"Unable to find HeadCommit '{objectish}' commit.";
+                    }
+                    else
+                    {
+                        ErrorCode = ErrorCodeStatus.None;
+                        Error = null;
+                        branchNames = FindBranches( Commit, options, r );
+                    }
+                }
+                if( branchNames != null )
+                {
                     ConsideredBranchNames = branchNames;
                     if( options.Branches != null )
                     {
                         FoundBranchOption = options.Branches.FirstOrDefault( b => branchNames.Contains( b.Name ) );
                     }
-                    Error = null;
                 }
-                else
+
+                static IReadOnlyCollection<string> FindBranches( Commit commit, RepositoryInfoOptions options, Repository r )
                 {
-                    Commit = r.Lookup<Commit>( commitSha );
-                    if( Commit == null )
-                    {
-                        Error = $"Unable to find StartingCommitSha '{commitSha}' commit.";
-                    }
-                    else
-                    {
-                        Error = null;
-                        // Here we may find the branches to which this Commit belong and populates the ConsideredBranchNames with them.
-                        // If not empty, this set of branch names should be confronted to the options.Branches and then
-                        // a CIVersionMode and CIBranchVersionName will be available.
-                        //
-                        // This would enable the possibility to compute a CI build number for any commit instead of the only 2 scenario
-                        // currently supported: for a StartingBranchName or for the repository's head. 
-                    }
+                    string remotePrefix = options.RemoteName + '/';
+                    return r.Branches
+                            .Where( b => b.Tip == commit && (!b.IsRemote || b.FriendlyName.StartsWith( remotePrefix )) )
+                            .Select( b => b.IsRemote ? b.FriendlyName.Substring( remotePrefix.Length ) : b.FriendlyName )
+                            .ToArray();
                 }
             }
         }
