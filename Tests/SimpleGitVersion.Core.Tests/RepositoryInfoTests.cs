@@ -23,7 +23,7 @@ namespace SimpleGitVersion.Core.Tests
             {
                 RepositoryInfo i = repoTest.GetRepositoryInfo( c.Sha );
                 (i.ErrorCode == RepositoryInfo.ErrorCodeStatus.CIBuildHeadCommitIsDetached
-                 || i.ErrorCode == RepositoryInfo.ErrorCodeStatus.CIBuildMissingBranchOption ).Should().BeTrue();
+                 || i.ErrorCode == RepositoryInfo.ErrorCodeStatus.CIBuildMissingBranchOption).Should().BeTrue();
                 i.ReleaseTag.Should().BeNull();
                 i.CommitInfo.BasicInfo.Should().BeNull();
                 i.PossibleVersions.Should().BeEquivalentTo( CSVersion.FirstPossibleVersions );
@@ -32,20 +32,35 @@ namespace SimpleGitVersion.Core.Tests
         }
 
         [Test]
-        public void CheckExistingVersions_ensures_that_the_version_is_either_the_Start()
+        public void multiple_tags_on_the_same_commit_is_an_error()
         {
             var repoTest = TestHelper.TestGitRepository;
+            var high = repoTest.Commits.Single( c => c.Message.StartsWith( "X-Commit." ) );
+            var overrides = new TagsOverride();
             {
                 RepositoryInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
                 {
-                    HeadBranchName = "parallel-world",
-                    CheckExistingVersions = true
+                    HeadCommit = high.Sha,
+                    OverriddenTags = overrides.Add( high.Sha, "1.0.0" ).Add( high.Sha, "2.0.0" ).Overrides,
                 } );
-                i.ErrorCode.Should().Be( RepositoryInfo.ErrorCodeStatus.CIBuildMissingBranchOption );
-                i.ReleaseTag.Should().BeNull();
-                i.CommitInfo.BasicInfo.Should().BeNull();
-                CollectionAssert.AreEqual( CSVersion.FirstPossibleVersions, i.PossibleVersions );
-                CollectionAssert.AreEqual( CSVersion.FirstPossibleVersions, i.NextPossibleVersions );
+                i.ErrorCode.Should().Be( RepositoryInfo.ErrorCodeStatus.MultipleVersionTagConflict );
+            }
+        }
+
+        [Test]
+        public void multiple_tags_on_the_same_commit_must_use_invalid_marker()
+        {
+            var repoTest = TestHelper.TestGitRepository;
+            var high = repoTest.Commits.Single( c => c.Message.StartsWith( "X-Commit." ) );
+            var overrides = new TagsOverride();
+            {
+                RepositoryInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
+                {
+                    HeadCommit = high.Sha,
+                    OverriddenTags = overrides.Add( high.Sha, "1.0.0+invalid" ).Add( high.Sha, "1.0.0-beta" ).Overrides,
+                } );
+                i.ErrorCode.Should().Be( RepositoryInfo.ErrorCodeStatus.None );
+                i.FinalVersion.ToString().Should().Be( "1.0.0-b" );
             }
         }
 

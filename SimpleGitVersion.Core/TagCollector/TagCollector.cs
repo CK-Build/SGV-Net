@@ -41,6 +41,7 @@ namespace SimpleGitVersion
         /// <param name="startingVersion">Vesion tags lower than this version will be ignored.</param>
         /// <param name="overriddenTags">Optional commits with associated tags that are applied as if they exist in the repository.</param>
         /// <param name="singleMajor">Optional major filter.</param>
+        /// <param name="checkExistingVersions">True to check existing </param>
         internal TagCollector(
             StringBuilder errors,
             Repository repo,
@@ -84,9 +85,10 @@ namespace SimpleGitVersion
 
             // Sorts TagCommit, optionally checking the existing versions. 
             _repoVersions = new RepositoryVersions( _collector.Values, errors );
-            if( checkExistingVersions )
+
+            if( checkExistingVersions
+                && (ErrorCode = _repoVersions.CheckExistingVersions( errors, _startingVersion )) != RepositoryInfo.ErrorCodeStatus.None )
             {
-                ErrorCode = _repoVersions.CheckExistingVersions( errors, _startingVersion );
                 return;
             }
 

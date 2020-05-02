@@ -10,7 +10,6 @@ namespace SimpleGitVersion.Core.Tests
     [TestFixture]
     public class SimpleMiscTests
     {
-
         [Test]
         public void sha1_of_trees_rocks()
         {

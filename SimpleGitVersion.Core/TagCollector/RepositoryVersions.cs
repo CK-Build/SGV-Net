@@ -32,14 +32,14 @@ namespace SimpleGitVersion
                         return RepositoryInfo.ErrorCodeStatus.CheckExistingVersionFirstMissing;
                     }
                 }
-                bool foundStartingVersion = false;
+                bool foundStartingVersion = first == startingVersion;
                 bool atLeastOneHole = false;
                 for( int i = 0; i < _versions.Count - 1; ++i )
                 {
                     var prev = _versions[i].ThisTag;
-                    foundStartingVersion |= prev == startingVersion;
                     var next = _versions[i + 1].ThisTag;
-                    Debug.Assert( next != prev, "Unicity has been already been handled." );
+                    foundStartingVersion |= next == startingVersion;
+                    Debug.Assert( next != prev, "Unicity has already been handled." );
                     if( !next.IsDirectPredecessor( prev ) )
                     {
                         errors.AppendFormat( $"Missing one or more version(s) between '{prev}' and '{next}'." )
@@ -47,7 +47,11 @@ namespace SimpleGitVersion
                         atLeastOneHole = true;
                     }
                 }
-                if( !foundStartingVersion && startingVersion != null ) return RepositoryInfo.ErrorCodeStatus.CheckExistingVersionStartingVersionNotFound;
+                if( !foundStartingVersion && startingVersion != null )
+                {
+                    errors.AppendLine( $"Missing specified StartingVersion='{startingVersion}'." );
+                    return RepositoryInfo.ErrorCodeStatus.CheckExistingVersionStartingVersionNotFound;
+                }
                 if( atLeastOneHole ) return RepositoryInfo.ErrorCodeStatus.CheckExistingVersionHoleFound;
             }
             return RepositoryInfo.ErrorCodeStatus.None;

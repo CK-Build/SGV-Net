@@ -68,7 +68,7 @@ namespace SimpleGitVersion
         /// <summary>
         /// Gets this options as an Xml element.
         /// </summary>
-        /// <returns>The <see cref="SGVSchema.SimpleGitVersion"/ >XElement.</returns>
+        /// <returns>The SimpleGitVersion XElement.</returns>
         public XElement ToXml()
         {
             return new XElement( SGVSchema.SimpleGitVersion,
