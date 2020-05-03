@@ -77,7 +77,7 @@ namespace SimpleGitVersion
                 if( options.XmlMigrationRequired )
                 {
                     ErrorCode = ErrorCodeStatus.OptionsXmlMigrationRequired;
-                    Error = "Repository.xml format has changed. No more namespace and new SimpleGitVersion chile element so that other components can easily use this central configuration file." + Environment.NewLine
+                    Error = "Repository.xml format has changed. No more namespace and new SimpleGitVersion child element so that other components can easily use this central configuration file." + Environment.NewLine
                             + "It should be:" + Environment.NewLine
                             + new XDocument( new XElement( XNamespace.None + "RepositoryInfo", options.ToXml() ) ).ToString();
                     return;

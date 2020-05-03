@@ -47,10 +47,13 @@ namespace SimpleGitVersion
         public static RepositoryInfo GetRepositoryInfo( this ICakeContext context, RepositoryInfoOptions options = null )
         {
             if( context == null ) throw new ArgumentNullException( nameof(context) );
+            var logger = new Logger( context );
             var path = context.Environment.WorkingDirectory.FullPath;
-            return options == null
+            var r = options != null
                     ? RepositoryInfo.LoadFromPath( path, options )
-                    : RepositoryInfo.LoadFromPath( new Logger( context ), path );
+                    : RepositoryInfo.LoadFromPath( logger, path );
+            r?.Explain( logger );
+            return r;
         }
 
     }
