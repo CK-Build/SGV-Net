@@ -493,8 +493,8 @@ namespace SimpleGitVersion
                 LogCommitInfo( logger );
                 if( CIRelease != null )
                 {
-                    logger.Info( $"CI release: '{FinalVersion}' ({(CIRelease.IsZeroTimed ? nameof( CIBranchVersionMode.ZeroTimed ) : nameof( CIBranchVersionMode.LastReleaseBased ))})." );
                     LogPossibleVersions( logger );
+                    logger.Info( $"CI release: '{FinalVersion}' ({(CIRelease.IsZeroTimed ? nameof( CIBranchVersionMode.ZeroTimed ) : nameof( CIBranchVersionMode.LastReleaseBased ))})." );
                 }
                 else
                 {
