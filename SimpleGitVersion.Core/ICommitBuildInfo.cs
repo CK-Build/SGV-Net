@@ -29,7 +29,9 @@ namespace SimpleGitVersion
 
         /// <summary>
         /// Gets the standardized information version string that must be used to build this
-        /// commit point. Never null: defaults to <see cref="InformationalVersion.ZeroInformationalVersion"/>.
+        /// commit point.
+        /// Never null: may be the <see cref="SVersion.ZeroVersion"/> with this <see cref="CommitSha"/> and <see cref="CommitDateUtc"/>
+        /// and ultimately defaults to <see cref="InformationalVersion.ZeroInformationalVersion"/>.
         /// string.
         /// </summary>
         string InformationalVersion { get; }

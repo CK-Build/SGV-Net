@@ -8,11 +8,11 @@ namespace SimpleGitVersion
     public static class CommitBuildInfoExtension
     {
         /// <summary>
-        /// Gets whether the <see cref="ICommitBuildInfo.CommitSha"/> is the <see cref="InformationalVersion.ZeroCommitSha"/>.
+        /// Gets whether the <see cref="ICommitBuildInfo.Version"/> is not the <see cref="SVersion.ZeroVersion"/>.
         /// </summary>
         /// <param name="this">This build info.</param>
-        /// <returns>True if this is the zero commit sha.</returns>
-        public static bool IsZeroCommit( this ICommitBuildInfo @this ) => @this.CommitSha == InformationalVersion.ZeroCommitSha;
+        /// <returns>True if this version is not the zero version.</returns>
+        public static bool IsValid( this ICommitBuildInfo @this ) => !@this.Version.IsZeroVersion;
     }
 
 }

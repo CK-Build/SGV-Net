@@ -152,7 +152,7 @@ namespace CodeCake
 
         public void WriteCommitMemoryKey( NormalizedPath key )
         {
-            if( !BuildInfo.IsZeroCommit() ) File.AppendAllLines( MemoryFilePath, new[] { key.ToString() } );
+            if( BuildInfo.IsValid() ) File.AppendAllLines( MemoryFilePath, new[] { key.ToString() } );
         }
 
         public bool CheckCommitMemoryKey( NormalizedPath key )
@@ -162,7 +162,7 @@ namespace CodeCake
                         : false;
             if( done )
             {
-                if( BuildInfo.IsZeroCommit() )
+                if( !BuildInfo.IsValid() )
                 {
                     Cake.Information( $"Zero commit. Key exists but is ignored: {key}" );
                     done = false;

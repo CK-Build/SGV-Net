@@ -16,7 +16,7 @@ namespace CodeCake
         {
             var result = new StandardGlobalInfo( Cake, buildInfo );
             // By default:
-            if( !buildInfo.IsZeroCommit() )
+            if( buildInfo.IsValid() )
             {
                 if( Cake.InteractiveMode() != InteractiveMode.NoInteraction
                     && Cake.ReadInteractiveOption( "PublishDirtyRepo", "Repository is not ready to be published. Proceed anyway?", 'Y', 'N' ) == 'Y' )

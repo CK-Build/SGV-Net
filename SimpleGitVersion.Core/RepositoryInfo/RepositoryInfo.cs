@@ -247,7 +247,7 @@ namespace SimpleGitVersion
         /// <summary>
         /// Gets the standardized information version string that must be used to build this commit point.
         /// If an error prevented the <see cref="FinalVersion"/> computation but a <see cref="CommitSha"/> has been
-        /// found, this is based on the <see cref="SVersion.ZeroVersion"/> withe CommitSha and <see cref="CommitDateUtc"/>.
+        /// found, this is based on the <see cref="SVersion.ZeroVersion"/> with this CommitSha and <see cref="CommitDateUtc"/>.
         /// Never null: ultimately defaults to <see cref="InformationalVersion.ZeroInformationalVersion"/> string.
         /// </summary>
         public readonly string FinalInformationalVersion;
