@@ -10,16 +10,15 @@ namespace CodeCake
         /// Creates a new <see cref="StandardGlobalInfo"/> initialized by the
         /// current environment.
         /// </summary>
-        /// <param name="gitInfo">The git info.</param>
         /// <returns>A new info object.</returns>
-        StandardGlobalInfo CreateStandardGlobalInfo( ICommitBuildInfo buildInfo )
+        StandardGlobalInfo CreateStandardGlobalInfo()
         {
-            var result = new StandardGlobalInfo( Cake, buildInfo );
+            var result = new StandardGlobalInfo( Cake, Cake.GetRepositoryInfo().FinalBuildInfo );
             // By default:
-            if( buildInfo.IsValid() )
+            if( result.IsValid )
             {
                 // gitInfo is valid: it is either ci or a release build. 
-                var v = buildInfo.Version;
+                var v = result.BuildInfo.Version;
                 // If a /LocalFeed/ directory exists above, we publish the packages in it.
                 var localFeedRoot = Cake.FindSiblingDirectoryAbove( Cake.Environment.WorkingDirectory.FullPath, "LocalFeed" );
                 if( localFeedRoot != null )
