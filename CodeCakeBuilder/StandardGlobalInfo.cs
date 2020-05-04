@@ -53,10 +53,14 @@ namespace CodeCake
         /// Gets the <see cref="ICommitBuildInfo"/> for this commit.
         /// This holds the <see cref="ICommitBuildInfo.CommitSha"/> and <see cref="ICommitBuildInfo.CommitDateUtc"/> of this commit.
         /// If <see cref="ICommitBuildInfo.Version"/> is the <see cref="SVersion.ZeroVersion"/> then this is not really a
-        /// valid build.
+        /// valid build (<see cref="IsValid"/> is false).
         /// </summary>
         public ICommitBuildInfo BuildInfo { get; }
 
+        /// <summary>
+        /// Gets whether the <see cref="ICommitBuildInfo.Version"/> is not the <see cref="SVersion.ZeroVersion"/>.
+        /// </summary>
+        public bool IsValid => BuildInfo.IsValid();
 
         IEnumerable<ICIPublishWorkflow> SolutionProducingArtifacts => Solutions.OfType<ICIPublishWorkflow>();
 
@@ -152,7 +156,7 @@ namespace CodeCake
 
         public void WriteCommitMemoryKey( NormalizedPath key )
         {
-            if( BuildInfo.IsValid() ) File.AppendAllLines( MemoryFilePath, new[] { key.ToString() } );
+            if( IsValid ) File.AppendAllLines( MemoryFilePath, new[] { key.ToString() } );
         }
 
         public bool CheckCommitMemoryKey( NormalizedPath key )
@@ -162,7 +166,7 @@ namespace CodeCake
                         : false;
             if( done )
             {
-                if( !BuildInfo.IsValid() )
+                if( !IsValid )
                 {
                     Cake.Information( $"Zero commit. Key exists but is ignored: {key}" );
                     done = false;

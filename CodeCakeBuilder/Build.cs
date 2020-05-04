@@ -55,7 +55,7 @@ namespace CodeCake
                 } );
 
             Task( "Create-NuGet-Packages" )
-                .WithCriteria( () => globalInfo.BuildInfo.IsValid() )
+                .WithCriteria( () => globalInfo.IsValid )
                 .IsDependentOn( "Unit-Testing" )
                 .Does( () =>
                 {
@@ -64,7 +64,7 @@ namespace CodeCake
 
             Task( "Push-Artifacts" )
                 .IsDependentOn( "Create-NuGet-Packages" )
-                .WithCriteria( () => globalInfo.BuildInfo.IsValid() )
+                .WithCriteria( () => globalInfo.IsValid )
                 .Does( () =>
                 {
                     globalInfo.PushArtifacts();
