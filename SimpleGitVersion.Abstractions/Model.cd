@@ -1,0 +1,119 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1" MembersFormat="FullSignature">
+  <Class Name="CSemVer.SVersion">
+    <Position X="9" Y="0.5" Width="3.5" />
+    <Members>
+      <Method Name="CompareTo" Hidden="true" />
+      <Method Name="Create" Hidden="true" />
+      <Method Name="CSemVerCompareTo" Hidden="true" />
+      <Method Name="CSemVerSafeCompare" Hidden="true" />
+      <Method Name="DoWithBuildMetaData" Hidden="true" />
+      <Method Name="Equals" Hidden="true" />
+      <Method Name="GetHashCode" Hidden="true" />
+      <Method Name="GetInformationalVersion" Hidden="true" />
+      <Property Name="NormalizedText" Hidden="true" />
+      <Method Name="op_Inequality" Hidden="true" />
+      <Method Name="op_LessThan" Hidden="true" />
+      <Method Name="op_LessThanOrEqual" Hidden="true" />
+      <Method Name="op_Equality" Hidden="true" />
+      <Method Name="op_GreaterThan" Hidden="true" />
+      <Method Name="op_GreaterThanOrEqual" Hidden="true" />
+      <Property Name="PackageQuality" Hidden="true" />
+      <Method Name="Parse" Hidden="true" />
+      <Property Name="ParsedText" Hidden="true" />
+      <Method Name="SafeCompare" Hidden="true" />
+      <Method Name="SVersion" Hidden="true" />
+      <Method Name="ToNormalizedString" Hidden="true" />
+      <Method Name="ToString" Hidden="true" />
+      <Method Name="TryParse" Hidden="true" />
+      <Method Name="WithBuildMetaData" Hidden="true" />
+    </Members>
+    <TypeIdentifier />
+  </Class>
+  <Class Name="CSemVer.CSVersion">
+    <Position X="9" Y="4" Width="3.5" />
+    <Members>
+      <Method Name="CompareTo" Hidden="true" />
+      <Method Name="Create" Hidden="true" />
+      <Method Name="DoWithBuildMetaData" Hidden="true" />
+      <Field Name="EmptyArray" Hidden="true" />
+      <Method Name="Equals" Hidden="true" />
+      <Field Name="FirstPossibleVersions" Hidden="true" />
+      <Method Name="GetDirectSuccessors" Hidden="true" />
+      <Method Name="GetHashCode" Hidden="true" />
+      <Method Name="GetInformationalVersion" Hidden="true" />
+      <Method Name="IsDirectPredecessor" Hidden="true" />
+      <Field Name="IsLongForm" Hidden="true" />
+      <Field Name="MaxMajor" Hidden="true" />
+      <Field Name="MaxMinor" Hidden="true" />
+      <Field Name="MaxPatch" Hidden="true" />
+      <Field Name="MaxPreReleaseNameIdx" Hidden="true" />
+      <Field Name="MaxPreReleaseNumber" Hidden="true" />
+      <Field Name="MaxPreReleasePatch" Hidden="true" />
+      <Method Name="op_Inequality" Hidden="true" />
+      <Method Name="op_LessThan" Hidden="true" />
+      <Method Name="op_LessThanOrEqual" Hidden="true" />
+      <Method Name="op_Equality" Hidden="true" />
+      <Method Name="op_GreaterThan" Hidden="true" />
+      <Method Name="op_GreaterThanOrEqual" Hidden="true" />
+      <Method Name="Parse" Hidden="true" />
+      <Field Name="PrereleaseNameIdx" Hidden="true" />
+      <Field Name="PrereleaseNumber" Hidden="true" />
+      <Field Name="PrereleasePatch" Hidden="true" />
+      <Property Name="StandardPrereleaseNames" Hidden="true" />
+      <Property Name="StandardPreReleaseNamesShort" Hidden="true" />
+      <Method Name="ToLongForm" Hidden="true" />
+      <Method Name="ToNormalizedForm" Hidden="true" />
+      <Method Name="ToString" Hidden="true" />
+      <Method Name="ToStringFileVersion" Hidden="true" />
+      <Method Name="TryParse" Hidden="true" />
+      <Field Name="VeryFirstVersion" Hidden="true" />
+      <Field Name="VeryLastVersion" Hidden="true" />
+      <Method Name="WithBuildMetaData" Hidden="true" />
+    </Members>
+    <TypeIdentifier />
+  </Class>
+  <Interface Name="SimpleGitVersion.ITagCommit">
+    <Position X="6.25" Y="0.5" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAACAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAA=</HashCode>
+      <FileName>ITagCommit.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="SimpleGitVersion.ICIReleaseInfo">
+    <Position X="6.25" Y="2" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAABAgIAAgAAAAAAA=</HashCode>
+      <FileName>ICIReleaseInfo.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="SimpleGitVersion.ICommitBuildInfo">
+    <Position X="1.5" Y="3.75" Width="2.5" />
+    <TypeIdentifier>
+      <HashCode>MAACAAAIABAAAAAAAAAAAAAAAAAAAAAAAAAAQBAAAAA=</HashCode>
+      <FileName>ICommitBuildInfo.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="SimpleGitVersion.ICommitInfo">
+    <Position X="0.5" Y="0.5" Width="3.75" />
+    <AssociationLine Name="CIRelease" Type="SimpleGitVersion.ICIReleaseInfo" FixedFromPoint="true" FixedToPoint="true">
+      <Path>
+        <Point X="4.25" Y="1.812" />
+        <Point X="4.625" Y="1.812" />
+        <Point X="4.625" Y="2.962" />
+        <Point X="6.25" Y="2.962" />
+      </Path>
+    </AssociationLine>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAABAQCAEgAAAAAIAAAAAAAAAAgAAgAAAAA=</HashCode>
+      <FileName>ICommitInfo.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="AlreadyExistingVersion" />
+      <Property Name="BestCommitBelow" />
+      <Property Name="CIRelease" />
+      <Property Name="FinalBuildInfo" />
+    </ShowAsAssociation>
+  </Interface>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

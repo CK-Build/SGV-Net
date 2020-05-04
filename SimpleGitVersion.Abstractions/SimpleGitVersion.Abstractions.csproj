@@ -4,13 +4,14 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <Description>Minimal Simple Git Version abstraction that enables to reason on new versions and configure a build.</Description>
-    <PackageIcon>SimpleGitVersion.png</PackageIcon>
+    <PackageIcon>../SimpleGitVersion.png</PackageIcon>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageTags>Versioning, SemVer, NuGet, CSemVer, InformationalVersion, Build</PackageTags>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="SimpleGitVersion.png" Pack="true" PackagePath=""/>
+    <None Include="../SimpleGitVersion.png" Pack="true" PackagePath=""/>
   </ItemGroup>
 
   <ItemGroup>
