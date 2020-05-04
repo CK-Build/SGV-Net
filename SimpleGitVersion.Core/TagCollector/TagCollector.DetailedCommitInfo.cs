@@ -31,7 +31,7 @@ namespace SimpleGitVersion
             return v;
         }
 
-        public CommitInfo GetCommitInfo( Commit c )
+        public DetailedCommitInfo GetCommitInfo( Commit c )
         {
             Debug.Assert( ExistingVersions != null, "No error." );
             BasicCommitInfo? basic = GetCommitView( null ).GetInfo( c );
@@ -97,7 +97,7 @@ namespace SimpleGitVersion
 
                 }
             }
-            return new CommitInfo( c.Sha, basic, alreadyExistingVersion, bestCommitBelow, possibleVersions, nextPossibleVersions );
+            return new DetailedCommitInfo( c.Sha, basic, alreadyExistingVersion, bestCommitBelow, possibleVersions, nextPossibleVersions );
         }
 
         List<CSVersion> GetPossibleVersions( CSVersion? baseVersion, CSVersion? excluded )

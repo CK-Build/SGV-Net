@@ -8,12 +8,12 @@ using LibGit2Sharp;
 namespace SimpleGitVersion
 {
 
-    public partial class RepositoryInfo
+    public partial class CommitInfo
     {
         /// <summary>
         /// Captures the first analysis of a repository based on a <see cref="RepositoryInfoOptions"/>.
         /// </summary>
-        public readonly struct StartingCommitInfo
+        public readonly struct InitialInfo
         {
             /// <summary>
             /// Gets the options from which this starting commit information is derived.
@@ -29,7 +29,7 @@ namespace SimpleGitVersion
             /// <summary>
             /// Error code of the <see cref="Error"/>.
             /// </summary>
-            public readonly RepositoryInfo.ErrorCodeStatus ErrorCode;
+            public readonly CommitInfo.ErrorCodeStatus ErrorCode;
 
             /// <summary>
             /// Gets the commit. Null if it has not been resolved.
@@ -64,11 +64,11 @@ namespace SimpleGitVersion
                                                         : FoundBranchOption.VersionName;
 
             /// <summary>
-            /// Initializes a new <see cref="StartingCommitInfo"/>.
+            /// Initializes a new <see cref="InitialInfo"/>.
             /// </summary>
             /// <param name="options">The options to use.</param>
             /// <param name="r">The LibGit2Sharp's repository.</param>
-            public StartingCommitInfo( RepositoryInfoOptions options, Repository? r )
+            public InitialInfo( RepositoryInfoOptions options, Repository? r )
             {
                 Options = options;
                 FoundBranchOption = null;

@@ -11,7 +11,7 @@ namespace SimpleGitVersion
     {
         /// <summary>
         /// Gets "Debug" for ci build or prerelease below "rc" and "Release" for "rc" and official releases.
-        /// Never null, defaults to "Debug".
+        /// Never null, must default to "Debug".
         /// </summary>
         string BuildConfiguration { get; }
 
@@ -50,9 +50,8 @@ namespace SimpleGitVersion
 
         /// <summary>
         /// Gets the 'Major.Minor.Build.Revision' windows file version to use based on the <see cref="CSVersion.OrderedVersion"/>.
-        /// When it is a release the last part (Revision) is even and it is odd for CI builds (except when <see cref="CIBranchVersionMode.ZeroTimed"/> is used). 
-        /// Defaults to '0.0.0.0' (<see cref="InformationalVersion.ZeroFileVersion"/>).
-        /// See <see cref="CSVersion.ToStringFileVersion(bool)"/>.
+        /// When it is a release the last part (Revision) is even and it is odd for CI builds. 
+        /// This is '0.0.0.0' (<see cref="InformationalVersion.ZeroFileVersion"/>) on error or for CI ZeroTimed based releases.
         /// </summary>
         string FileVersion { get; }
     }

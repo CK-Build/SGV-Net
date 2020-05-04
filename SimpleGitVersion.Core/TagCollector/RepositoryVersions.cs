@@ -18,7 +18,7 @@ namespace SimpleGitVersion
             _versions = collected.OrderBy( t => t.ThisTag ).ToList();
         }
 
-        public RepositoryInfo.ErrorCodeStatus CheckExistingVersions( StringBuilder errors, CSVersion? startingVersion )
+        public CommitInfo.ErrorCodeStatus CheckExistingVersions( StringBuilder errors, CSVersion? startingVersion )
         {
             if( _versions.Count > 0 )
             {
@@ -29,7 +29,7 @@ namespace SimpleGitVersion
                     {
                         errors.AppendFormat( $"First existing version is '{first}' (on '{_versions[0].CommitSha}'). A very first version is missing ({String.Join( ", ", CSVersion.FirstPossibleVersions.Select( v => v.ToString() ) )}) or a StartingVersion must be specified.." )
                                 .AppendLine();
-                        return RepositoryInfo.ErrorCodeStatus.CheckExistingVersionFirstMissing;
+                        return CommitInfo.ErrorCodeStatus.CheckExistingVersionFirstMissing;
                     }
                 }
                 bool foundStartingVersion = first == startingVersion;
@@ -50,11 +50,11 @@ namespace SimpleGitVersion
                 if( !foundStartingVersion && startingVersion != null )
                 {
                     errors.AppendLine( $"Missing specified StartingVersion='{startingVersion}'." );
-                    return RepositoryInfo.ErrorCodeStatus.CheckExistingVersionStartingVersionNotFound;
+                    return CommitInfo.ErrorCodeStatus.CheckExistingVersionStartingVersionNotFound;
                 }
-                if( atLeastOneHole ) return RepositoryInfo.ErrorCodeStatus.CheckExistingVersionHoleFound;
+                if( atLeastOneHole ) return CommitInfo.ErrorCodeStatus.CheckExistingVersionHoleFound;
             }
-            return RepositoryInfo.ErrorCodeStatus.None;
+            return CommitInfo.ErrorCodeStatus.None;
         }
 
         internal IReadOnlyList<TagCommit> TagCommits => _versions;

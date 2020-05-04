@@ -21,11 +21,11 @@ namespace SimpleGitVersion.Core.Tests
             var repoTest = TestHelper.TestGitRepository;
             foreach( SimpleCommit c in repoTest.Commits )
             {
-                RepositoryInfo i = repoTest.GetRepositoryInfo( c.Sha );
-                (i.ErrorCode == RepositoryInfo.ErrorCodeStatus.CIBuildHeadCommitIsDetached
-                 || i.ErrorCode == RepositoryInfo.ErrorCodeStatus.CIBuildMissingBranchOption).Should().BeTrue();
+                CommitInfo i = repoTest.GetRepositoryInfo( c.Sha );
+                (i.ErrorCode == CommitInfo.ErrorCodeStatus.CIBuildHeadCommitIsDetached
+                 || i.ErrorCode == CommitInfo.ErrorCodeStatus.CIBuildMissingBranchOption).Should().BeTrue();
                 i.ReleaseTag.Should().BeNull();
-                i.CommitInfo.BasicInfo.Should().BeNull();
+                i.DetailedCommitInfo.BasicInfo.Should().BeNull();
                 i.PossibleVersions.Should().BeEquivalentTo( CSVersion.FirstPossibleVersions );
                 i.NextPossibleVersions.Should().BeEquivalentTo( CSVersion.FirstPossibleVersions );
             }
@@ -38,12 +38,12 @@ namespace SimpleGitVersion.Core.Tests
             var high = repoTest.Commits.Single( c => c.Message.StartsWith( "X-Commit." ) );
             var overrides = new TagsOverride();
             {
-                RepositoryInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
+                CommitInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
                 {
                     HeadCommit = high.Sha,
                     OverriddenTags = overrides.Add( high.Sha, "1.0.0" ).Add( high.Sha, "2.0.0" ).Overrides,
                 } );
-                i.ErrorCode.Should().Be( RepositoryInfo.ErrorCodeStatus.MultipleVersionTagConflict );
+                i.ErrorCode.Should().Be( CommitInfo.ErrorCodeStatus.MultipleVersionTagConflict );
             }
         }
 
@@ -54,12 +54,12 @@ namespace SimpleGitVersion.Core.Tests
             var high = repoTest.Commits.Single( c => c.Message.StartsWith( "X-Commit." ) );
             var overrides = new TagsOverride();
             {
-                RepositoryInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
+                CommitInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
                 {
                     HeadCommit = high.Sha,
                     OverriddenTags = overrides.Add( high.Sha, "1.0.0+invalid" ).Add( high.Sha, "1.0.0-beta" ).Overrides,
                 } );
-                i.ErrorCode.Should().Be( RepositoryInfo.ErrorCodeStatus.None );
+                i.ErrorCode.Should().Be( CommitInfo.ErrorCodeStatus.None );
                 i.FinalVersion.ToString().Should().Be( "1.0.0-b" );
             }
         }
@@ -77,8 +77,8 @@ namespace SimpleGitVersion.Core.Tests
             {
                 var i = repoTest.GetRepositoryInfo( sc.Sha, overrides );
 
-                (i.ErrorCode == RepositoryInfo.ErrorCodeStatus.CIBuildHeadCommitIsDetached
-                 || i.ErrorCode == RepositoryInfo.ErrorCodeStatus.CIBuildMissingBranchOption).Should().BeTrue();
+                (i.ErrorCode == CommitInfo.ErrorCodeStatus.CIBuildHeadCommitIsDetached
+                 || i.ErrorCode == CommitInfo.ErrorCodeStatus.CIBuildMissingBranchOption).Should().BeTrue();
 
                 i.FinalVersion.Should().Be( SVersion.ZeroVersion );
                 i.PossibleVersions.Should().BeEquivalentTo( bb1Tag.GetDirectSuccessors() );
@@ -93,14 +93,14 @@ namespace SimpleGitVersion.Core.Tests
             Action<SimpleCommit> checkKO = sc =>
             {
                 var i = repoTest.GetRepositoryInfo( sc.Sha, overrides );
-                i.ErrorCode.Should().Be( RepositoryInfo.ErrorCodeStatus.CIBuildHeadCommitIsDetached );
+                i.ErrorCode.Should().Be( CommitInfo.ErrorCodeStatus.CIBuildHeadCommitIsDetached );
                 i.FinalVersion.Should().Be( SVersion.ZeroVersion );
                 i.PossibleVersions.Should().BeEmpty();
                 // Now tag the commit and checks that each tag is invalid.
                 foreach( var next in bb1Tag.GetDirectSuccessors() )
                 {
                     var iWithTag = repoTest.GetRepositoryInfo( sc.Sha, overrides.Add( sc.Sha, next.ToString() ) );
-                    iWithTag.ErrorCode.Should().Be( RepositoryInfo.ErrorCodeStatus.ReleaseTagIsNotPossible );
+                    iWithTag.ErrorCode.Should().Be( CommitInfo.ErrorCodeStatus.ReleaseTagIsNotPossible );
                     iWithTag.FinalVersion.Should().Be( SVersion.ZeroVersion );
                 }
             };
@@ -146,32 +146,32 @@ namespace SimpleGitVersion.Core.Tests
                                     .MutableAdd( cKO3.Sha, "2.0.2" );
 
             {
-                RepositoryInfo i = repoTest.GetRepositoryInfo( cOK.Sha, overrides );
+                CommitInfo i = repoTest.GetRepositoryInfo( cOK.Sha, overrides );
                 i.Error.Should().Match( "Release tag '*' is not valid here.*" );
             }
             {
-                RepositoryInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
+                CommitInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
                 {
                     HeadCommit = cOK.Sha,
                     OverriddenTags = overrides.Overrides,
                     StartingVersion = "4.0.3-beta"
                 } );
                 i.Error.Should().BeNull();
-                i.ErrorCode.Should().Be( RepositoryInfo.ErrorCodeStatus.None );
+                i.ErrorCode.Should().Be( CommitInfo.ErrorCodeStatus.None );
                 i.ReleaseTag.ToString().Should().Be( "4.0.3-b" );
                 i.FinalVersion.Should().BeSameAs( i.ReleaseTag );
                 i.PossibleVersions.Select( t => t.ToString() ).Should().BeEquivalentTo( new[] { "4.0.3-b" } );
             }
             {
                 var cAbove = repoTest.Commits.First( sc => sc.Message.StartsWith( "Second b/b2" ) );
-                RepositoryInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
+                CommitInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
                 {
                     HeadCommit = cAbove.Sha,
                     OverriddenTags = overrides.Overrides,
                     StartingVersion = "4.0.3-beta"
                 } );
-                i.ErrorCode.Should().Be( RepositoryInfo.ErrorCodeStatus.CIBuildHeadCommitIsDetached );
-                Assert.That( i.CommitInfo.BasicInfo.BestCommitBelow.ThisTag.ToString(), Is.EqualTo( "4.0.3-b" ) );
+                i.ErrorCode.Should().Be( CommitInfo.ErrorCodeStatus.CIBuildHeadCommitIsDetached );
+                Assert.That( i.DetailedCommitInfo.BasicInfo.BestCommitBelow.ThisTag.ToString(), Is.EqualTo( "4.0.3-b" ) );
                 i.Error.Should().NotBeNull();
                 i.FinalVersion.Should().Be( SVersion.ZeroVersion );
                 CollectionAssert.Contains( i.PossibleVersions.Select( t => t.ToString() ), "4.0.3-b00-01", "4.0.3-b01", "4.0.3-d", "4.0.3", "4.1.0-r", "4.1.0", "5.0.0" );
@@ -180,27 +180,27 @@ namespace SimpleGitVersion.Core.Tests
             // Commit before the StartingVersion has no PossibleVersions.
             {
                 var cBelow = repoTest.Commits.First( sc => sc.Message.StartsWith( "On master again" ) );
-                RepositoryInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
+                CommitInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
                 {
                     HeadCommit = cBelow.Sha,
                     OverriddenTags = overrides.Overrides,
                     StartingVersion = "4.0.3-beta"
                 } );
-                i.ErrorCode.Should().Be( RepositoryInfo.ErrorCodeStatus.CIBuildHeadCommitIsDetached );
-                i.CommitInfo.BasicInfo.Should().BeNull();
+                i.ErrorCode.Should().Be( CommitInfo.ErrorCodeStatus.CIBuildHeadCommitIsDetached );
+                i.DetailedCommitInfo.BasicInfo.Should().BeNull();
                 i.FinalVersion.Should().Be( SVersion.ZeroVersion );
                 i.PossibleVersions.Should().BeEmpty();
             }
             {
                 var cBelow = repoTest.Commits.First( sc => sc.Message.StartsWith( "Merge branch 'a' into b" ) );
-                RepositoryInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
+                CommitInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
                 {
                     HeadCommit = cBelow.Sha,
                     OverriddenTags = overrides.Overrides,
                     StartingVersion = "4.0.3-beta"
                 } );
-                i.ErrorCode.Should().Be( RepositoryInfo.ErrorCodeStatus.CIBuildHeadCommitIsDetached );
-                i.CommitInfo.BasicInfo.Should().BeNull();
+                i.ErrorCode.Should().Be( CommitInfo.ErrorCodeStatus.CIBuildHeadCommitIsDetached );
+                i.DetailedCommitInfo.BasicInfo.Should().BeNull();
                 i.FinalVersion.Should().Be( SVersion.ZeroVersion );
                 i.PossibleVersions.Should().BeEmpty();
             }
@@ -224,12 +224,12 @@ namespace SimpleGitVersion.Core.Tests
 
             // cReleased has already been released by its 1.0.0-beta parent.
             {
-                RepositoryInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
+                CommitInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
                 {
                     HeadCommit = cReleased.Sha,
                     OverriddenTags = overrides.Overrides
                 } );
-                i.ErrorCode.Should().Be( RepositoryInfo.ErrorCodeStatus.CIBuildMissingBranchOption );
+                i.ErrorCode.Should().Be( CommitInfo.ErrorCodeStatus.CIBuildMissingBranchOption );
                 i.StartingCommit.ConsideredBranchNames.Should().BeEquivalentTo( "parallel-world" );
                 i.BestCommitBelow.ThisTag.Should().Be( v1beta );
                 i.AlreadyExistingVersion.ThisTag.Should().Be( v1beta );
@@ -238,12 +238,12 @@ namespace SimpleGitVersion.Core.Tests
             }
             // Trying to release it is an error because of the AlreadyExistingVersion.
             {
-                RepositoryInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
+                CommitInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
                 {
                     HeadCommit = cReleased.Sha,
                     OverriddenTags = overrides.Add( cReleased.Sha, "v1.0.0-rc" ).Overrides
                 } );
-                i.ErrorCode.Should().Be( RepositoryInfo.ErrorCodeStatus.AlreadyExistingVersion );
+                i.ErrorCode.Should().Be( CommitInfo.ErrorCodeStatus.AlreadyExistingVersion );
                 i.Error.Should().StartWith( "This commit has already been released with version '1.0.0-b', by commit '" );
                 i.BestCommitBelow.ThisTag.Should().Be( v1beta );
                 i.AlreadyExistingVersion.ThisTag.Should().Be( v1beta );
@@ -253,22 +253,22 @@ namespace SimpleGitVersion.Core.Tests
 
             // Same but with IgnoreAlreadyExistingVersion = true.
             {
-                RepositoryInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
+                CommitInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
                 {
                     IgnoreAlreadyExistingVersion = true,
                     HeadCommit = cReleased.Sha,
                     OverriddenTags = overrides.Overrides
                 } );
-                i.ErrorCode.Should().Be( RepositoryInfo.ErrorCodeStatus.CIBuildMissingBranchOption );
+                i.ErrorCode.Should().Be( CommitInfo.ErrorCodeStatus.CIBuildMissingBranchOption );
                 i.Error.Should().StartWith( "No release tag found and CI build is not possible: no CI Branch information defined for branch 'parallel-world'." );
                 i.AlreadyExistingVersion.CommitSha.Should().Be( cAlpha.Sha );
-                i.CommitInfo.BasicInfo.BestCommitBelow.ThisTag.Should().Be( v1beta );
+                i.DetailedCommitInfo.BasicInfo.BestCommitBelow.ThisTag.Should().Be( v1beta );
                 i.ReleaseTag.Should().BeNull();
                 i.PossibleVersions.Should().BeEquivalentTo( v1beta.GetDirectSuccessors(), "The possible versions are not reset by the existing AlreadyExistingVersion." );
             }
             // Releasing it is possible.
             {
-                RepositoryInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
+                CommitInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
                 {
                     IgnoreAlreadyExistingVersion = true,
                     HeadCommit = cReleased.Sha,
@@ -301,7 +301,7 @@ namespace SimpleGitVersion.Core.Tests
 
             // This is "normal": cReleased has 1.0.0-beta in its parent.
             {
-                RepositoryInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
+                CommitInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
                 {
                     HeadCommit = cReleased.Sha,
                     OverriddenTags = overrides.Overrides
@@ -313,7 +313,7 @@ namespace SimpleGitVersion.Core.Tests
                 i.PossibleVersions.Should().BeEmpty( "Since there is a AlreadyExistingVersion." );
             }
             {
-                RepositoryInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
+                CommitInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
                 {
                     HeadCommit = cReleased.Sha,
                     IgnoreAlreadyExistingVersion = true,
@@ -338,7 +338,7 @@ namespace SimpleGitVersion.Core.Tests
 
             overrides.MutableAdd( cReleased.Sha, "2.0.0" );
             {
-                RepositoryInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
+                CommitInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
                 {
                     HeadCommit = cReleased.Sha,
                     OverriddenTags = overrides.Overrides
@@ -349,7 +349,7 @@ namespace SimpleGitVersion.Core.Tests
             }
             // Use the StartingVersion:
             {
-                RepositoryInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
+                CommitInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
                 {
                     StartingVersion = "2.0.0",
                     HeadCommit = cReleased.Sha,
@@ -361,13 +361,13 @@ namespace SimpleGitVersion.Core.Tests
             }
             // Using IgnoreAlreadyExistingVersion is not enough: 1.0.0-b cannot be followed by 2.0.0.
             {
-                RepositoryInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
+                CommitInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
                 {
                     IgnoreAlreadyExistingVersion = true,
                     HeadCommit = cReleased.Sha,
                     OverriddenTags = overrides.Overrides
                 } );
-                i.ErrorCode.Should().Be( RepositoryInfo.ErrorCodeStatus.ReleaseTagIsNotPossible );
+                i.ErrorCode.Should().Be( CommitInfo.ErrorCodeStatus.ReleaseTagIsNotPossible );
                 i.Error.Should().StartWith( "Release tag '2.0.0' is not valid here." );
                 i.ReleaseTag.ToString().Should().Be( "2.0.0" );
                 i.FinalVersion.Should().Be( SVersion.ZeroVersion );
@@ -375,7 +375,7 @@ namespace SimpleGitVersion.Core.Tests
             // Subsequent developments of alpha branch now starts after 2.0.0, for instance 2.1.0-beta.
             overrides.MutableAdd( cAlphaContinue.Sha, "2.1.0-beta" );
             {
-                RepositoryInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
+                CommitInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
                 {
                     HeadCommit = cAlphaContinue.Sha,
                     OverriddenTags = overrides.Overrides
@@ -413,7 +413,7 @@ namespace SimpleGitVersion.Core.Tests
             // cRoot - v1.0.0
 
             {
-                RepositoryInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
+                CommitInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
                 {
                     HeadCommit = cDevInAlpha.Sha,
                     OverriddenTags = overrides.Overrides
@@ -431,7 +431,7 @@ namespace SimpleGitVersion.Core.Tests
             //   | /
             // cRoot - v1.0.0
             {
-                RepositoryInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
+                CommitInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
                 {
                     HeadCommit = cDevInBeta.Sha,
                     OverriddenTags = overrides.Overrides
@@ -449,7 +449,7 @@ namespace SimpleGitVersion.Core.Tests
             //   | /
             // cRoot - v1.0.0
             {
-                RepositoryInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
+                CommitInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
                 {
                     HeadCommit = cDevInGamma.Sha,
                     OverriddenTags = overrides.Overrides
@@ -458,7 +458,7 @@ namespace SimpleGitVersion.Core.Tests
             }
             // On "gamma" branch, the head is 7 commits ahead of the v2.0.0 tag: this is the longest path. 
             {
-                RepositoryInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
+                CommitInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
                 {
                     HeadBranchName = "gamma",
                     OverriddenTags = overrides.Overrides,
@@ -473,7 +473,7 @@ namespace SimpleGitVersion.Core.Tests
             }
             // Testing "gamma" branch in ZeroTimed mode. 
             {
-                RepositoryInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
+                CommitInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
                 {
                     HeadBranchName = "gamma",
                     OverriddenTags = overrides.Overrides,
@@ -489,7 +489,7 @@ namespace SimpleGitVersion.Core.Tests
             }
             // On "alpha" branch, the head is 6 commits ahead of the v2.0.0 tag (always the take the longest path). 
             {
-                RepositoryInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
+                CommitInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
                 {
                     HeadBranchName = "alpha",
                     OverriddenTags = overrides.Overrides,
@@ -505,7 +505,7 @@ namespace SimpleGitVersion.Core.Tests
             }
             // Testing "alpha" branch in ZeroTimed mode.  
             {
-                RepositoryInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
+                CommitInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
                 {
                     HeadBranchName = "alpha",
                     OverriddenTags = overrides.Overrides,
@@ -520,7 +520,7 @@ namespace SimpleGitVersion.Core.Tests
             }
             // On "beta" branch, the head is 6 commits ahead of the v2.0.0 tag. 
             {
-                RepositoryInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
+                CommitInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
                 {
                     HeadBranchName = "beta",
                     OverriddenTags = overrides.Overrides,
@@ -535,7 +535,7 @@ namespace SimpleGitVersion.Core.Tests
             }
             // Testing ZeroTimed mode on "beta" branch. 
             {
-                RepositoryInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
+                CommitInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
                 {
                     HeadBranchName = "beta",
                     OverriddenTags = overrides.Overrides,
@@ -562,7 +562,7 @@ namespace SimpleGitVersion.Core.Tests
             var cDevInAlpha = repoTest.Commits.Single( sc => sc.Message.StartsWith( "Dev in Alpha." ) );
             var overrides = new TagsOverride().MutableAdd( cDevInAlpha.Sha, vOnDevInAlpha );
             {
-                RepositoryInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
+                CommitInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
                 {
                     HeadBranchName = branchName,
                     OverriddenTags = overrides.Overrides,
@@ -626,7 +626,7 @@ namespace SimpleGitVersion.Core.Tests
                 .MutableAdd( cDevInAlpha.Sha, vDevInAlpha );
 
             {
-                RepositoryInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
+                CommitInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
                 {
                     HeadBranchName = branchName,
                     OverriddenTags = overrides.Overrides,
@@ -658,7 +658,7 @@ namespace SimpleGitVersion.Core.Tests
             {
                 var options = new RepositoryInfoOptions();
 
-                RepositoryInfo info;
+                CommitInfo info;
 
                 info = repoTest.GetRepositoryInfo( options );
                 Assert.That( info.IsDirty, Is.False );
@@ -694,7 +694,7 @@ namespace SimpleGitVersion.Core.Tests
 
             try
             {
-                RepositoryInfo info;
+                CommitInfo info;
                 var options = new RepositoryInfoOptions();
                 info = repoTest.GetRepositoryInfo( options );
                 Assert.That( info.IsDirty, Is.False, "Working folder is clean." );
@@ -812,14 +812,14 @@ namespace SimpleGitVersion.Core.Tests
             // cD     +          v4.3.2
 
             {
-                RepositoryInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
+                CommitInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
                 {
                     OverriddenTags = overrides.Overrides,
                     HeadCommit = cFix.Sha
                 } );
                 // On the fumble commit, no release is possible.
                 // Above the fumble commit, any successor of the 5.0.0 is possible.
-                i.ErrorCode.Should().Be( RepositoryInfo.ErrorCodeStatus.CIBuildHeadCommitIsDetached );
+                i.ErrorCode.Should().Be( CommitInfo.ErrorCodeStatus.CIBuildHeadCommitIsDetached );
                 i.Error.Should().StartWith( "No release tag found and CI build is not possible: no branches reference the specified commit 'e6766d127f9a2df42567151222c6569601614626'." );
                 i.AlreadyExistingVersion.ThisTag.Should().Be( v5 );
                 i.PossibleVersions.Should().BeEmpty();
@@ -827,12 +827,12 @@ namespace SimpleGitVersion.Core.Tests
             }
             {
                 // Above the fix of the fumble commit, any successor of the 5.0.0 is possible.
-                RepositoryInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
+                CommitInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
                 {
                     OverriddenTags = overrides.Overrides,
                     HeadCommit = cX.Sha
                 } );
-                i.ErrorCode.Should().Be( RepositoryInfo.ErrorCodeStatus.CIBuildMissingBranchOption );
+                i.ErrorCode.Should().Be( CommitInfo.ErrorCodeStatus.CIBuildMissingBranchOption );
                 i.Error.Should().StartWith( "No release tag found and CI build is not possible: no CI Branch information defined for branch 'fumble-develop'." );
                 i.AlreadyExistingVersion.Should().BeNull();
                 i.PossibleVersions.Should().BeEquivalentTo( v5.GetDirectSuccessors() );
@@ -891,7 +891,7 @@ namespace SimpleGitVersion.Core.Tests
             var v10 = CSVersion.TryParse( "v10.0.0" );
             {
                 // On cFix, Without SingleMajor = 5, v10 wins. 
-                RepositoryInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
+                CommitInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
                 {
                     IgnoreAlreadyExistingVersion = true,
                     OverriddenTags = overrides.Overrides,
@@ -901,7 +901,7 @@ namespace SimpleGitVersion.Core.Tests
                 i.BestCommitBelow.ThisTag.ToString().Should().Be( "10.0.0" );
                 i.PossibleVersions.Should().BeEquivalentTo( v10.GetDirectSuccessors() );
                 
-                RepositoryInfo iLTS = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
+                CommitInfo iLTS = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
                 {
                     IgnoreAlreadyExistingVersion = true,
                     OverriddenTags = overrides.Overrides,
@@ -917,14 +917,14 @@ namespace SimpleGitVersion.Core.Tests
                 var v44a01 = CSVersion.TryParse( "v4.4.0-alpha.0.1" );
                 var v44a1 = CSVersion.TryParse( "v4.4.0-alpha.1" );
                 var v500 = CSVersion.TryParse( "v5.0.0" );
-                RepositoryInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
+                CommitInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
                 {
                     OverriddenTags = overrides.Overrides,
                     HeadCommit = cB.Sha
                 } );
                 i.PossibleVersions.Should().BeEquivalentTo( v10.GetDirectSuccessors() );
 
-                RepositoryInfo iLTS = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
+                CommitInfo iLTS = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
                 {
                     OverriddenTags = overrides.Overrides,
                     HeadCommit = cB.Sha,
@@ -940,7 +940,7 @@ namespace SimpleGitVersion.Core.Tests
                 // existing v5.0.0-rc) because its content is tagged with v4.4.0-alpha.
                 var v432 = CSVersion.TryParse( "v4.3.2" );
                 var v44a = CSVersion.TryParse( "v4.4.0-alpha" );
-                RepositoryInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
+                CommitInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
                 {
                     IgnoreAlreadyExistingVersion = true,
                     OverriddenTags = overrides.Overrides,
@@ -962,7 +962,7 @@ namespace SimpleGitVersion.Core.Tests
             var overrides = new TagsOverride().MutableAdd( cRealDevInAlpha.Sha, "1.0.0" )
                                               .MutableAdd( cRealDevInAlpha.Sha, "2.0.0" );
             {
-                RepositoryInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
+                CommitInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
                 {
                     HeadCommit = cRealDevInAlpha.Sha,
                     OverriddenTags = overrides.Overrides,
@@ -971,7 +971,7 @@ namespace SimpleGitVersion.Core.Tests
                 i.Error.Trim().Should().Be( $"Commit '{cRealDevInAlpha.Sha}' has 2 different released version tags. Delete some of them or create +invalid tag(s) if they are already pushed to a remote repository." );
             }
             {
-                RepositoryInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
+                CommitInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
                 {
                     HeadCommit = cRealDevInAlpha.Sha,
                     OverriddenTags = overrides.Overrides,
@@ -989,9 +989,9 @@ namespace SimpleGitVersion.Core.Tests
             var repoTest = TestHelper.TestGitRepository;
             {
                 var cOrphan = repoTest.Commits.Single( sc => sc.Message.StartsWith( "First in parallel world." ) );
-                RepositoryInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions { HeadCommit = cOrphan.Sha } );
-                i.CommitInfo.BasicInfo.Should().BeNull();
-                i.CommitInfo.PossibleVersions.Should().BeEquivalentTo( CSVersion.FirstPossibleVersions );
+                CommitInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions { HeadCommit = cOrphan.Sha } );
+                i.DetailedCommitInfo.BasicInfo.Should().BeNull();
+                i.DetailedCommitInfo.PossibleVersions.Should().BeEquivalentTo( CSVersion.FirstPossibleVersions );
                 i.CIRelease.Should().BeNull();
             }
             {
@@ -1004,9 +1004,9 @@ namespace SimpleGitVersion.Core.Tests
                     }
                 };
 
-                RepositoryInfo i = repoTest.GetRepositoryInfo( options );
-                i.CommitInfo.BasicInfo.Should().BeNull();
-                i.CommitInfo.PossibleVersions.Should().BeEquivalentTo( CSVersion.FirstPossibleVersions );
+                CommitInfo i = repoTest.GetRepositoryInfo( options );
+                i.DetailedCommitInfo.BasicInfo.Should().BeNull();
+                i.DetailedCommitInfo.PossibleVersions.Should().BeEquivalentTo( CSVersion.FirstPossibleVersions );
                 i.CIRelease.Should().NotBeNull();
             }
         }

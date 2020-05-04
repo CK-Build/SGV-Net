@@ -14,11 +14,11 @@ namespace SimpleGitVersion
     /// the <see cref="SVersion.ZeroVersion"/> if an <see cref="Error"/> occurred).
     /// </para>
     /// </summary>
-    public interface IRepositoryInfo
+    public interface ICommitInfo
     {
         /// <summary>
-        /// Gets either <see cref="RepositoryInfo.StartingCommitInfo.Error"/> or a subsequent analysis error.
-        /// Null if no error occurred.
+        /// Gets any error that may have prevented a <see cref="CommitBuildInfoExtension.IsValid(ICommitBuildInfo)">valid</see>
+        /// <see cref="FinalBuildInfo"/> to be obtained.
         /// </summary>
         string? Error { get; }
 
@@ -30,11 +30,8 @@ namespace SimpleGitVersion
 
         /// <summary>
         /// Gets CI informations if a CI release can be done: <see cref="ReleaseTag"/> is necessarily null.
-        /// Not null only if we are on a branch that is enabled in <see cref="RepositoryInfoOptions.Branches"/> (either 
-        /// because it is the current branch or <see cref="RepositoryInfoOptions.HeadBranchName"/> specifies it),
-        /// and the <see cref="RepositoryInfoOptions.HeadCommit"/> is null or empty.
         /// </summary>
-        CIReleaseInfo? CIRelease { get; }
+        ICIReleaseInfo? CIRelease { get; }
 
         /// <summary>
         /// Gets the commit with the version for that exact same content if it exists.

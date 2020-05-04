@@ -39,7 +39,7 @@ namespace SimpleGitVersion.Core.Tests
         [Test]
         public void testing_SRepositoryInfo_on_this_repository()
         {
-            var info = RepositoryInfo.LoadFromPath( new ConsoleLogger(), TestHelper.SolutionFolder, (logger, hasRepoXml,opt) =>
+            var info = CommitInfo.LoadFromPath( new ConsoleLogger(), TestHelper.SolutionFolder, (logger, hasRepoXml,opt) =>
             {
                 logger.Info( "Ignoring DirtyWorkingFolder check." );
                 opt.IgnoreDirtyWorkingFolder = true;
@@ -51,7 +51,7 @@ namespace SimpleGitVersion.Core.Tests
         [Explicit]
         public void testing_SimpleGitRepositoryInfo_on_other_repository()
         {
-            var info = RepositoryInfo.LoadFromPath( new ConsoleLogger(), @"C:\Dev\CK\CK-Core-Projects\CK-Text" );
+            var info = CommitInfo.LoadFromPath( new ConsoleLogger(), @"C:\Dev\CK\CK-Core-Projects\CK-Text" );
             Console.WriteLine( $"This repo's InformationalVersion: '{info.FinalInformationalVersion}'." );
         }
     }

@@ -5,7 +5,7 @@ using CSemVer;
 namespace SimpleGitVersion
 {
 
-    public partial class RepositoryInfo
+    public partial class CommitInfo
     {
         ICommitBuildInfo? _commitBuildInfo;
 
@@ -32,9 +32,9 @@ namespace SimpleGitVersion
 
         class RepoCommitBuildInfo : ICommitBuildInfo
         {
-            readonly RepositoryInfo _info;
+            readonly CommitInfo _info;
 
-            public RepoCommitBuildInfo( RepositoryInfo info )
+            public RepoCommitBuildInfo( CommitInfo info )
             {
                 Debug.Assert( info != null );
                 _info = info;

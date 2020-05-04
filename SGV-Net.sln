@@ -24,6 +24,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CodeCakeBuilder", "CodeCake
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SimpleGitVersion.Core", "SimpleGitVersion.Core\SimpleGitVersion.Core.csproj", "{399B4720-DA22-4435-8FA4-ECCE1BDBEBB4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleGitVersion.Abstractions", "SimpleGitVersion.Abstractions\SimpleGitVersion.Abstractions.csproj", "{2A7A9DF5-2B75-4CFF-A494-8DD117B3A3C7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -46,6 +48,10 @@ Global
 		{399B4720-DA22-4435-8FA4-ECCE1BDBEBB4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{399B4720-DA22-4435-8FA4-ECCE1BDBEBB4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{399B4720-DA22-4435-8FA4-ECCE1BDBEBB4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2A7A9DF5-2B75-4CFF-A494-8DD117B3A3C7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2A7A9DF5-2B75-4CFF-A494-8DD117B3A3C7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2A7A9DF5-2B75-4CFF-A494-8DD117B3A3C7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2A7A9DF5-2B75-4CFF-A494-8DD117B3A3C7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

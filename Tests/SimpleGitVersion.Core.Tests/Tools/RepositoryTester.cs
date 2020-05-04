@@ -32,14 +32,14 @@ namespace SimpleGitVersion
             }
         }
 
-        public RepositoryInfo GetRepositoryInfo( RepositoryInfoOptions options = null )
+        public CommitInfo GetRepositoryInfo( RepositoryInfoOptions options = null )
         {
-            return RepositoryInfo.LoadFromPath( Path, options );
+            return CommitInfo.LoadFromPath( Path, options );
         }
         
-        public RepositoryInfo GetRepositoryInfo( string headCommit, TagsOverride tags = null )
+        public CommitInfo GetRepositoryInfo( string headCommit, TagsOverride tags = null )
         {
-            return RepositoryInfo.LoadFromPath( Path, new RepositoryInfoOptions { HeadCommit = headCommit, OverriddenTags = tags != null ? tags.Overrides : null } );
+            return CommitInfo.LoadFromPath( Path, new RepositoryInfoOptions { HeadCommit = headCommit, OverriddenTags = tags != null ? tags.Overrides : null } );
         }
     }
 }

@@ -16,12 +16,12 @@ namespace SimpleGitVersion.Core.Tests
         {
             var repoTest = TestHelper.TestGitRepository;
             {
-                RepositoryInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
+                CommitInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
                 {
                     HeadBranchName = "parallel-world",
                     CheckExistingVersions = true
                 } );
-                i.ErrorCode.Should().Be( RepositoryInfo.ErrorCodeStatus.CIBuildMissingBranchOption );
+                i.ErrorCode.Should().Be( CommitInfo.ErrorCodeStatus.CIBuildMissingBranchOption );
                 i.PossibleVersions.Should().BeEquivalentTo( CSVersion.FirstPossibleVersions );
             }
         }
@@ -36,22 +36,22 @@ namespace SimpleGitVersion.Core.Tests
 
             // Missing.
             {
-                RepositoryInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
+                CommitInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
                 {
                     CheckExistingVersions = true,
                     OverriddenTags = overrides.Add( high.Sha, "2.0.0" ).Overrides,
                 } );
-                i.ErrorCode.Should().Be( RepositoryInfo.ErrorCodeStatus.CheckExistingVersionFirstMissing );
+                i.ErrorCode.Should().Be( CommitInfo.ErrorCodeStatus.CheckExistingVersionFirstMissing );
             }
             foreach( var oneFirst in CSVersion.FirstPossibleVersions )
             {
-                RepositoryInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
+                CommitInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
                 {
                     HeadBranchName = "origin/fumble-develop",
                     OverriddenTags = overrides.Add( high.Sha, oneFirst.ToString() ).Overrides,
                     CheckExistingVersions = true
                 } );
-                i.ErrorCode.Should().Be( RepositoryInfo.ErrorCodeStatus.None );
+                i.ErrorCode.Should().Be( CommitInfo.ErrorCodeStatus.None );
                 i.FinalVersion.Should().Be( oneFirst );
             }
         }
@@ -67,24 +67,24 @@ namespace SimpleGitVersion.Core.Tests
 
             // Missing.
             {
-                RepositoryInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
+                CommitInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
                 {
                     StartingVersion = "1.5.0",
                     CheckExistingVersions = true,
                     OverriddenTags = overrides.Add( high.Sha, "2.0.0" ).Overrides,
                 } );
-                i.ErrorCode.Should().Be( RepositoryInfo.ErrorCodeStatus.CheckExistingVersionStartingVersionNotFound );
+                i.ErrorCode.Should().Be( CommitInfo.ErrorCodeStatus.CheckExistingVersionStartingVersionNotFound );
             }
             // With the StartingVersion.
             {
-                RepositoryInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
+                CommitInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
                 {
                     StartingVersion = "1.5.0",
                     CheckExistingVersions = true,
                     OverriddenTags = overrides.Add( medium.Sha, "1.5.0" ).Add( high.Sha, "2.0.0" ).Overrides,
                     HeadCommit = high.Sha
                 } );
-                i.ErrorCode.Should().Be( RepositoryInfo.ErrorCodeStatus.None );
+                i.ErrorCode.Should().Be( CommitInfo.ErrorCodeStatus.None );
                 i.FinalVersion.ToString().Should().Be( "2.0.0" );
             }
         }
@@ -99,28 +99,28 @@ namespace SimpleGitVersion.Core.Tests
             var low = repoTest.Commits.Single( c => c.Message.StartsWith( "D-Commit." ) );
             var overrides = new TagsOverride();
             {
-                RepositoryInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
+                CommitInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
                 {
                     CheckExistingVersions = true,
                     OverriddenTags = overrides.Add( low.Sha, "2.0.0" ).Add( medium.Sha, "1.1.0" ).Add( high.Sha, "1.0.0" ).Overrides,
                 } );
-                i.ErrorCode.Should().NotBe( RepositoryInfo.ErrorCodeStatus.CheckExistingVersionHoleFound, "There's no hole here (even if they are not in the right order!)." );
+                i.ErrorCode.Should().NotBe( CommitInfo.ErrorCodeStatus.CheckExistingVersionHoleFound, "There's no hole here (even if they are not in the right order!)." );
             }
             {
-                RepositoryInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
+                CommitInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
                 {
                     CheckExistingVersions = true,
                     OverriddenTags = overrides.Add( low.Sha, "2.0.0" ).Add( medium.Sha, "1.5.0" ).Add( high.Sha, "1.0.0" ).Overrides,
                 } );
-                i.ErrorCode.Should().Be( RepositoryInfo.ErrorCodeStatus.CheckExistingVersionHoleFound, "Here, somethinh is missing between 1.5.0 and 1.0.0." );
+                i.ErrorCode.Should().Be( CommitInfo.ErrorCodeStatus.CheckExistingVersionHoleFound, "Here, somethinh is missing between 1.5.0 and 1.0.0." );
             }
             {
-                RepositoryInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
+                CommitInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
                 {
                     CheckExistingVersions = true,
                     OverriddenTags = overrides.Add( low.Sha, "4.0.0" ).Add( medium.Sha, "3.0.0" ).Add( high.Sha, "1.0.0" ).Overrides,
                 } );
-                i.ErrorCode.Should().Be( RepositoryInfo.ErrorCodeStatus.CheckExistingVersionHoleFound, "Here, somethinh is missing between 3.0.0 and 1.0.0." );
+                i.ErrorCode.Should().Be( CommitInfo.ErrorCodeStatus.CheckExistingVersionHoleFound, "Here, somethinh is missing between 3.0.0 and 1.0.0." );
             }
         }
 

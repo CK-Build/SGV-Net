@@ -16,7 +16,7 @@ namespace SimpleGitVersion
     /// It can be obtained by calling static helper <see cref="LoadFromPath(string, RepositoryInfoOptions)"/>
     /// (a <see cref="Repository"/> is created and disposed) or by using its constructor.
     /// </summary>
-    public partial class RepositoryInfo : IRepositoryInfo
+    public partial class CommitInfo : ICommitInfo
     {
         /// <summary>
         /// Gets the solution directory: the one that contains the .git folder.
@@ -30,13 +30,13 @@ namespace SimpleGitVersion
 
         /// <summary>
         /// Gets the initial commit analysis result.
-        /// Its <see cref="StartingCommitInfo.Error"/> holds the primary error that may prevent any further analysis.
+        /// Its <see cref="InitialInfo.Error"/> holds the primary error that may prevent any further analysis.
         /// </summary>
-        public readonly StartingCommitInfo StartingCommit;
+        public readonly InitialInfo StartingCommit;
 
         /// <summary>
         /// Error code of the <see cref="Error"/>.
-        /// This is local to this <see cref="RepositoryInfo"/> and should not be exposed on the <see cref="IRepositoryInfo"/> abstraction
+        /// This is local to this <see cref="CommitInfo"/> and should not be exposed on the <see cref="ICommitInfo"/> abstraction
         /// since this captures implementation related aspects.
         /// </summary>
         public enum ErrorCodeStatus
@@ -119,7 +119,7 @@ namespace SimpleGitVersion
             ReleaseTagConflictsWithSingleMajorOrOnlyPatch,
 
             /// <summary>
-            /// The existing version tag does not belong to the set of <see cref="RepositoryInfo.PossibleVersions"/>.
+            /// The existing version tag does not belong to the set of <see cref="CommitInfo.PossibleVersions"/>.
             /// </summary>
             ReleaseTagIsNotPossible,
 
@@ -211,17 +211,17 @@ namespace SimpleGitVersion
         public CSVersion? ReleaseTag { get; }
 
         /// <summary>
-        /// Gets the <see cref="SimpleGitVersion.CommitInfo"/> of the current commit point.
+        /// Gets the <see cref="SimpleGitVersion.DetailedCommitInfo"/> of the current commit point.
         /// Null if there is a <see cref="Error"/> that prevented its computation.
         /// </summary>
-        public readonly CommitInfo? CommitInfo;
+        public readonly DetailedCommitInfo? DetailedCommitInfo;
 
         /// <summary>
         /// When empty, this means that there cannot be a valid release tag on the current commit point.
         /// Null when an <see cref="Error"/> prevented its computation.
         /// This is the set of filtered versions (<see cref="RepositoryInfoOptions.SingleMajor"/>
         /// and <see cref="RepositoryInfoOptions.OnlyPatch"/> options are applied
-        /// on <see cref="CommitInfo"/>.<see cref="CommitInfo.PossibleVersions">PossibleVersions</see>).
+        /// on <see cref="DetailedCommitInfo"/>.<see cref="DetailedCommitInfo.PossibleVersions">PossibleVersions</see>).
         /// </summary>
         public IReadOnlyList<CSVersion>? PossibleVersions { get; }
 
@@ -230,13 +230,18 @@ namespace SimpleGitVersion
         /// Null when a <see cref="StartingCommit"/>'s error or a subsequent analysis error prevented its computation.
         /// This is the set of filtered versions (<see cref="RepositoryInfoOptions.SingleMajor"/>
         /// and <see cref="RepositoryInfoOptions.OnlyPatch"/> options are applied
-        /// on <see cref="CommitInfo"/>.<see cref="CommitInfo.NextPossibleVersions">NextPossibleVersions</see>).
+        /// on <see cref="DetailedCommitInfo"/>.<see cref="DetailedCommitInfo.NextPossibleVersions">NextPossibleVersions</see>).
         /// Empty if there is a <see cref="Error"/> that prevented its computation.
         /// </summary>
         public IReadOnlyList<CSVersion>? NextPossibleVersions { get; }
 
-        /// <inheritdoc />
-        public CIReleaseInfo? CIRelease { get; }
+        /// <summary>
+        /// Gets CI informations if a CI release can be done: <see cref="ReleaseTag"/> is necessarily null.
+        /// Not null only if we are on a branch that is enabled in <see cref="RepositoryInfoOptions.Branches"/> (either 
+        /// because it is the current branch or <see cref="RepositoryInfoOptions.HeadBranchName"/> specifies it),
+        /// and the <see cref="RepositoryInfoOptions.HeadCommit"/> is null or empty.
+        /// </summary>
+        public ICIReleaseInfo? CIRelease { get; }
 
         /// <summary>
         /// Gets the final version (always CSVersion short form) that must be used to build this commit point.
@@ -270,15 +275,15 @@ namespace SimpleGitVersion
         public readonly string? CommitSha;
 
         /// <summary>
-        /// Initializes a new <see cref="RepositoryInfo"/> on a LibGit2Sharp <see cref="Repository"/>.
+        /// Initializes a new <see cref="CommitInfo"/> on a LibGit2Sharp <see cref="Repository"/>.
         /// </summary>
         /// <param name="r">The repository (can be invalid and even null).</param>
         /// <param name="options">Optional options.</param>
-        public RepositoryInfo( Repository? r, RepositoryInfoOptions? options = null )
+        public CommitInfo( Repository? r, RepositoryInfoOptions? options = null )
         {
             CommitDateUtc = InformationalVersion.ZeroCommitDate;
             SVersion? finalVersion = null;
-            StartingCommit = new StartingCommitInfo( options ??= new RepositoryInfoOptions(), r );
+            StartingCommit = new InitialInfo( options ??= new RepositoryInfoOptions(), r );
             if( StartingCommit.Error != null )
             {
                 Debug.Assert( StartingCommit.ErrorCode != ErrorCodeStatus.None );
@@ -320,8 +325,8 @@ namespace SimpleGitVersion
                         Debug.Assert( collector.ExistingVersions != null );
 
                         ExistingVersions = collector.ExistingVersions.TagCommits;
-                        CommitInfo info = collector.GetCommitInfo( commit );
-                        CommitInfo = info;
+                        DetailedCommitInfo info = collector.GetCommitInfo( commit );
+                        DetailedCommitInfo = info;
                         AlreadyExistingVersion = info.AlreadyExistingVersion;
                         BestCommitBelow = info.BestCommitBelow;
 
@@ -468,7 +473,7 @@ namespace SimpleGitVersion
         }
 
         /// <summary>
-        /// Logs messages that express the state of this <see cref="RepositoryInfo"/>.
+        /// Logs messages that express the state of this <see cref="CommitInfo"/>.
         /// </summary>
         /// <param name="logger">A target logger.</param>
         public void Explain( ILogger logger )
@@ -477,12 +482,12 @@ namespace SimpleGitVersion
             if( Error != null )
             {
                 logger.Error( Error );
-                if( CommitInfo != null ) LogCommitInfo( logger );
+                if( DetailedCommitInfo != null ) LogCommitInfo( logger );
                 if( PossibleVersions != null ) LogPossibleVersions( logger );
             }
             else
             {
-                Debug.Assert( CommitInfo != null );
+                Debug.Assert( DetailedCommitInfo != null );
                 Debug.Assert( FinalVersion != null && FinalVersion != SVersion.ZeroVersion );
                 if( IsDirty )
                 {
@@ -505,7 +510,7 @@ namespace SimpleGitVersion
 
             void LogCommitInfo( ILogger logger )
             {
-                var basic = CommitInfo.BasicInfo;
+                var basic = DetailedCommitInfo.BasicInfo;
                 if( basic == null )
                 {
                     logger.Info( "No version information found on or below this commit." );
@@ -656,29 +661,29 @@ namespace SimpleGitVersion
         }
 
         /// <summary>
-        /// Creates a new <see cref="RepositoryInfo"/> based on a path (that can be below the folder with the '.git' sub folder). 
+        /// Creates a new <see cref="CommitInfo"/> based on a path (that can be below the folder with the '.git' sub folder). 
         /// </summary>
         /// <param name="path">The path to lookup.</param>
         /// <param name="options">Optional <see cref="RepositoryInfoOptions"/>.</param>
         /// <returns>An immutable RepositoryInfo instance. Never null.</returns>
-        public static RepositoryInfo LoadFromPath( string path, RepositoryInfoOptions? options = null )
+        public static CommitInfo LoadFromPath( string path, RepositoryInfoOptions? options = null )
         {
             if( path == null ) throw new ArgumentNullException( nameof( path ) );
             path = Repository.Discover( path );
             using( var repo = path != null ? new Repository( path ) : null )
             {
-                return new RepositoryInfo( repo, options );
+                return new CommitInfo( repo, options );
             }
         }
 
         /// <summary>
-        /// Creates a new <see cref="RepositoryInfo"/> based on a path (that can be below the folder with the '.git' sub folder)
+        /// Creates a new <see cref="CommitInfo"/> based on a path (that can be below the folder with the '.git' sub folder)
         /// and a function that can create a <see cref="RepositoryInfoOptions"/> from the actual Git repository path. 
         /// </summary>
         /// <param name="path">The path to lookup.</param>
         /// <param name="optionsBuilder">Function that can create a <see cref="RepositoryInfoOptions"/> from the Git working directory (the Solution folder).</param>
         /// <returns>An immutable RepositoryInfo instance. Never null.</returns>
-        public static RepositoryInfo LoadFromPath( string path, Func<string,RepositoryInfoOptions> optionsBuilder )
+        public static CommitInfo LoadFromPath( string path, Func<string,RepositoryInfoOptions> optionsBuilder )
         {
             if( path == null ) throw new ArgumentNullException( nameof( path ) );
             if( optionsBuilder == null ) throw new ArgumentNullException( nameof( optionsBuilder ) );
@@ -686,14 +691,14 @@ namespace SimpleGitVersion
             path = Repository.Discover( path );
             using( var repo = path != null ? new Repository( path ) : null )
             {
-                if( repo == null ) return new RepositoryInfo( null, null );
-                return new RepositoryInfo( repo, optionsBuilder( repo.Info.WorkingDirectory ) );
+                if( repo == null ) return new CommitInfo( null, null );
+                return new CommitInfo( repo, optionsBuilder( repo.Info.WorkingDirectory ) );
             }
         }
 
 
         /// <summary>
-        /// Creates a new <see cref="RepositoryInfo"/> based on a path (that can be below the folder with the '.git' sub folder). 
+        /// Creates a new <see cref="CommitInfo"/> based on a path (that can be below the folder with the '.git' sub folder). 
         /// </summary>
         /// <param name="path">The path to lookup.</param>
         /// <param name="logger">Logger that will be used.</param>
@@ -702,7 +707,7 @@ namespace SimpleGitVersion
         /// found, and the <see cref="RepositoryInfoOptions"/> that will be used.
         /// </param>
         /// <returns>A RepositoryInfo instance.</returns>
-        static public RepositoryInfo LoadFromPath( ILogger logger, string path, Action<ILogger, bool, RepositoryInfoOptions>? optionsChecker = null )
+        static public CommitInfo LoadFromPath( ILogger logger, string path, Action<ILogger, bool, RepositoryInfoOptions>? optionsChecker = null )
         {
             if( logger == null ) throw new ArgumentNullException( nameof( logger ) );
             return LoadFromPath( path, gitPath =>

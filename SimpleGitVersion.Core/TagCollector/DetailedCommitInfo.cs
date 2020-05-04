@@ -8,13 +8,12 @@ using System.Threading.Tasks;
 
 namespace SimpleGitVersion
 {
-
     /// <summary>
     /// Commit info that exposes raw <see cref="PossibleVersions"/> and <see cref="NextPossibleVersions"/>
     /// (<see cref="RepositoryInfoOptions.SingleMajor"/> and <see cref="RepositoryInfoOptions.OnlyPatch"/>
     /// are ignored at this level).
     /// </summary>
-    public class CommitInfo
+    public class DetailedCommitInfo
     {
         /// <summary>
         /// Gets this commit sha.
@@ -50,7 +49,7 @@ namespace SimpleGitVersion
         public readonly IReadOnlyList<CSVersion> PossibleVersions;
 
 
-        internal CommitInfo(
+        internal DetailedCommitInfo(
             string sha,
             BasicCommitInfo? basic,
             ITagCommit? alreadyExistingVersion,
@@ -65,7 +64,9 @@ namespace SimpleGitVersion
             NextPossibleVersions = nextPossibleVersions;
             PossibleVersions = possibleVersions;
 
-            Debug.Assert( AlreadyExistingVersion == null || BasicInfo?.UnfilteredThisCommit == null || AlreadyExistingVersion.ThisTag != BasicInfo?.UnfilteredThisCommit.ThisTag,
+            Debug.Assert( AlreadyExistingVersion == null
+                          || BasicInfo?.UnfilteredThisCommit == null
+                          || AlreadyExistingVersion.ThisTag != BasicInfo?.UnfilteredThisCommit.ThisTag,
                           "AlreadyExistingVersion is independent of the release tag, except that, if both exist, they are necessarily different." );
         }
     }

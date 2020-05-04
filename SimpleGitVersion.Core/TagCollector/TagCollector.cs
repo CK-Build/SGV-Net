@@ -9,7 +9,6 @@ using CSemVer;
 
 namespace SimpleGitVersion
 {
-
     /// <summary>
     /// Discovers existing tags in the repository and provide a <see cref="GetCommitInfo"/> to
     /// retrieve commit information.
@@ -26,11 +25,11 @@ namespace SimpleGitVersion
         public CSVersion? StartingVersion => _startingVersion;
 
         /// <summary>
-        /// See <see cref="RepositoryInfo.ExistingVersions"/>.
+        /// See <see cref="CommitInfo.ExistingVersions"/>.
         /// </summary>
         public RepositoryVersions? ExistingVersions => _repoVersions;
 
-        public readonly RepositoryInfo.ErrorCodeStatus ErrorCode;
+        public readonly CommitInfo.ErrorCodeStatus ErrorCode;
 
         /// <summary>
         /// Initializes a new <see cref="TagCollector"/>.
@@ -57,14 +56,14 @@ namespace SimpleGitVersion
                 var v = CSVersion.TryParse( startingVersion, true );
                 if( !v.IsValid )
                 {
-                    ErrorCode = RepositoryInfo.ErrorCodeStatus.InvalidStartingVersion;
+                    ErrorCode = CommitInfo.ErrorCodeStatus.InvalidStartingVersion;
                     errors.Append( "Invalid StartingVersion. " ).Append( v.ErrorMessage ).AppendLine();
                     return;
                 }
                 _startingVersion = v.ToNormalizedForm();
                 if( singleMajor.HasValue && _startingVersion.Major > singleMajor )
                 {
-                    ErrorCode = RepositoryInfo.ErrorCodeStatus.StartingVersionConflictsWithSingleMajor;
+                    ErrorCode = CommitInfo.ErrorCodeStatus.StartingVersionConflictsWithSingleMajor;
                     errors.Append( "StartingVersion '" )
                           .Append( _startingVersion )
                           .Append( "'is defined, its major must not be greater than defined SingleMajor = " ).Append( singleMajor ).Append( "." )
@@ -74,12 +73,12 @@ namespace SimpleGitVersion
             }
             // Register all tags.
             ErrorCode = RegisterAllTags( errors, repo, overriddenTags, singleMajor, checkExistingVersions );
-            if( ErrorCode != RepositoryInfo.ErrorCodeStatus.None ) return;
+            if( ErrorCode != CommitInfo.ErrorCodeStatus.None ) return;
 
             // Resolves multiple tags on the same commit.
             if( !CloseCollect( errors ) )
             {
-                ErrorCode = RepositoryInfo.ErrorCodeStatus.MultipleVersionTagConflict;
+                ErrorCode = CommitInfo.ErrorCodeStatus.MultipleVersionTagConflict;
                 return;
             }
 
@@ -87,7 +86,7 @@ namespace SimpleGitVersion
             _repoVersions = new RepositoryVersions( _collector.Values, errors );
 
             if( checkExistingVersions
-                && (ErrorCode = _repoVersions.CheckExistingVersions( errors, _startingVersion )) != RepositoryInfo.ErrorCodeStatus.None )
+                && (ErrorCode = _repoVersions.CheckExistingVersions( errors, _startingVersion )) != CommitInfo.ErrorCodeStatus.None )
             {
                 return;
             }
@@ -99,11 +98,11 @@ namespace SimpleGitVersion
             }
         }
 
-        RepositoryInfo.ErrorCodeStatus RegisterAllTags( StringBuilder errors, Repository repo, IEnumerable<KeyValuePair<string, IReadOnlyList<string>>>? overriddenTags, int? singleMajor, bool checkExistingVersions )
+        CommitInfo.ErrorCodeStatus RegisterAllTags( StringBuilder errors, Repository repo, IEnumerable<KeyValuePair<string, IReadOnlyList<string>>>? overriddenTags, int? singleMajor, bool checkExistingVersions )
         {
             foreach( var tag in repo.Tags )
             {
-                Commit? tagCommit = tag.ResolveTarget() as Commit;
+                Commit? tagCommit = tag.PeeledTarget as Commit;
                 if( tagCommit == null ) continue;
                 RegisterOneTag( tagCommit, tag.FriendlyName, singleMajor );
             }
@@ -117,7 +116,7 @@ namespace SimpleGitVersion
                     if( string.IsNullOrEmpty( k.Key ) )
                     {
                         errors.Append( "Invalid overriden commit: the key is null or empty." ).AppendLine();
-                        return RepositoryInfo.ErrorCodeStatus.InvalidOverriddenTag;
+                        return CommitInfo.ErrorCodeStatus.InvalidOverriddenTag;
                     }
                     else if( k.Key.Equals( "head", StringComparison.OrdinalIgnoreCase ) )
                     {
@@ -130,7 +129,7 @@ namespace SimpleGitVersion
                         if( o == null )
                         {
                             errors.AppendFormat( "Overriden commit '{0}' does not exist.", k.Key ).AppendLine();
-                            return RepositoryInfo.ErrorCodeStatus.InvalidOverriddenTag;
+                            return CommitInfo.ErrorCodeStatus.InvalidOverriddenTag;
                         }
                     }
                     if( o != null )
@@ -142,7 +141,7 @@ namespace SimpleGitVersion
                     }
                 }
             }
-            return RepositoryInfo.ErrorCodeStatus.None;
+            return CommitInfo.ErrorCodeStatus.None;
         }
 
         void RegisterOneTag( Commit c, string tagName, int? singleMajor )

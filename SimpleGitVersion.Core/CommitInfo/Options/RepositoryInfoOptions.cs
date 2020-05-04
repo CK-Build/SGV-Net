@@ -10,7 +10,7 @@ using System.Xml.Linq;
 namespace SimpleGitVersion
 {
     /// <summary>
-    /// Describes options for initializing <see cref="RepositoryInfo"/>.
+    /// Describes options for initializing <see cref="CommitInfo"/>.
     /// </summary>
     public class RepositoryInfoOptions
     {
@@ -215,20 +215,20 @@ namespace SimpleGitVersion
         }
 
         /// <summary>
-        /// Gets or sets whether the <see cref="RepositoryInfo.IsDirty"/> is ignored.
+        /// Gets or sets whether the <see cref="CommitInfo.IsDirty"/> is ignored.
         /// This should be used only for debugging purposes.
         /// Xml activation: <code>&lt;SimpleGitVersion&gt; &lt;Debug IgnoreDirtyWorkingFolder="true" /&gt; &lt;/SimpleGitVersion&gt;</code>
         /// </summary>
         public bool IgnoreDirtyWorkingFolder { get; set; }
 
         /// <summary>
-        /// Gets or sets whether a <see cref="IRepositoryInfo.AlreadyExistingVersion"/> must be ignored.
+        /// Gets or sets whether a <see cref="ICommitInfo.AlreadyExistingVersion"/> must be ignored.
         /// Xml activation: <code>&lt;SimpleGitVersion IgnoreAlreadyExistingVersion="true" /&gt;</code>
         /// </summary>
         public bool IgnoreAlreadyExistingVersion { get; set; }
 
         /// <summary>
-        /// Gets or sets whether existing versions should be checked. See <see cref="RepositoryInfo.ExistingVersions"/>.
+        /// Gets or sets whether existing versions should be checked. See <see cref="CommitInfo.ExistingVersions"/>.
         /// Xml activation: <code>&lt;SimpleGitVersion CheckExistingVersions="true" /&gt;</code>
         /// </summary>
         public bool CheckExistingVersions { get; set; }
