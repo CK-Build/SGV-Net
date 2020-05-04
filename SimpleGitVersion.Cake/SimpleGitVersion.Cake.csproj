@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <Import Project="..\Common\Shared.props" />
 
@@ -6,7 +6,7 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <Description>Cake extension that enables Cake scripts to obtain SimpleGitVersion information from current Git repository.</Description>
     <PackageTags>Versioning, SemVer, NuGet, CSemVer, InformationalVersion, Cake</PackageTags>
-    <PackageIcon>../SimpleGitVersion.png</PackageIcon>
+    <PackageIcon>SimpleGitVersion.png</PackageIcon>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
 
     <!-- Remove signing from Shared.props since Cake is not signed. -->
