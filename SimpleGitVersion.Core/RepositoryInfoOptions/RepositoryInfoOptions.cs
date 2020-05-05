@@ -32,9 +32,11 @@ namespace SimpleGitVersion
         public RepositoryInfoOptions( XElement e )
             : this()
         {
-            var sgv = e.Name == SGVSchema.SimpleGitVersion
-                        ? e
-                        : e.Element( SGVSchema.SimpleGitVersion );
+            var sgv = e.Attributes().Any( a => a.Value == OldXmlSchema.SVGNS )
+                        ? null
+                        : (e.Name == SGVSchema.SimpleGitVersion
+                            ? e
+                            : e.Element( SGVSchema.SimpleGitVersion) );
             if( sgv != null )
             {
                 IgnoreDirtyWorkingFolder = (bool?)sgv.Element( SGVSchema.Debug )?.Attribute( SGVSchema.IgnoreDirtyWorkingFolder ) ?? false;
