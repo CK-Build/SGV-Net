@@ -9,8 +9,8 @@ namespace SimpleGitVersion
 {
     static class OldXmlSchema
     {
-        public static readonly XNamespace SVGNS = XNamespace.Get( "http://csemver.org/schemas/2015" );
 
+        public static readonly XNamespace SVGNS = XNamespace.Get( "http://csemver.org/schemas/2015" );
         public static readonly XName RepositoryInfo = SVGNS + "RepositoryInfo";
         public static readonly XName StartingVersionForCSemVer = SVGNS + "StartingVersionForCSemVer";
         public static readonly XName IgnoreModifiedFiles = SVGNS + "IgnoreModifiedFiles";
@@ -30,10 +30,15 @@ namespace SimpleGitVersion
         public static readonly XName IgnoreDirtyWorkingFolder = XNamespace.None + "IgnoreDirtyWorkingFolder";
     }
 
-    static class SGVSchema
+    /// <summary>
+    /// Exposes all names used in Xml configuration file as static readonly <see cref="XName"/> in
+    /// the the <see cref="XNamespace.None"/>.
+    /// </summary>
+    public static class SGVSchema
     {
-        public static readonly XName SimpleGitVersion = XNamespace.None + "SimpleGitVersion";
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 
+        public static readonly XName SimpleGitVersion = XNamespace.None + "SimpleGitVersion";
         public static readonly XName StartingVersion = XNamespace.None + "StartingVersion";
         public static readonly XName IgnoreModifiedFiles = XNamespace.None + "IgnoreModifiedFiles";
         public static readonly XName SingleMajor = XNamespace.None + "SingleMajor";
@@ -44,12 +49,13 @@ namespace SimpleGitVersion
         public static readonly XName Branch = XNamespace.None + "Branch";
         public static readonly XName RemoteName = XNamespace.None + "RemoteName";
 
-
         public static readonly XName Name = XNamespace.None + "Name";
         public static readonly XName CIVersionMode = XNamespace.None + "CIVersionMode";
         public static readonly XName VersionName = XNamespace.None + "VersionName";
         public static readonly XName IgnoreDirtyWorkingFolder = XNamespace.None + "IgnoreDirtyWorkingFolder";
         public static readonly XName IgnoreAlreadyExistingVersion = XNamespace.None + "IgnoreAlreadyExistingVersion";
         public static readonly XName CheckExistingVersions = XNamespace.None + "CheckExistingVersions";
+
+#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
     }
 }
