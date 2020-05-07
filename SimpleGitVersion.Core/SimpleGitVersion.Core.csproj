@@ -2,13 +2,19 @@
   <Import Project="..\Common\Shared.props" />
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
-    <Description></Description>
-    <PackageIconUrl>https://raw.githubusercontent.com/SimpleGitVersion/SGV-Net/master/SimpleGitVersion.png</PackageIconUrl>
-    <PackageTags>Versioning, SemVer, NuGet, CSemVer, InformationalVersion</PackageTags>
+    <Description>Simple Git Version implementation based on LibGit2Sharp.</Description>
+    <PackageIcon>SimpleGitVersion.png</PackageIcon>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageTags>Versioning, SemVer, NuGet, CSemVer, InformationalVersion, Build, LibGit2Sharp</PackageTags>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+
   <ItemGroup>
-    <PackageReference Include="CSemVer" Version="8.0.0" />
+    <None Include="../SimpleGitVersion.png" Pack="true" PackagePath=""/>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="LibGit2Sharp" Version="0.26.2" />
+    <ProjectReference Include="..\SimpleGitVersion.Abstractions\SimpleGitVersion.Abstractions.csproj" />
   </ItemGroup>
 </Project>

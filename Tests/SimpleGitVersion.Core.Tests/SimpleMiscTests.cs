@@ -10,7 +10,6 @@ namespace SimpleGitVersion.Core.Tests
     [TestFixture]
     public class SimpleMiscTests
     {
-
         [Test]
         public void sha1_of_trees_rocks()
         {
@@ -38,22 +37,22 @@ namespace SimpleGitVersion.Core.Tests
         }
 
         [Test]
-        public void testing_SimpleGitRepositoryInfo_on_this_repository()
+        public void testing_SRepositoryInfo_on_this_repository()
         {
-            var info = SimpleRepositoryInfo.LoadFromPath( new ConsoleLogger(), TestHelper.SolutionFolder, (logger, hasRepoXml,opt) =>
+            var info = CommitInfo.LoadFromPath( new ConsoleLogger(), TestHelper.SolutionFolder, (logger, hasRepoXml,opt) =>
             {
                 logger.Info( "Ignoring DirtyWorkingFolder check." );
                 opt.IgnoreDirtyWorkingFolder = true;
             } );
-            Console.WriteLine( "This repo's SemVer: {0}", info.SafeVersion );
+            Console.WriteLine( $"This repo's SemVer: {info.FinalVersion}, InformationalVersion: '{info.FinalInformationalVersion}'." );
         }
 
         [Test]
         [Explicit]
         public void testing_SimpleGitRepositoryInfo_on_other_repository()
         {
-            var info = SimpleRepositoryInfo.LoadFromPath( new ConsoleLogger(), @"C:\Dev\CK\CK-Core-Projects\CK-Text" );
-            Console.WriteLine( "This repo's SemVer: {0}", info.SafeVersion );
+            var info = CommitInfo.LoadFromPath( new ConsoleLogger(), @"C:\Dev\CK\CK-Core-Projects\CK-Text" );
+            Console.WriteLine( $"This repo's InformationalVersion: '{info.FinalInformationalVersion}'." );
         }
     }
 }

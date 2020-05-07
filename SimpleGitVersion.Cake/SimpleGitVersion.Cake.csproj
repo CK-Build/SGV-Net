@@ -3,17 +3,19 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <Description>Cake extension that enables Cake scripts to obtain SimpleGitVersion information from current Git repository.</Description>
-    <PackageIconUrl>https://raw.githubusercontent.com/SimpleGitVersion/SGV-NetCore/master/SimpleGitVersion.png</PackageIconUrl>
     <PackageTags>Versioning, SemVer, NuGet, CSemVer, InformationalVersion, Cake</PackageTags>
+    <PackageIcon>SimpleGitVersion.png</PackageIcon>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <!-- Remove signing from Shared.props since Cake is not signed. -->
     <AssemblyOriginatorKeyFile></AssemblyOriginatorKeyFile>
     <SignAssembly>false</SignAssembly>
     <PublicSign>false</PublicSign>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="../SimpleGitVersion.Core/SimpleGitVersion.Core.csproj" />
+    <None Include="../SimpleGitVersion.png" Pack="true" PackagePath="" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Code.Cake" Version="3.1.0" />
+    <ProjectReference Include="../SimpleGitVersion.Core/SimpleGitVersion.Core.csproj" />
+    <PackageReference Include="Code.Cake" Version="4.0.0" />
   </ItemGroup>
 </Project>

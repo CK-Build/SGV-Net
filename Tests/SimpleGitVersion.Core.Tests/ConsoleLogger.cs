@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -20,11 +20,6 @@ namespace SimpleGitVersion.Core.Tests
         public void Info( string msg )
         {
             Console.WriteLine( "Info: " + msg );
-        }
-
-        public void Trace( string msg )
-        {
-            Console.WriteLine( "Trace: " + msg );
         }
 
     }

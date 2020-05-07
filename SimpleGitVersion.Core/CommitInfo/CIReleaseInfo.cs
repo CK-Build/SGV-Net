@@ -11,10 +11,9 @@ namespace SimpleGitVersion
 {
     /// <summary>
     /// Encapsulates CI release information.
-    /// Instances of this class are created internally if and only a CI build can 
-    /// actually be done.
+    /// Instances of this class are created internally if and only a CI build can be done.
     /// </summary>
-    public class CIReleaseInfo
+    class CIReleaseInfo : ICIReleaseInfo
     {
         CIReleaseInfo(
             SVersion ciBaseTag,
@@ -29,29 +28,17 @@ namespace SimpleGitVersion
             IsZeroTimed = isZeroTimed;
         }
 
-        /// <summary>
-        /// The base <see cref="CSVersion"/> from which <see cref="BuildVersion"/> is built,
-        /// or the <see cref="SVersion.ZeroVersion"/> if no previous tag has been found from the commit.
-        /// When no previous tag has been found (ZeroVersion), then <see cref="IsZeroTimed"/> is necessarily true.
-        /// </summary>
-        public readonly SVersion BaseTag;
+        /// <inheritdoc/>
+        public SVersion BaseTag { get; }
 
-        /// <summary>
-        /// The greatest number of commits between the current commit and the deepest occurence 
-        /// of <see cref="BaseTag"/>.
-        /// </summary>
-        public readonly int Depth;
+        /// <inheritdoc/>
+        public int Depth { get; }
 
-        /// <summary>
-        /// Never null: this is the CSemVer-CI version in <see cref="CSVersionFormat.Normalized"/> format.
-        /// </summary>
-        public readonly SVersion BuildVersion;
+        /// <inheritdoc/>
+        public SVersion BuildVersion { get; }
 
-        /// <summary>
-        /// Gets whether this version is a Zero timed based. See <see cref="CIBranchVersionMode.ZeroTimed"/>,
-        /// <see cref="CIBuildDescriptor.CreateLongFormZeroTimed(string, DateTime)"/> and <see cref="CIBuildDescriptor.CreateShortFormZeroTimed(string, DateTime)"/>.
-        /// </summary>
-        public readonly bool IsZeroTimed;
+        /// <inheritdoc/>
+        public bool IsZeroTimed { get; }
 
         internal static CIReleaseInfo Create( Commit commit, CIBranchVersionMode ciVersionMode, string ciBuildName, BasicCommitInfo? info )
         {

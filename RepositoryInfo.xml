@@ -1,8 +1,7 @@
-<RepositoryInfo xmlns="http://csemver.org/schemas/2015">
-  <Branches>
-    <Branch Name="develop" CIVersionMode="LastReleaseBased" VersionName="develop" />
-
-  </Branches>
-  <!--<Debug IgnoreDirtyWorkingFolder="true"/>-->
-
+<RepositoryInfo>
+  <SimpleGitVersion>
+    <Branches>
+      <Branch Name="develop" CIVersionMode="LastReleaseBased" VersionName="develop" />
+    </Branches>
+  </SimpleGitVersion>
 </RepositoryInfo>

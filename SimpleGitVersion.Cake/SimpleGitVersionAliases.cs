@@ -34,41 +34,26 @@ namespace SimpleGitVersion
             {
                 _ctx.Log.Information( Verbosity.Quiet, msg );
             }
-
-            public void Trace( string msg )
-            {
-                _ctx.Log.Verbose( Verbosity.Quiet, msg );
-            }
         }
 
         /// <summary>
-        /// Gets a <see cref="RepositoryInfo"/> immutable object computed from the current head of the Git repository.
-        /// Use <see cref="GetSimpleRepositoryInfo"/> to obtain a simpler object.
+        /// Gets a <see cref="CommitInfo"/> object computed from the current head of the Git repository.
+        /// By default, the RepositoryInfo.xml file at the root is used (if it exists) to obtain the <paramref name="options"/>.
         /// </summary>
         /// <param name="context">The Cake context.</param>
         /// <param name="options">Optional options.</param>
-        /// <returns>A RepositoryInformation object.</returns>
+        /// <returns>A RepositoryInfo object.</returns>
         [CakeMethodAlias]
-        public static RepositoryInfo GetRepositoryInfo( this ICakeContext context, RepositoryInfoOptions options = null )
+        public static CommitInfo GetRepositoryInfo( this ICakeContext context, RepositoryInfoOptions options = null )
         {
-            if( context == null ) throw new ArgumentNullException( "context" );
-            return RepositoryInfo.LoadFromPath( context.Environment.WorkingDirectory.FullPath, options );
-        }
-
-        /// <summary>
-        /// Gets a <see cref="SimpleRepositoryInfo"/> immutable object computed from the current head of the Git repository.
-        /// </summary>
-        /// <param name="context">The Cake context.</param>
-        /// <returns>A SimpleRepositoryInfo object.</returns>
-        [CakeMethodAlias]
-        public static SimpleRepositoryInfo GetSimpleRepositoryInfo( this ICakeContext context )
-        {
-            if( context == null ) throw new ArgumentNullException( nameof( context ) );
-            return SimpleRepositoryInfo.LoadFromPath( new Logger( context ), context.Environment.WorkingDirectory.FullPath, ( log, hasOptionFile, options ) =>
-            {
-                if( !hasOptionFile ) log.Info( $"File RepositoryInfo.xml not found: using default options to read repository information." );
-                else log.Info( "Using RepositoryInfo.xml: " + options.ToXml().ToString() );
-            } );
+            if( context == null ) throw new ArgumentNullException( nameof(context) );
+            var logger = new Logger( context );
+            var path = context.Environment.WorkingDirectory.FullPath;
+            var r = options != null
+                    ? CommitInfo.LoadFromPath( path, options )
+                    : CommitInfo.LoadFromPath( logger, path );
+            r?.Explain( logger );
+            return r;
         }
 
     }

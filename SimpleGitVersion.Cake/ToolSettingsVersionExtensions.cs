@@ -19,10 +19,10 @@ namespace SimpleGitVersion
         /// </summary>
         /// <typeparam name="T">Specialized DotNetCoreSettings type.</typeparam>
         /// <param name="this">This settings.</param>
-        /// <param name="info">The repository information.</param>
+        /// <param name="info">The commit build information.</param>
         /// <param name="conf">Optional configuration to apply after version arguments have been injected.</param>
         /// <returns>This settings.</returns>
-        public static T AddVersionArguments<T>( this T @this, SimpleRepositoryInfo info, Action<T> conf = null ) where T : DotNetCoreSettings
+        public static T AddVersionArguments<T>( this T @this, ICommitBuildInfo info, Action<T> conf = null ) where T : DotNetCoreSettings
         {
             AddVersionToolArguments( @this, info );
             conf?.Invoke( @this );
@@ -33,28 +33,25 @@ namespace SimpleGitVersion
         /// Adds standard version information on <see cref="MSBuildSettings"/>.
         /// </summary>
         /// <param name="this">This settings.</param>
-        /// <param name="info">The repository information.</param>
+        /// <param name="info">The commit build information.</param>
         /// <param name="conf">Optional configuration to apply after version arguments have been injected.</param>
         /// <returns>This settings.</returns>
-        public static MSBuildSettings AddVersionArguments( this MSBuildSettings @this, SimpleRepositoryInfo info, Action<MSBuildSettings> conf = null )
+        public static MSBuildSettings AddVersionArguments( this MSBuildSettings @this, ICommitBuildInfo info, Action<MSBuildSettings> conf = null )
         {
             AddVersionToolArguments( @this, info );
             conf?.Invoke( @this );
             return @this;
         }
-        static void AddVersionToolArguments( Cake.Core.Tooling.ToolSettings t, SimpleRepositoryInfo info )
+
+        static void AddVersionToolArguments( Cake.Core.Tooling.ToolSettings t, ICommitBuildInfo info )
         {
-            string version = info.Info.FinalVersion.NormalizedText;
-            string assemblyVersion = info.MajorMinor;
-            string fileVersion = info.FileVersion;
-            string informationalVersion = info.Info.FinalInformationalVersion;
             var prev = t.ArgumentCustomization;
             t.ArgumentCustomization = args => (prev?.Invoke( args ) ?? args)
                             .Append( $@"/p:CakeBuild=""true""" )
-                            .Append( $@"/p:Version=""{version}""" )
-                            .Append( $@"/p:AssemblyVersion=""{assemblyVersion}""" )
-                            .Append( $@"/p:FileVersion=""{fileVersion}""" )
-                            .Append( $@"/p:InformationalVersion=""{informationalVersion}""" );
+                            .Append( $@"/p:Version=""{info.Version}""" )
+                            .Append( $@"/p:AssemblyVersion=""{info.AssemblyVersion}""" )
+                            .Append( $@"/p:FileVersion=""{info.FileVersion}""" )
+                            .Append( $@"/p:InformationalVersion=""{info.InformationalVersion}""" );
         }
 
     }

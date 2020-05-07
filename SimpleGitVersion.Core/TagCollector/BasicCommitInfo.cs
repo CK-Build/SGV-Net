@@ -13,7 +13,7 @@ namespace SimpleGitVersion
     public class BasicCommitInfo
     {
         /// <summary>
-        /// The commit tag of the commit point.
+        /// The commit tag of the commit point. 
         /// Can be null.
         /// </summary>
         public readonly ITagCommit? UnfilteredThisCommit;
