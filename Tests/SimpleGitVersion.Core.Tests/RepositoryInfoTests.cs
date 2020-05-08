@@ -65,6 +65,37 @@ namespace SimpleGitVersion.Core.Tests
         }
 
         [Test]
+        public void multiple_tags_on_the_same_commit_is_an_error_even_if_there_are_also_invalid_markers()
+        {
+            var repoTest = TestHelper.TestGitRepository;
+            var high = repoTest.Commits.Single( c => c.Message.StartsWith( "X-Commit." ) );
+            var overrides = new TagsOverride();
+            {
+                CommitInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
+                {
+                    HeadCommit = high.Sha,
+                    OverriddenTags = overrides.Add( high.Sha, "1.0.0" ).Add( high.Sha, "2.0.0" ).Add( high.Sha, "1.1.1+Invalid" ).Overrides,
+                } );
+                i.ErrorCode.Should().Be( CommitInfo.ErrorCodeStatus.MultipleVersionTagConflict );
+            }
+        }
+        [Test]
+        public void only_invalid_markers_are_ignored()
+        {
+            var repoTest = TestHelper.TestGitRepository;
+            var high = repoTest.Commits.Single( c => c.Message.StartsWith( "X-Commit." ) );
+            var overrides = new TagsOverride();
+            {
+                CommitInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
+                {
+                    HeadCommit = high.Sha,
+                    OverriddenTags = overrides.Add( high.Sha, "1.0.0+Invalid" ).Add( high.Sha, "2.0.0+Invalid" ).Add( high.Sha, "1.1.1+Invalid" ).Overrides,
+                } );
+                i.ErrorCode.Should().Be( CommitInfo.ErrorCodeStatus.CIBuildMissingBranchOption );
+            }
+        }
+
+        [Test]
         public void repository_with_the_very_first_version_only()
         {
             var repoTest = TestHelper.TestGitRepository;

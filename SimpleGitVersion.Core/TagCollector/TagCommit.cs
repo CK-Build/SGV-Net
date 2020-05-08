@@ -108,7 +108,7 @@ namespace SimpleGitVersion
         /// If multiple versions exist on this commit, an error is raised.
         /// </summary>
         /// <param name="errors">Errors collector.</param>
-        /// <returns>False it this tag is invalid.</returns>
+        /// <returns>False it this tag is invalid (taht doesn't mean that an error has been added).</returns>
         public bool CloseCollect( StringBuilder errors )
         {
             var t = DoCloseCollect( errors );

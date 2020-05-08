@@ -165,6 +165,7 @@ namespace SimpleGitVersion
 
         bool CloseCollect( StringBuilder errors )
         {
+            Debug.Assert( errors.Length == 0 && ErrorCode == CommitInfo.ErrorCodeStatus.None );
             List<TagCommit>? invalidTags = null;
             foreach( var c in _collector.Values )
             {
@@ -180,9 +181,8 @@ namespace SimpleGitVersion
                 {
                     _collector.Remove( c.CommitSha );
                 }
-                return false;
             }
-            return true;
+            return errors.Length == 0;
         }
 
         void RegisterContent( TagCommit tagCommit )
