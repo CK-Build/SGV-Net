@@ -42,7 +42,7 @@ namespace SimpleGitVersion
                                 // Let any exceptions be thrown here: if we can't have a copy of the test repository, it 
                                 // is too risky to Assume(false).
                                 Directory.CreateDirectory( _testGitRepositoryFolder );
-                                gitPath = Repository.Clone( "https://github.com/SimpleGitVersion/TestGitRepository.git", _testGitRepositoryFolder );
+                                gitPath = Repository.Clone( "https://github.com/CK-Build/TestGitRepository.git", _testGitRepositoryFolder );
                             }
                             try
                             {
@@ -54,7 +54,7 @@ namespace SimpleGitVersion
                             catch( LibGit2SharpException ex )
                             {
                                 // Fetch fails. We don't care.
-                                Console.WriteLine( "Warning: Fetching the TestGitRepository (https://github.com/SimpleGitVersion/TestGitRepository.git) failed. Check the internet connection. Error: {0}.", ex.Message );
+                                Console.WriteLine( "Warning: Fetching the TestGitRepository (https://github.com/CK-Build/TestGitRepository.git) failed. Check the internet connection. Error: {0}.", ex.Message );
                             }
                         }
                     }
