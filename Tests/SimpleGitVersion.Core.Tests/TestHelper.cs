@@ -68,11 +68,6 @@ namespace SimpleGitVersion
             get { return _testGitRepository ?? (_testGitRepository = new RepositoryTester( TestGitRepositoryFolder ));}
         }
 
-        public static string RepositoryXSDPath
-        {
-            get { return Path.Combine( TestHelper.SolutionFolder, "SimpleGitVersion.Core", "RepositoryInfo.xsd" ); }
-        }
-
 
         static void InitalizePaths()
         {
