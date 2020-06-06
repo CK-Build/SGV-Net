@@ -179,6 +179,7 @@ namespace SimpleGitVersion
                     return r.Branches
                             .Where( b => b.Tip == commit && (!b.IsRemote || b.FriendlyName.StartsWith( remotePrefix )) )
                             .Select( b => b.IsRemote ? b.FriendlyName.Substring( remotePrefix.Length ) : b.FriendlyName )
+                            .Distinct() // To remove 'name' and 'origin/name' duplicates.
                             .ToArray();
                 }
             }

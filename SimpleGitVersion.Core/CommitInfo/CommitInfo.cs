@@ -229,9 +229,6 @@ namespace SimpleGitVersion
                                 errors.Append( "Release tag '" )
                                         .Append( ReleaseTag )
                                         .AppendLine( "' is not valid here. " );
-                                errors.Append( "Valid tags are: " )
-                                        .AppendJoin( ", ", PossibleVersions )
-                                        .AppendLine();
                                 if( PossibleVersions != rawPossible && rawPossible.Contains( ReleaseTag ) )
                                 {
                                     errors.AppendLine( "Note: this version is invalid because of <SingleMajor> or <OnlyPatch> setting in RepositoryInfo.xml." );
@@ -385,7 +382,7 @@ namespace SimpleGitVersion
                 else
                 {
                     Debug.Assert( ReleaseTag != null, "Otherwise there is an Error." );
-                    logger.Info( $"Release: '{FinalVersion}'." );
+                    logger.Info( $"Release: '{ReleaseTag}'." );
                 }
             }
 

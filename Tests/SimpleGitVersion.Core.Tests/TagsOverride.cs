@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -21,6 +21,7 @@ namespace SimpleGitVersion
         /// </summary>
         /// <param name="commitSha">The commit or "head".</param>
         /// <param name="tags">Tags to apply.</param>
+        /// <returns>This overrides.</returns>
         public TagsOverride MutableAdd( string commitSha, params string[] tags )
         {
             if( _overrides == null )
@@ -36,6 +37,21 @@ namespace SimpleGitVersion
                     _overrides.Add( commitSha, exist = new List<string>() );
                 }
                 ((List<string>)exist).AddRange( tags );
+            }
+            return this;
+        }
+
+        /// <summary>
+        /// Removed a set of tags from this <see cref="TagsOverride"/>.
+        /// </summary>
+        /// <param name="commitSha">The commit or "head".</param>
+        /// <param name="tags">Tags to remove from this overrides.</param>
+        /// <returns>This overrides.</returns>
+        public TagsOverride MutableRemove( string commitSha, params string[] tags )
+        {
+            if( _overrides != null && _overrides.TryGetValue( commitSha, out var exist ) )
+            {
+                ((List<string>)exist).RemoveAll( t => tags.Contains( t ) );
             }
             return this;
         }
