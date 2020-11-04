@@ -12,6 +12,6 @@
     <None Include="../SimpleGitVersion.png" Pack="true" PackagePath="" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="CSemVer" Version="8.0.1" />
+    <PackageReference Include="CSemVer" Version="8.0.2--0020-develop" />
   </ItemGroup>
 </Project>
