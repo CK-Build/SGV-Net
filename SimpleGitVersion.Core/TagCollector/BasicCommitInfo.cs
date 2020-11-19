@@ -38,14 +38,20 @@ namespace SimpleGitVersion
         public readonly int BelowDepth;
 
         /// <summary>
+        /// Whether the parent graph is truncated because we are on a shallow cloned repositry.
+        /// </summary>
+        public readonly bool IsShallowCloned;
+
+        /// <summary>
         /// Gets the best among <see cref="BestCommit"/> and <see cref="BestCommitBelow"/>.
         /// This is never null.
         /// </summary>
         public ITagCommit MaxCommit => (BestCommit?.ThisTag > BestCommitBelow?.ThisTag ? BestCommit : BestCommitBelow)!;
 
-        internal BasicCommitInfo( ITagCommit? thisCommit, ITagCommit? best, BasicCommitInfo? parent )
+        internal BasicCommitInfo( ITagCommit? thisCommit, ITagCommit? best, BasicCommitInfo? parent, bool isShallowCloned )
         {
             UnfilteredThisCommit = thisCommit;
+            IsShallowCloned = isShallowCloned;
             if( best != null )
             {
                 BestCommit = best;

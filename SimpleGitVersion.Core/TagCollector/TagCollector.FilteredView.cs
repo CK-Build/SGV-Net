@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using CSemVer;
 using LibGit2Sharp;
 
@@ -21,10 +22,10 @@ namespace SimpleGitVersion
                 _cache = new Dictionary<string, BasicCommitInfo?>();
             }
 
-            public BasicCommitInfo? GetInfo( Commit c )
+            public (BasicCommitInfo? Info, bool IsShallowCloned) GetInfo( Commit c )
             {
                 string sha = c.Sha;
-                if( _cache.TryGetValue( sha, out var d ) ) return d;
+                if( _cache.TryGetValue( sha, out var d ) ) return (d, d?.IsShallowCloned ?? false);
                 TagCommit? commit = _collector.GetCommit( sha );
                 ITagCommit? best;
                 if( commit != null )
@@ -41,26 +42,28 @@ namespace SimpleGitVersion
                     }
                     catch( NullReferenceException )
                     {
-                        return null;
+                        return (null, true);
                     }
                     TagCommit? content = _collector.GetCommit( t.Sha );
                     best = content?.GetBestCommitExcept( _excluded );
                 }
-                BasicCommitInfo? p = ReadParents( c );
-                if( best != null || p != null ) d = new BasicCommitInfo( commit, best, p );
+                var (p,shallow) = ReadParents( c );
+                if( best != null || p != null ) d = new BasicCommitInfo( commit, best, p, shallow );
                 _cache.Add( sha, d );
-                return d;
+                return (d, shallow);
             }
 
-            BasicCommitInfo? ReadParents( Commit c )
+            (BasicCommitInfo? Info, bool IsShallowCloned) ReadParents( Commit c )
             {
+                bool shallowHit = false;
                 BasicCommitInfo? current = null;
                 foreach( var p in c.Parents )
                 {
-                    var d = GetInfo( p );
+                    var (d,shallow) = GetInfo( p );
+                    shallowHit |= shallow;
                     if( current == null || (d != null && d.IsBetterThan( current )) ) current = d;
                 }
-                return current;
+                return (current,shallowHit);
             }
         }
 

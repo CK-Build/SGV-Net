@@ -28,6 +28,11 @@ namespace SimpleGitVersion
         public readonly BasicCommitInfo? BasicInfo;
 
         /// <summary>
+        /// Whether the parent graph has not been fully analyzed because we are on a shallow cloned repositry.
+        /// </summary>
+        public readonly bool IsShallowCloned;
+
+        /// <summary>
         /// Gets the commit with the version for that exact same content if it exists.
         /// </summary>
         public readonly ITagCommit? AlreadyExistingVersion;
@@ -52,6 +57,7 @@ namespace SimpleGitVersion
         internal DetailedCommitInfo(
             string sha,
             BasicCommitInfo? basic,
+            bool isShallowCloned,
             ITagCommit? alreadyExistingVersion,
             ITagCommit? bestCommitBelow,
             IReadOnlyList<CSVersion> possibleVersions,
@@ -59,6 +65,7 @@ namespace SimpleGitVersion
         {
             CommitSha = sha;
             BasicInfo = basic;
+            IsShallowCloned = isShallowCloned;            
             AlreadyExistingVersion = alreadyExistingVersion;
             BestCommitBelow = bestCommitBelow;
             NextPossibleVersions = nextPossibleVersions;

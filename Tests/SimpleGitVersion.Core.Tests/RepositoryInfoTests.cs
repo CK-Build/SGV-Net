@@ -28,6 +28,7 @@ namespace SimpleGitVersion.Core.Tests
                 i.DetailedCommitInfo.BasicInfo.Should().BeNull();
                 i.PossibleVersions.Should().BeEquivalentTo( CSVersion.FirstPossibleVersions );
                 i.NextPossibleVersions.Should().BeEquivalentTo( CSVersion.FirstPossibleVersions );
+                i.IsShallowCloned.Should().BeFalse();
             }
         }
 
@@ -44,6 +45,7 @@ namespace SimpleGitVersion.Core.Tests
                     OverriddenTags = overrides.Add( high.Sha, "1.0.0" ).Add( high.Sha, "2.0.0" ).Overrides,
                 } );
                 i.ErrorCode.Should().Be( CommitInfo.ErrorCodeStatus.MultipleVersionTagConflict );
+                i.IsShallowCloned.Should().BeFalse();
             }
         }
 
@@ -92,6 +94,7 @@ namespace SimpleGitVersion.Core.Tests
                     OverriddenTags = overrides.Add( high.Sha, "1.0.0+Invalid" ).Add( high.Sha, "2.0.0+Invalid" ).Add( high.Sha, "1.1.1+Invalid" ).Overrides,
                 } );
                 i.ErrorCode.Should().Be( CommitInfo.ErrorCodeStatus.CIBuildMissingBranchOption );
+                i.IsShallowCloned.Should().BeFalse();
             }
         }
 
@@ -119,6 +122,7 @@ namespace SimpleGitVersion.Core.Tests
                     var iWithTag = repoTest.GetRepositoryInfo( sc.Sha, overrides.Add( sc.Sha, next.ToString() ) );
                     Assert.That( iWithTag.FinalVersion, Is.EqualTo( next ) );
                 }
+                i.IsShallowCloned.Should().BeFalse();
             };
 
             Action<SimpleCommit> checkKO = sc =>

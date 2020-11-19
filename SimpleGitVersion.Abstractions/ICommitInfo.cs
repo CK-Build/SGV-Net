@@ -23,6 +23,12 @@ namespace SimpleGitVersion
         string? Error { get; }
 
         /// <summary>
+        /// Gets whether the parent graph of the starting commit has not been fully anlayzed because we
+        /// are on a shallow cloned repositry.
+        /// </summary>
+        public bool IsShallowCloned { get; }
+
+        /// <summary>
         /// Gets the version directly associated to this commit.
         /// Null if there is no release tag on the current commit (or an <see cref="Error"/> occured).
         /// </summary>

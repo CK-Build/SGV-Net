@@ -34,7 +34,7 @@ namespace SimpleGitVersion
         public DetailedCommitInfo GetCommitInfo( Commit c )
         {
             Debug.Assert( ExistingVersions != null, "No error." );
-            BasicCommitInfo? basic = GetCommitView( null ).GetInfo( c );
+            var (basic,shallow) = GetCommitView( null ).GetInfo( c );
 
             // Default to null.
             ITagCommit? alreadyExistingVersion = null;
@@ -84,7 +84,7 @@ namespace SimpleGitVersion
                             // Since this commit is tagged, to compute the PossibleVersions,  we must do as if this tag doesn't exist at all.
                             // This is where we need the "View" that excludes this version.
                             var excluded = basic.UnfilteredThisCommit.ThisTag;
-                            var noThisVersion = GetCommitView( excluded ).GetInfo( c );
+                            var noThisVersion = GetCommitView( excluded ).GetInfo( c ).Info;
                             // Since we excluded this tag, there may be... nothing: noThisVersion can be null.
                             // The BestCommit of this noThisVersion is our high level AlreadyExistingVersion and
                             // its BestCommitBelow is also our high level BestCommitBelow.
@@ -97,7 +97,7 @@ namespace SimpleGitVersion
 
                 }
             }
-            return new DetailedCommitInfo( c.Sha, basic, alreadyExistingVersion, bestCommitBelow, possibleVersions, nextPossibleVersions );
+            return new DetailedCommitInfo( c.Sha, basic, shallow, alreadyExistingVersion, bestCommitBelow, possibleVersions, nextPossibleVersions );
         }
 
         List<CSVersion> GetPossibleVersions( CSVersion? baseVersion, CSVersion? excluded )

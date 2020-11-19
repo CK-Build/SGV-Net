@@ -61,6 +61,7 @@ namespace SimpleGitVersion.Core.Tests
             }
             var info = CommitInfo.LoadFromPath( new ConsoleLogger(), targetDir );
             info.FinalVersion.ToString().Should().Be( "0.0.0--031t8rf-develop" );
+            info.IsShallowCloned.Should().BeTrue();
         }
 
         [Test]
@@ -69,6 +70,7 @@ namespace SimpleGitVersion.Core.Tests
         {
             var info = CommitInfo.LoadFromPath( new ConsoleLogger(), @"C:\Dev\CK-Build\CK-Build\SGV-Net\Tests\ThisRepoDevDepth5" );
             Console.WriteLine( $"This repo's InformationalVersion: '{info.FinalInformationalVersion}'." );
+
         }
     }
 }
