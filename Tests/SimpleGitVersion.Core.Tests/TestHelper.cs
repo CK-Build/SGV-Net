@@ -25,6 +25,8 @@ namespace SimpleGitVersion
             }
         }
 
+        public static string TestsFolder => Path.Combine( SolutionFolder, "Tests" );
+
         public static string TestGitRepositoryFolder
         {
             get

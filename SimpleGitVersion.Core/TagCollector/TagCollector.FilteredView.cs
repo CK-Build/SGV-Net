@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using CSemVer;
 using LibGit2Sharp;
@@ -32,7 +33,17 @@ namespace SimpleGitVersion
                 }
                 else
                 {
-                    TagCommit? content = _collector.GetCommit( c.Tree.Sha );
+                    Tree t;
+                    // Waiting for https://github.com/libgit2/libgit2sharp/issues/1775
+                    try
+                    {
+                        t = c.Tree;
+                    }
+                    catch( NullReferenceException )
+                    {
+                        return null;
+                    }
+                    TagCommit? content = _collector.GetCommit( t.Sha );
                     best = content?.GetBestCommitExcept( _excluded );
                 }
                 BasicCommitInfo? p = ReadParents( c );
