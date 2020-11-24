@@ -27,7 +27,7 @@
 
   <!--<StandardProperties>-->
   <PropertyGroup>
-    <RepositoryUrl>https://github.com/CK-Build/SGV-Net.git</RepositoryUrl>
+    <RepositoryUrl>https://github.com/CK-Build/SGV-Net</RepositoryUrl>
     <ProductName>CK-Build</ProductName>
     <Company>Signature Code</Company>
     <Authors>Signature Code</Authors>

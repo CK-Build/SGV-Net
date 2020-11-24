@@ -501,7 +501,7 @@ namespace CodeCake
             public string ProjectName { get; }
 
             /// <summary>
-            /// Implements Package promotion in @CI, @Exploratory, @Preview, @ReleaseCandidate and @Stable views.
+            /// Implements Package promotion in @CI, @Exploratory, @Preview, @Latest and @Stable views.
             /// </summary>
             /// <param name="ctx">The Cake context.</param>
             /// <param name="pushes">The set of artifacts to promote.</param>

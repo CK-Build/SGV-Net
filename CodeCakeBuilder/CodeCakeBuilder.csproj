@@ -5,10 +5,10 @@
     <IsPackable>False</IsPackable>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="NuGet.Protocol" Version="5.5.1" />
+    <PackageReference Include="NuGet.Protocol" Version="5.8.0" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="NuGet.Credentials" Version="5.5.1" />
+    <PackageReference Include="NuGet.Credentials" Version="5.8.0" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="CK.Text" Version="9.0.0" />
