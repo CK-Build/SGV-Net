@@ -28,6 +28,7 @@ namespace SimpleGitVersion.Core.Tests
                 i.DetailedCommitInfo.BasicInfo.Should().BeNull();
                 i.PossibleVersions.Should().BeEquivalentTo( CSVersion.FirstPossibleVersions );
                 i.NextPossibleVersions.Should().BeEquivalentTo( CSVersion.FirstPossibleVersions );
+                i.IsShallowCloned.Should().BeFalse();
             }
         }
 
@@ -44,6 +45,7 @@ namespace SimpleGitVersion.Core.Tests
                     OverriddenTags = overrides.Add( high.Sha, "1.0.0" ).Add( high.Sha, "2.0.0" ).Overrides,
                 } );
                 i.ErrorCode.Should().Be( CommitInfo.ErrorCodeStatus.MultipleVersionTagConflict );
+                i.IsShallowCloned.Should().BeFalse();
             }
         }
 
@@ -92,6 +94,7 @@ namespace SimpleGitVersion.Core.Tests
                     OverriddenTags = overrides.Add( high.Sha, "1.0.0+Invalid" ).Add( high.Sha, "2.0.0+Invalid" ).Add( high.Sha, "1.1.1+Invalid" ).Overrides,
                 } );
                 i.ErrorCode.Should().Be( CommitInfo.ErrorCodeStatus.CIBuildMissingBranchOption );
+                i.IsShallowCloned.Should().BeFalse();
             }
         }
 
@@ -119,6 +122,7 @@ namespace SimpleGitVersion.Core.Tests
                     var iWithTag = repoTest.GetRepositoryInfo( sc.Sha, overrides.Add( sc.Sha, next.ToString() ) );
                     Assert.That( iWithTag.FinalVersion, Is.EqualTo( next ) );
                 }
+                i.IsShallowCloned.Should().BeFalse();
             };
 
             Action<SimpleCommit> checkKO = sc =>
@@ -802,13 +806,13 @@ namespace SimpleGitVersion.Core.Tests
         public void fumble_commit_scenario()
         {
             var repoTest = TestHelper.TestGitRepository;
-            var cD = repoTest.Commits.First( sc => sc.Message.StartsWith( "D-Commit." ) );
-            var cC = repoTest.Commits.First( sc => sc.Message.StartsWith( "C-Commit." ) );
-            var cF = repoTest.Commits.First( sc => sc.Sha == "27a629754c6b9034f7ca580442b589a0241773c5" );
-            var cB = repoTest.Commits.First( sc => sc.Message.StartsWith( "B-Commit." ) );
-            var cA = repoTest.Commits.First( sc => sc.Message.StartsWith( "Merge branch 'fumble-develop' into fumble-master" ) );
-            var cFix = repoTest.Commits.First( sc => sc.Sha == "e6766d127f9a2df42567151222c6569601614626" );
-            var cX = repoTest.Commits.First( sc => sc.Message.StartsWith( "X-Commit." ) );
+            var cD = repoTest.Commits.Single( sc => sc.Message.StartsWith( "D-Commit." ) );
+            var cC = repoTest.Commits.Single( sc => sc.Message.StartsWith( "C-Commit." ) );
+            var cF = repoTest.Commits.Single( sc => sc.Sha == "27a629754c6b9034f7ca580442b589a0241773c5" );
+            var cB = repoTest.Commits.Single( sc => sc.Message.StartsWith( "B-Commit." ) );
+            var cA = repoTest.Commits.Single( sc => sc.Message.StartsWith( "Merge branch 'fumble-develop' into fumble-master" ) );
+            var cFix = repoTest.Commits.Single( sc => sc.Sha == "e6766d127f9a2df42567151222c6569601614626" );
+            var cX = repoTest.Commits.Single( sc => sc.Message.StartsWith( "X-Commit." ) );
             var overrides = new TagsOverride()
                 .MutableAdd( cD.Sha, "v4.3.2" )
                 .MutableAdd( cC.Sha, "v4.4.0-alpha" )
@@ -1041,5 +1045,78 @@ namespace SimpleGitVersion.Core.Tests
                 i.CIRelease.Should().NotBeNull();
             }
         }
+
+        [Test]
+        public void simple_label_failure()
+        {
+            var repoTest = TestHelper.TestGitRepository;
+            var cD = repoTest.Commits.Single( sc => sc.Message.StartsWith( "D-Commit." ) );
+            var cF = repoTest.Commits.Single( sc => sc.Sha == "27a629754c6b9034f7ca580442b589a0241773c5" );
+            var cC = repoTest.Commits.Single( sc => sc.Message.StartsWith( "C-Commit." ) );
+
+            //        
+            // cC   +          v4.2.1-rc
+            //      |        
+            // cF   |    +     v4.2.1-alpha     
+            //      |   /          
+            //      |  /          
+            //      | /          
+            //      |/          
+            // cD   +          v4.2.0
+
+            var console = new ConsoleLogger();
+
+            var overrides = new TagsOverride()
+                .MutableAdd( cD.Sha, "v4.2.0" )
+                .MutableAdd( cF.Sha, "v4.2.1-alpha" )
+                .MutableAdd( cC.Sha, "v4.2.1-rc" );
+            {
+                console.Info( "--------- rc/alpha conflict." );
+                CommitInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
+                {
+                    OverriddenTags = overrides.Overrides,
+                    HeadCommit = cC.Sha
+                } );
+                i.Error.Should().StartWith( "Release tag '4.2.1-r' is not valid here." );
+                i.Explain( console );
+            }
+            {
+                console.Info( "--------- With v4.2.1-a+invalid" );
+                overrides.MutableAdd( cF.Sha, "v4.2.1-a+invalid" );
+                CommitInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
+                {
+                    OverriddenTags = overrides.Overrides,
+                    HeadCommit = cC.Sha
+                } );
+                i.Error.Should().BeNull();
+                i.Explain( console );
+            }
+            {
+                console.Info( "--------- With v4.2.1-a+invalid and no more v4.2.1-rc" );
+                overrides.MutableRemove( cC.Sha, "v4.2.1-rc" );
+                CommitInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
+                {
+                    OverriddenTags = overrides.Overrides,
+                    HeadCommit = cC.Sha
+                } );
+                i.Error.Should().StartWith( "No release tag found and CI build is not possible: no CI Branch information defined for branch 'branch-on-C-Commit'." );
+                i.Explain( console );
+            }
+            {
+                console.Info( "--------- Same as before but now the branch is configured for CI." );
+                overrides.MutableRemove( cC.Sha, "v4.2.1-rc" );
+                CommitInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
+                {
+                    OverriddenTags = overrides.Overrides,
+                    HeadCommit = cC.Sha,
+                    Branches = { new RepositoryInfoOptionsBranch( "branch-on-C-Commit", CIBranchVersionMode.LastReleaseBased, "test" ) }
+                } );
+                i.Error.Should().BeNull();
+                i.FinalVersion.ToString().Should().Be( "4.2.1--0001-test" );
+                i.Explain( console );
+            }
+        }
+
+
     }
 }

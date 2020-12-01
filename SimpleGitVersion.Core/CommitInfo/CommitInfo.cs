@@ -89,6 +89,12 @@ namespace SimpleGitVersion
         public readonly DetailedCommitInfo? DetailedCommitInfo;
 
         /// <summary>
+        /// Gets whether the parent graph of the <see cref="DetailedCommitInfo.BasicInfo"/> has not been fully anlayzed
+        /// because we are on a shallow cloned repositry.
+        /// </summary>
+        public bool IsShallowCloned { get; }
+
+        /// <summary>
         /// When empty, this means that there cannot be a valid release tag on the current commit point.
         /// Null when an <see cref="Error"/> prevented its computation.
         /// This is the set of filtered versions (<see cref="RepositoryInfoOptions.SingleMajor"/>
@@ -199,6 +205,7 @@ namespace SimpleGitVersion
                         ExistingVersions = collector.ExistingVersions.TagCommits;
                         DetailedCommitInfo info = collector.GetCommitInfo( commit );
                         DetailedCommitInfo = info;
+                        IsShallowCloned = info.IsShallowCloned;
                         AlreadyExistingVersion = info.AlreadyExistingVersion;
                         BestCommitBelow = info.BestCommitBelow;
 
@@ -229,9 +236,6 @@ namespace SimpleGitVersion
                                 errors.Append( "Release tag '" )
                                         .Append( ReleaseTag )
                                         .AppendLine( "' is not valid here. " );
-                                errors.Append( "Valid tags are: " )
-                                        .AppendJoin( ", ", PossibleVersions )
-                                        .AppendLine();
                                 if( PossibleVersions != rawPossible && rawPossible.Contains( ReleaseTag ) )
                                 {
                                     errors.AppendLine( "Note: this version is invalid because of <SingleMajor> or <OnlyPatch> setting in RepositoryInfo.xml." );
@@ -385,7 +389,7 @@ namespace SimpleGitVersion
                 else
                 {
                     Debug.Assert( ReleaseTag != null, "Otherwise there is an Error." );
-                    logger.Info( $"Release: '{FinalVersion}'." );
+                    logger.Info( $"Release: '{ReleaseTag}'." );
                 }
             }
 
@@ -403,6 +407,10 @@ namespace SimpleGitVersion
                     if( AlreadyExistingVersion != null && Error == null )
                     {
                         logger.Warn( AlreadyExistingVersionMessage( AlreadyExistingVersion ) );
+                    }
+                    if( basic.IsShallowCloned )
+                    {
+                        logger.Warn( "The parent graph analysis is not complete because we are on a shallow cloned repositry." );
                     }
                 }
             }

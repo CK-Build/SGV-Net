@@ -1,7 +1,9 @@
+using FluentAssertions;
 using LibGit2Sharp;
 using NUnit.Framework;
 using System;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Text.RegularExpressions;
 
@@ -37,7 +39,7 @@ namespace SimpleGitVersion.Core.Tests
         }
 
         [Test]
-        public void testing_SRepositoryInfo_on_this_repository()
+        public void testing_RepositoryInfo_on_this_repository()
         {
             var info = CommitInfo.LoadFromPath( new ConsoleLogger(), TestHelper.SolutionFolder, (logger, hasRepoXml,opt) =>
             {
@@ -48,11 +50,27 @@ namespace SimpleGitVersion.Core.Tests
         }
 
         [Test]
+        public void when_the_repo_is_shallow_cloned_there_is_no_exception_and_the_version_is_what_it_is()
+        {
+            // Here we don't have any verion tag in the parents: magically, we produce a "0.0.0--031t8rf-develop"
+            // that as a Zero Version is safe to use.
+            var targetDir = Path.Combine( TestHelper.TestsFolder, "ThisRepoDevDepth5" );
+            if( !Directory.Exists( targetDir ) )
+            {
+                ZipFile.ExtractToDirectory( Path.Combine( TestHelper.TestsFolder, "ThisRepoDevDepth5.zip" ), targetDir );
+            }
+            var info = CommitInfo.LoadFromPath( new ConsoleLogger(), targetDir );
+            info.FinalVersion.ToString().Should().Be( "0.0.0--031t8rf-develop" );
+            info.IsShallowCloned.Should().BeTrue();
+        }
+
+        [Test]
         [Explicit]
         public void testing_SimpleGitRepositoryInfo_on_other_repository()
         {
-            var info = CommitInfo.LoadFromPath( new ConsoleLogger(), @"C:\Dev\CK\CK-Core-Projects\CK-Text" );
+            var info = CommitInfo.LoadFromPath( new ConsoleLogger(), @"C:\Dev\CK-Build\CK-Build\SGV-Net\Tests\ThisRepoDevDepth5" );
             Console.WriteLine( $"This repo's InformationalVersion: '{info.FinalInformationalVersion}'." );
+
         }
     }
 }
