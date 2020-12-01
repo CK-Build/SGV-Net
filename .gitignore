@@ -259,3 +259,6 @@ Tests/**/CKSetup-WorkingDir/
 
 CodeCakeBuilder/MemoryKey.*.txt
 CodeCakeBuilder/UnitTestsDone.*.txt
+/Tests/ThisRepoDevDepth5/
+
+$StObjGen/
