@@ -55,11 +55,11 @@ namespace SimpleGitVersion
             /// <summary>
             /// Gets the branch name to use in final version name for CI build: this comes from the <see cref="FoundBranchOption"/>
             /// (this is the <see cref="RepositoryInfoOptionsBranch.VersionName"/> or the <see cref="RepositoryInfoOptionsBranch.Name"/>).
-            /// Note that this name's length has not been checked.
+            /// Note that this name's length has not been checked and that it's always null when <see cref="CIVersionMode"/> is <see cref="CIBranchVersionMode.None"/>.
             /// </summary>
-            public string? CIBranchVersionName => FoundBranchOption == null
+            public string? CIBranchVersionName => CIVersionMode == CIBranchVersionMode.None
                                                     ? null
-                                                    : String.IsNullOrWhiteSpace( FoundBranchOption.VersionName )
+                                                    : String.IsNullOrWhiteSpace( FoundBranchOption!.VersionName )
                                                         ? FoundBranchOption.Name
                                                         : FoundBranchOption.VersionName;
 
