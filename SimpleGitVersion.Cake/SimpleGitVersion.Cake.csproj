@@ -9,9 +9,8 @@
     <SignAssembly>false</SignAssembly>
     <PublicSign>false</PublicSign>
   </PropertyGroup>
- 
   <ItemGroup>
     <ProjectReference Include="../SimpleGitVersion.Core/SimpleGitVersion.Core.csproj" />
-    <PackageReference Include="Code.Cake" Version="5.0.0" />
+    <PackageReference Include="Code.Cake" Version="5.0.1--0002-develop" />
   </ItemGroup>
 </Project>

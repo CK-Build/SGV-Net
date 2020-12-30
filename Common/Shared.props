@@ -71,4 +71,10 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   <!--</SourceLinkDebuggingWorkaround>-->
+
+  <!--<SPDXLicense>: See https://docs.microsoft.com/en-us/nuget/reference/msbuild-targets#packing-a-license-expression-or-a-license-file and https://spdx.org/licenses/ -->
+  <PropertyGroup>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+  </PropertyGroup>
+  <!--</SPDXLicense>-->
 </Project>
