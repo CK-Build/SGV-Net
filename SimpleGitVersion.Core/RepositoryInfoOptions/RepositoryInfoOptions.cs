@@ -27,8 +27,10 @@ namespace SimpleGitVersion
 
         /// <summary>
         /// Initializes a new <see cref="RepositoryInfoOptions"/> from its Xml representation.
+        /// The element must be named <see cref="SGVSchema.SimpleGitVersion"/> or has a child
+        /// element that is named SimpleGitVersion.
         /// </summary>
-        /// <param name="e">The XElement.</param>
+        /// <param name="e">The SimpleGitVersion XElement or its direct parent.</param>
         public RepositoryInfoOptions( XElement e )
             : this()
         {
@@ -68,7 +70,7 @@ namespace SimpleGitVersion
         }
 
         /// <summary>
-        /// Gets this options as an Xml element.
+        /// Gets this options as an Xml element named <see cref="SGVSchema.SimpleGitVersion"/>.
         /// </summary>
         /// <returns>The SimpleGitVersion XElement.</returns>
         public XElement ToXml()

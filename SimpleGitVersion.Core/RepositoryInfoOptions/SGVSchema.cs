@@ -32,7 +32,7 @@ namespace SimpleGitVersion
 
     /// <summary>
     /// Exposes all names used in Xml configuration file as static readonly <see cref="XName"/> in
-    /// the the <see cref="XNamespace.None"/>.
+    /// the <see cref="XNamespace.None"/>.
     /// </summary>
     public static class SGVSchema
     {

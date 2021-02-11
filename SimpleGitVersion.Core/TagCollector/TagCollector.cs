@@ -72,7 +72,7 @@ namespace SimpleGitVersion
                 }
             }
             // Register all tags.
-            ErrorCode = RegisterAllTags( errors, repo, overriddenTags, singleMajor, checkExistingVersions );
+            ErrorCode = RegisterAllTags( errors, repo, overriddenTags, singleMajor );
             if( ErrorCode != CommitInfo.ErrorCodeStatus.None ) return;
 
             // Resolves multiple tags on the same commit.
@@ -91,14 +91,14 @@ namespace SimpleGitVersion
                 return;
             }
 
-            // Register content (if no error occured).
+            // Register content (if no error occurred).
             foreach( var tc in _repoVersions.TagCommits )
             {
                 RegisterContent( tc );
             }
         }
 
-        CommitInfo.ErrorCodeStatus RegisterAllTags( StringBuilder errors, Repository repo, IEnumerable<KeyValuePair<string, IReadOnlyList<string>>>? overriddenTags, int? singleMajor, bool checkExistingVersions )
+        CommitInfo.ErrorCodeStatus RegisterAllTags( StringBuilder errors, Repository repo, IEnumerable<KeyValuePair<string, IReadOnlyList<string>>>? overriddenTags, int? singleMajor )
         {
             foreach( var tag in repo.Tags )
             {
@@ -115,20 +115,20 @@ namespace SimpleGitVersion
                     Commit? o = null;
                     if( string.IsNullOrEmpty( k.Key ) )
                     {
-                        errors.Append( "Invalid overriden commit: the key is null or empty." ).AppendLine();
+                        errors.Append( "Invalid overridden commit: the key is null or empty." ).AppendLine();
                         return CommitInfo.ErrorCodeStatus.InvalidOverriddenTag;
                     }
                     else if( k.Key.Equals( "head", StringComparison.OrdinalIgnoreCase ) )
                     {
                         o = repo.Head.Tip;
-                        Debug.Assert( o != null, "Unitialized Git repository. Already handled." );
+                        Debug.Assert( o != null, "Uninitialized Git repository. Already handled." );
                     }
                     else
                     {
                         o = repo.Lookup<Commit>( k.Key );
                         if( o == null )
                         {
-                            errors.AppendFormat( "Overriden commit '{0}' does not exist.", k.Key ).AppendLine();
+                            errors.AppendFormat( "Overridden commit '{0}' does not exist.", k.Key ).AppendLine();
                             return CommitInfo.ErrorCodeStatus.InvalidOverriddenTag;
                         }
                     }
@@ -154,12 +154,11 @@ namespace SimpleGitVersion
                     // This version is smaller than the StartingVersion: we ignore it.
                     return;
                 }
-                TagCommit tagCommit;
-                if( _collector.TryGetValue( c.Sha, out tagCommit ) )
+                if( _collector.TryGetValue( c.Sha, out var tagCommit ) )
                 {
                     tagCommit.AddCollectedTag( v );
                 }
-                else _collector.Add( c.Sha, tagCommit = new TagCommit( c, v ) );
+                else _collector.Add( c.Sha, new TagCommit( c, v ) );
             }
         }
 
