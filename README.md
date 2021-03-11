@@ -5,9 +5,15 @@
 CSemVer (http://csemver.org) is an operational subset of Semantic Versioning (http://semver.org) that provides stronger
 and explicit definition of a version number.
 
-SimpleGitVersion supports CSemVer in the context of Git repositories.
+SimpleGitVersion applies CSemVer to Git repositories. Tools can use it to ensure **ensuring traceability and deployment reliability** by:
+ - Validating version tags on any commit (typically the HEAD) by analyzing the repository topology and applying CSemVer rules.
+ - Computing automatic CSemVer-CI versions on CI branches.
 
-Build status & packages:
+## Configuration
+SimpleGitVersion supports a few configurations (like defining which branches will produce CI-Build) thanks to
+an optional **RepositoryInfo.xml** file that is described [here](SimpleGitVersion.Core).
+
+## Build status & packages:
 
 - Stable release [![Build status](https://ci.appveyor.com/api/projects/status/at6fx86w6qbkxclg/branch/master?svg=true)](https://ci.appveyor.com/project/Signature-OpenSource/sgv-net/branch/master)
   -  SimpleGitVersion.Abstractions ![Nuget](https://img.shields.io/nuget/v/SimpleGitVersion.Abstractions?logo=nuget)
@@ -16,17 +22,10 @@ Build status & packages:
 
 - Development [![Build status](https://ci.appveyor.com/api/projects/status/at6fx86w6qbkxclg/branch/develop?svg=true)](https://ci.appveyor.com/project/Signature-OpenSource/sgv-net/branch/develop)
   - CI Builds packages can be found on the [public Azure feeed](https://dev.azure.com/Signature-OpenSource/Feeds/_packaging?_a=feed&feed=NetCore3).
-
-SimpleGitVersion applies CSemVer to Git repositories. Tools can use it to ensure **ensuring traceability and deployment reliability** by:
- - Validating version tags on any commit (typically the HEAD) by analyzing the repository topology and applying CSemVer rules.
- - Computing automatic CSemVer-CI versions on CI branches.
  
 The actual code is in SimpleGitVersion.Core package that depends on
  - [CSemVer](https://www.nuget.org/packages/CSemVer/) that implements SemVer and CSemVer versions (parsing and version manipulations).
  - [LibGit2Sharp](https://www.nuget.org/packages/LibGit2Sharp/) to read the local Git repositories.
-
-SimpleGitVersion supports a few configurations (like defining which branches will produce CI-Build) thanks to
-an optional **RepositoryInfo.xml** file that is described [here](SimpleGitVersion.Core) file.
 
 Only one tool is currently implemented and supported:
   - [SimpleGitVersion.Cake](SimpleGitVersion.Cake) enables Cake build system (http://cakebuild.net/) to use CSemVer on Git repositories.
@@ -39,7 +38,8 @@ To understand it, try to forget the Git branches and consider the basics of Git:
   - A commit point has a ‘content’: its ‘File tree’ is our ‘base of code’.
   - A commit can have tags: in our case, when a commit is tagged with ‘v4.5.0-rc.2’ this means that the ‘File tree’ of this commit contains and defines everything we need to build this exact version of our product/artifact.
   - Tags are unique across the repository: there can be only one commit tagged with ‘v4.5.0-rc.2’.
-  - More than one commits can contain identical File trees and this is easy to detect: these File trees share the same SHA1 that we call ContentSHA.
+  - More than one commits can contain identical File trees and this is easy to detect: these File trees share the same SHA1 that we call ContentSHA 
+  (this is how Git works, by using a [Merkle Tree](https://en.wikipedia.org/wiki/Merkle_tree)).
   - A commit point is either:
     - An orphan (the initial commit in ‘master’ commit for instance)
     - Based on one commit: it carries the differences between itself and its Parent.
