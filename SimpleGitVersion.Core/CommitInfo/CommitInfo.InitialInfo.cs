@@ -22,7 +22,7 @@ namespace SimpleGitVersion
 
             /// <summary>
             /// Gets the fatal error text if locating this starting commit failed: when not null, it is one line of
-            /// text like 'No Git repository.' or 'Unitialized Git repository.'.
+            /// text like 'No Git repository.' or 'Uninitialized Git repository.'.
             /// </summary>
             public readonly string? Error;
 
@@ -96,12 +96,11 @@ namespace SimpleGitVersion
                 {
                     if( String.IsNullOrWhiteSpace( options.HeadBranchName ) )
                     {
-                        // locCommit is here because one cannot use an out parameter inside a lambda.
                         Commit = r.Head.Tip;
                         if( Commit == null )
                         {
                             ErrorCode = ErrorCodeStatus.InitUnitializedGitRepository;
-                            Error = "Unitialized Git repository.";
+                            Error = "Uninitialized Git repository.";
                             return;
                         }
                         // Save the branches!

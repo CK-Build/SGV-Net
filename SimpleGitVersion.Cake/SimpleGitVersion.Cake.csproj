@@ -4,18 +4,13 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <Description>Cake extension that enables Cake scripts to obtain SimpleGitVersion information from current Git repository.</Description>
     <PackageTags>Versioning, SemVer, NuGet, CSemVer, InformationalVersion, Cake</PackageTags>
-    <PackageIcon>SimpleGitVersion.png</PackageIcon>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <!-- Remove signing from Shared.props since Cake is not signed. -->
     <AssemblyOriginatorKeyFile></AssemblyOriginatorKeyFile>
     <SignAssembly>false</SignAssembly>
     <PublicSign>false</PublicSign>
   </PropertyGroup>
   <ItemGroup>
-    <None Include="../SimpleGitVersion.png" Pack="true" PackagePath="" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="../SimpleGitVersion.Core/SimpleGitVersion.Core.csproj" />
-    <PackageReference Include="Code.Cake" Version="5.0.0" />
+    <PackageReference Include="Code.Cake" Version="5.1.0" />
   </ItemGroup>
 </Project>

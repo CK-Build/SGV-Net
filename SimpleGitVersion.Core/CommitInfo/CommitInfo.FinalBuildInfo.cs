@@ -10,24 +10,34 @@ namespace SimpleGitVersion
         ICommitBuildInfo? _commitBuildInfo;
 
         /// <summary>
-        /// Central strategy that choose a build configuration (typically "Debug" or "Release") based on a <see cref="SVersion"/>
-        /// and a <see cref="RepositoryInfoOptions"/>.
-        /// Defaults to <see cref="DefaultBuildConfigurationSelector(SVersion, RepositoryInfoOptions)"/>.
+        /// Defines the <see cref="BuildConfigurationSelector"/> signature.
+        /// This is required since the <see cref="Func{T1, T2, TResult}"/> cannot accept "in" parameters. 
         /// </summary>
-        public static Func<SVersion, RepositoryInfoOptions, string> BuildConfigurationSelector = DefaultBuildConfigurationSelector;
+        /// <param name="commitInfo">The initial commit info that also exposes the configurations.</param>
+        /// <param name="finalVersion">The version for which a build configuration must be computed.</param>
+        /// <returns>The build configuration to use.</returns>
+        public delegate string BuildConfigurationDelegate( in InitialInfo commitInfo, SVersion finalVersion );
 
         /// <summary>
-        /// Default implementation of <see cref="BuildConfigurationSelector"/>: "Debug" for every one, but "Release" for stable release
-        /// (no <see cref="SVersion.Prerelease"/>) and for <see cref="CSVersion"/> with <see cref="CSVersion.PrereleaseName"/> "rc".
+        /// Central strategy that choose a build configuration (typically "Debug" or "Release") based on the <see cref="InitialInfo"/>
+        /// and a <see cref="SVersion"/>.
+        /// Defaults to <see cref="DefaultBuildConfigurationSelector(in InitialInfo, SVersion)"/>.
         /// </summary>
-        /// <param name="finalVersion">The version.</param>
-        /// <param name="options">The options to consider (currently unused by this implementation).</param>
+        public static BuildConfigurationDelegate BuildConfigurationSelector = DefaultBuildConfigurationSelector;
+
+        /// <summary>
+        /// Default implementation of <see cref="BuildConfigurationSelector"/> that relies on <see cref="RepositoryInfoOptions.UseReleaseBuildConfigurationFrom"/>
+        /// and <see cref="RepositoryInfoOptionsBranch.UseReleaseBuildConfigurationFrom"/> configurations.
+        /// </summary>
+        /// <param name="commitInfo">The initial commit info that also exposes the configurations.</param>
+        /// <param name="finalVersion">The version for which a build configuration must be computed.</param>
         /// <returns>The build configuration to use.</returns>
-        public static string DefaultBuildConfigurationSelector( SVersion finalVersion, RepositoryInfoOptions options )
+        public static string DefaultBuildConfigurationSelector( in InitialInfo commitInfo, SVersion finalVersion )
         {
-            return finalVersion.Prerelease.Length == 0 || finalVersion.AsCSVersion?.PrereleaseName == "rc"
-                                       ? "Release"
-                                       : "Debug";
+            // Look for the RepositoryInfoOptionsBranch first.
+            PackageQuality q = commitInfo.FoundBranchOption?.UseReleaseBuildConfigurationFrom ?? commitInfo.Options.UseReleaseBuildConfigurationFrom;
+            // None means "Always Debug", "CI" means always "Release".
+            return q == PackageQuality.None || finalVersion.PackageQuality < q ? "Debug" : "Release";
         }
 
         class RepoCommitBuildInfo : ICommitBuildInfo
@@ -39,7 +49,7 @@ namespace SimpleGitVersion
                 Debug.Assert( info != null );
                 _info = info;
                 
-                BuildConfiguration = BuildConfigurationSelector( info.FinalVersion, info.Options );
+                BuildConfiguration = BuildConfigurationSelector( info.StartingCommit, info.FinalVersion );
                 AssemblyVersion = $"{info.FinalVersion.Major}.{info.FinalVersion.Minor}";
                 if( info.Error == null )
                 {
