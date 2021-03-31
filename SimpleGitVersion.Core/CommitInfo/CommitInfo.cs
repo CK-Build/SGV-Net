@@ -298,7 +298,7 @@ namespace SimpleGitVersion
                                             .AppendLine( "Adds a Branch element in RepositoryInfo.xml with the branch name of interest, for instance:" )
                                             .AppendLine( "<Branches>" )
                                             .AppendLine( @"  <Branch Name=""develop"" CIVersionMode=""LastReleaseBased"" />." )
-                                            .AppendLine( @"  <Branch Name=""exploratory"" CIVersionMode=""ZeroTimed"" VersionName=""explo"" />." )
+                                            .AppendLine( @"  <Branch Name=""exploratory"" CIVersionMode=""ZeroTimed"" VersionName=""explo"" UseReleaseBuildConfigurationFrom=""CI"" />." )
                                             .AppendLine( @"  <Branch Name=""fx/new-computation"" CIVersionMode=""ZeroTimed"" VersionName=""explo"" />." )
                                             .AppendLine( "</Branches>" );
                                     ErrorCode = ErrorCodeStatus.CIBuildMissingBranchOption;
@@ -336,7 +336,7 @@ namespace SimpleGitVersion
                         && (CIRelease == null
                             || CIRelease.IsZeroTimed
                             || CIRelease.Depth > 0
-                            || BuildConfigurationSelector( CIRelease.BaseTag, options ) == BuildConfigurationSelector( finalVersion, options ) ) )
+                            || BuildConfigurationSelector( StartingCommit, CIRelease.BaseTag ) == BuildConfigurationSelector( StartingCommit, finalVersion ) ) )
                     {
                         errors.AppendLine( AlreadyExistingVersionMessage( AlreadyExistingVersion ) )
                                 .AppendLine( "To ignore such already existing version and force a release, set IgnoreAlreadyExistingVersion option to true." );

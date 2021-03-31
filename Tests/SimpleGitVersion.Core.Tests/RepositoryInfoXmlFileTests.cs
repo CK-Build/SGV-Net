@@ -1,3 +1,4 @@
+using CSemVer;
 using FluentAssertions;
 using NUnit.Framework;
 using System;
@@ -146,14 +147,15 @@ namespace SimpleGitVersion.Core.Tests
         OnlyPatch=""true""
         RemoteName=""not-the-origin""
         IgnoreAlreadyExistingVersion=""true""
-        CheckExistingVersions=""true"" >
+        CheckExistingVersions=""true""
+        UseReleaseBuildConfigurationFrom=""Exploratory"">
   <Debug IgnoreDirtyWorkingFolder=""true"" />
   <IgnoreModifiedFiles>
     <Add>SharedKey.snk</Add>
   </IgnoreModifiedFiles>
   <Branches>
     <Branch Name=""develop"" CIVersionMode=""LastReleaseBased"" />
-    <Branch Name=""exploratory"" CIVersionMode=""ZeroTimed"" VersionName=""Preview"" />
+    <Branch Name=""fx/command-rework"" CIVersionMode=""ZeroTimed"" VersionName=""explo"" UseReleaseBuildConfigurationFrom=""None"" />
     <Branch Name=""other"" CIVersionMode=""None"" />
   </Branches>
 </SimpleGitVersion>" );
@@ -165,6 +167,7 @@ namespace SimpleGitVersion.Core.Tests
             opt.StartingVersion.Should().Be( "v4.2.0" );
             opt.SingleMajor.Should().Be( 3 );
             opt.OnlyPatch.Should().BeTrue();
+            opt.UseReleaseBuildConfigurationFrom.Should().Be( PackageQuality.Exploratory );
             opt.RemoteName.Should().Be( "not-the-origin" );
             opt.IgnoreAlreadyExistingVersion.Should().BeTrue();
             opt.CheckExistingVersions.Should().BeTrue();
@@ -172,7 +175,7 @@ namespace SimpleGitVersion.Core.Tests
             opt.IgnoreModifiedFiles.Should().BeEquivalentTo( "SharedKey.snk" );
             opt.Branches.Should().HaveCount( 3 );
             opt.Branches.Should().ContainEquivalentOf( new RepositoryInfoOptionsBranch( "develop", CIBranchVersionMode.LastReleaseBased ) );
-            opt.Branches.Should().ContainEquivalentOf( new RepositoryInfoOptionsBranch( "exploratory", CIBranchVersionMode.ZeroTimed, "Preview" ) );
+            opt.Branches.Should().ContainEquivalentOf( new RepositoryInfoOptionsBranch( "fx/command-rework", CIBranchVersionMode.ZeroTimed, "explo" ) { UseReleaseBuildConfigurationFrom = PackageQuality.None } );
             opt.Branches.Should().ContainEquivalentOf( new RepositoryInfoOptionsBranch( "other", CIBranchVersionMode.None ) );
         }
 

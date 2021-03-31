@@ -721,6 +721,7 @@ namespace SimpleGitVersion.Core.Tests
 
             string devPath = Path.Combine( repoTest.Path, "Dev in Alpha.txt" );
             string devTxt = File.ReadAllText( devPath );
+            // There is a typo in the text file! :D
             Assume.That( devTxt, Is.EqualTo( "Dev in Aplpha." ) );
 
             string realDevPath = Path.Combine( repoTest.Path, "Real Dev in Alpha.txt" ); ;
@@ -1043,6 +1044,48 @@ namespace SimpleGitVersion.Core.Tests
                 i.DetailedCommitInfo.BasicInfo.Should().BeNull();
                 i.DetailedCommitInfo.PossibleVersions.Should().BeEquivalentTo( CSVersion.FirstPossibleVersions );
                 i.CIRelease.Should().NotBeNull();
+            }
+        }
+
+        [Test]
+        public void BuildConfiguration_can_depend_on_the_branch()
+        {
+            var repoTest = TestHelper.TestGitRepository;
+            // Root option configuration: here even a CI build is in "Release".
+            {
+                var options = new RepositoryInfoOptions
+                {
+                    UseReleaseBuildConfigurationFrom = PackageQuality.CI,
+                    HeadBranchName = "alpha",
+                    Branches =
+                    {
+                        new RepositoryInfoOptionsBranch( "alpha", CIBranchVersionMode.ZeroTimed )
+                    }
+                };
+
+                CommitInfo i = repoTest.GetRepositoryInfo( options );
+                i.DetailedCommitInfo.BasicInfo.Should().BeNull();
+                i.DetailedCommitInfo.PossibleVersions.Should().BeEquivalentTo( CSVersion.FirstPossibleVersions );
+                i.CIRelease.Should().NotBeNull();
+                i.FinalBuildInfo.BuildConfiguration.Should().Be( "Release" );
+            }
+            // Branch configuration takes precedence on the root.
+            {
+                var options = new RepositoryInfoOptions
+                {
+                    UseReleaseBuildConfigurationFrom = PackageQuality.CI,
+                    HeadBranchName = "alpha",
+                    Branches =
+                    {
+                        new RepositoryInfoOptionsBranch( "alpha", CIBranchVersionMode.ZeroTimed ) { UseReleaseBuildConfigurationFrom = PackageQuality.None }
+                    }
+                };
+
+                CommitInfo i = repoTest.GetRepositoryInfo( options );
+                i.DetailedCommitInfo.BasicInfo.Should().BeNull();
+                i.DetailedCommitInfo.PossibleVersions.Should().BeEquivalentTo( CSVersion.FirstPossibleVersions );
+                i.CIRelease.Should().NotBeNull();
+                i.FinalBuildInfo.BuildConfiguration.Should().Be( "Debug" );
             }
         }
 

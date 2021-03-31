@@ -30,6 +30,44 @@ has incoherent or invalid tags.
 Another common use is when for any reason one need to boost the actual version: jumping from any current
 version (like 1.0.0) to a target that violates the SemVer rule of consecutive versions (like 10.0.0).
 
+### UseReleaseBuildConfigurationFrom (attribute)
+
+This configures the build configuration to use between "Debug" and "Release".
+By default, it is the [ReleaseCandidate](https://github.com/CK-Build/CSemVer-Net/blob/master/CSemVer/PackageQuality.cs)
+quality: only release candidates or stable versions will use "Release".
+```xml
+<RepositoryInfo>
+  <SimpleGitVersion UseReleaseBuildConfigurationFrom="None"> <!-- Always uses "Debug" --> 
+  </SimpleGitVersion>
+</RepositoryInfo>
+```
+
+When specified, it must be:
+ - `None`: always use "Debug" build configuration.
+ - `CI`: always use "Release" build configuration.
+ - `Exploratory`: always use "Release" except for CI builds.
+ - `Preview`: use "Debug" for CI and Exploratory qualities, "Release" otherwise.
+ - `ReleaseCandidate` or `rc`: this is the default.
+ - `Stable`: only stable versions will use "Release", all prerelease versions will use "Debug".
+
+This attribute can also be set at a branch level and overrides the top-level one:
+```xml
+<RepositoryInfo>
+  <!-- Always uses "Release" except on "fx/new-way" where only release candidates
+       or stable versions will use "Release". --> 
+  <SimpleGitVersion UseReleaseBuildConfigurationFrom="CI">
+    <Branches>
+      <Branch Name="develop" CIVersionMode="LastReleaseBased" />
+      <Branch Name="fx/new-way" VersionName="explore" CIVersionMode="ZeroTimed" UseReleaseBuildConfigurationFrom="ReleaseCandidate" />
+    </Branches>
+  </SimpleGitVersion>
+</RepositoryInfo>
+```
+
+If for any reason "Debug" vs. "Release" is not enough, a simple extension point can be used to compute any esoteric build
+configuration string. The build configuration is computed by the static `CommitInfo.BuildConfigurationSelector` function
+that can be replaced. See [CommitInfo.FinalBuildInfo.cs](CommitInfo/CommitInfo.FinalBuildInfo.cs).
+
 ### Long Term Support (`SingleMajor` and `OnlyPatch` attributes)
 
 The RepositoryInfo.xml file can define two attributes:

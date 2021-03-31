@@ -43,6 +43,7 @@ namespace SimpleGitVersion
         public static readonly XName IgnoreModifiedFiles = XNamespace.None + "IgnoreModifiedFiles";
         public static readonly XName SingleMajor = XNamespace.None + "SingleMajor";
         public static readonly XName OnlyPatch = XNamespace.None + "OnlyPatch";
+        public static readonly XName UseReleaseBuildConfigurationFrom = XNamespace.None + "UseReleaseBuildConfigurationFrom";
         public static readonly XName Add = XNamespace.None + "Add";
         public static readonly XName Debug = XNamespace.None + "Debug";
         public static readonly XName Branches = XNamespace.None + "Branches";

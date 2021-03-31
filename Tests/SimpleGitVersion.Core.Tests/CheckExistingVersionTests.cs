@@ -57,7 +57,7 @@ namespace SimpleGitVersion.Core.Tests
         }
 
         [Test]
-        public void CheckExistingVersions_expects_the_StartingVersion_it_it_is_specified()
+        public void CheckExistingVersions_expects_the_StartingVersion_if_it_is_specified()
         {
             var repoTest = TestHelper.TestGitRepository;
             // high is also "origin/fumble-develop" branch.
@@ -112,7 +112,7 @@ namespace SimpleGitVersion.Core.Tests
                     CheckExistingVersions = true,
                     OverriddenTags = overrides.Add( low.Sha, "2.0.0" ).Add( medium.Sha, "1.5.0" ).Add( high.Sha, "1.0.0" ).Overrides,
                 } );
-                i.ErrorCode.Should().Be( CommitInfo.ErrorCodeStatus.CheckExistingVersionHoleFound, "Here, somethinh is missing between 1.5.0 and 1.0.0." );
+                i.ErrorCode.Should().Be( CommitInfo.ErrorCodeStatus.CheckExistingVersionHoleFound, "Here, something is missing between 1.5.0 and 1.0.0." );
             }
             {
                 CommitInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
@@ -120,7 +120,7 @@ namespace SimpleGitVersion.Core.Tests
                     CheckExistingVersions = true,
                     OverriddenTags = overrides.Add( low.Sha, "4.0.0" ).Add( medium.Sha, "3.0.0" ).Add( high.Sha, "1.0.0" ).Overrides,
                 } );
-                i.ErrorCode.Should().Be( CommitInfo.ErrorCodeStatus.CheckExistingVersionHoleFound, "Here, somethinh is missing between 3.0.0 and 1.0.0." );
+                i.ErrorCode.Should().Be( CommitInfo.ErrorCodeStatus.CheckExistingVersionHoleFound, "Here, something is missing between 3.0.0 and 1.0.0." );
             }
         }
 

@@ -11,7 +11,44 @@ SimpleGitVersion applies CSemVer to Git repositories. Tools can use it to ensure
 
 ## Configuration
 SimpleGitVersion supports a few configurations (like defining which branches will produce CI-Build) thanks to
-an optional **RepositoryInfo.xml** file that is described [here](SimpleGitVersion.Core).
+an optional **RepositoryInfo.xml** file at the repository root. Here is is a full sample:
+
+```xml
+<RepositoryInfo>
+  <SimpleGitVersion
+          StartingVersion="4.2.0"
+          SingleMajor="3"   <!-- Note: SingleMajor and OnlyPatch should not be both defined (OnlyPatch wins). -->
+          OnlyPatch="true"
+          UseReleaseBuildConfigurationFrom="Stable">
+          IgnoreAlreadyExistingVersion="true"
+          RemoteName="not-the-origin"  <!-- Note: This should rarely be used. -->
+          CheckExistingVersions="true"
+    <Debug IgnoreDirtyWorkingFolder="true" />  <!-- Note: This is dangerous. -->
+    <IgnoreModifiedFiles>
+      <Add>SharedKey.snk</Add>
+    </IgnoreModifiedFiles>
+    <Branches>
+      <Branch Name="develop"
+              CIVersionMode=""LastReleaseBased" />
+      <Branch Name="other"
+              CIVersionMode=""None"" />
+      <Branch Name="fx/command-rework"
+              CIVersionMode="ZeroTimed"
+              VersionName="explo"
+              UseReleaseBuildConfigurationFrom="None" />
+    </Branches>
+  </SimpleGitVersion>
+</RepositoryInfo>
+```
+
+And this is the simplest one:
+```xml
+<RepositoryInfo>
+  <SimpleGitVersion />
+</RepositoryInfo>
+```
+
+Full documentation is [here](SimpleGitVersion.Core).
 
 ## Build status & packages:
 
@@ -128,17 +165,17 @@ When the release is invalid, the file version is 0.0.0.0 (and the _Product Versi
 
 ## Background & links
 
-Please have a look at http://www.lionhack.com/2014/03/09/software-versioning-strategies/: this is a very good overview of
+Please have a look at https://www.lionhack.com/2014/03/09/software-versioning-strategies/: this is a very good overview of
 the domain that explains .Net Version attributes, FileVersion attributes, version schemes, packages, etc. *
 Of course, semantic versioning is a must: http://semver.org/ as well as http://csemver.org/.
 
 To discover NuGet:
  - https://docs.microsoft.com/en-us/nuget/reference/package-versioning
- - http://www.xavierdecoster.com/semantic-versioning-auto-incremented-nuget-package-versions
+ - https://www.xavierdecoster.com/post/2013/04/29/semantic-versioning-auto-incremented-nuget-package-versions.html
  - NuGet - Top 10 NuGet (Anti-) Patterns: https://msdn.microsoft.com/en-us/magazine/jj851071.aspx 
- - http://haacked.com/archive/2011/10/24/semver-nuget-nightly-builds.aspx/ (even if it’s an old post, the discussion below the post is interesting)
+ - https://haacked.com/archive/2011/10/24/semver-nuget-nightly-builds.aspx/ (even if it’s an old post, the discussion below the post is interesting)
 
-About Git branches and workflows, read http://nvie.com/posts/a-successful-git-branching-model/.
+About Git branches and workflows, read https://nvie.com/posts/a-successful-git-branching-model/.
 You should also have a look at https://github.com/ParticularLabs/GitVersion/ that pursue the same goal as SimpleGitVersion but
 differently (it does not use CSemVer and relies on your Git flow).
 

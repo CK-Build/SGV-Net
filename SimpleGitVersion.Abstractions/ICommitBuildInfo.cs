@@ -10,13 +10,16 @@ namespace SimpleGitVersion
     public interface ICommitBuildInfo
     {
         /// <summary>
-        /// Gets "Debug" for ci build or prerelease below "rc" and "Release" for "rc" and official releases.
+        /// Gets "Debug" for ci build or prerelease below 'rc' and "Release" for 'rc' and stable releases.
         /// Never null, must default to "Debug".
+        /// <para>
+        /// This behavior can be overridden by the configuration.
+        /// </para>
         /// </summary>
         string BuildConfiguration { get; }
 
         /// <summary>
-        /// Gets the Sha of the commit.
+        /// Gets the SHA1 of the commit.
         /// Defaults to <see cref="InformationalVersion.ZeroCommitSha"/>.
         /// </summary>
         string CommitSha { get; }

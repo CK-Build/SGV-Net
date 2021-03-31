@@ -1,3 +1,4 @@
+using CSemVer;
 using FluentAssertions;
 using NUnit.Framework;
 using System;
@@ -94,8 +95,12 @@ namespace SimpleGitVersion.Core.Tests
         [TestCase( "AlwaysOther", CommitInfo.ErrorCodeStatus.AlreadyExistingVersion )]
         public void saving_or_not_the_0000_version_depends_on_the_BuildConfiguration( string selector, object result )
         {
-            if( selector == "AlwaysRelease" ) CommitInfo.BuildConfigurationSelector = ( v, o ) => "Release";
-            if( selector == "AlwaysOther" ) CommitInfo.BuildConfigurationSelector = ( v, o ) => "Other";
+            static string AlwaysRelease( in CommitInfo.InitialInfo commitInfo, SVersion v ) => "Release";
+
+            static string AlwaysOther( in CommitInfo.InitialInfo commitInfo, SVersion v ) => "Other";
+
+            if( selector == "AlwaysRelease" ) CommitInfo.BuildConfigurationSelector = AlwaysRelease;
+            if( selector == "AlwaysOther" ) CommitInfo.BuildConfigurationSelector = AlwaysOther;
             try
             {
                 CommitInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
