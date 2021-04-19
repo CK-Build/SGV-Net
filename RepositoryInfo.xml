@@ -1,4 +1,4 @@
-<RepositoryInfo>
+﻿<RepositoryInfo>
   <SimpleGitVersion>
     <Branches>
       <Branch Name="develop" CIVersionMode="LastReleaseBased" VersionName="develop" />
