@@ -1,79 +1,36 @@
-using Cake.Common.IO;
-using Cake.Common.Solution;
-using Cake.Core;
-
-using Cake.Core.Diagnostics;
-using Cake.Core.IO;
-using SimpleGitVersion;
-using System.Linq;
-
-
+using CK.Core;
+using CodeCakeBuilder.Helpers;
+using System.Threading.Tasks;
 
 namespace CodeCake
 {
-    [AddPath( "%UserProfile%/.nuget/packages/**/tools*" )]
-    public partial class Build : CodeCakeHost
+    public partial class Build
     {
-        public Build()
+        public StandardGlobalInfo GlobalInfo { get; private set; }
+        public async Task<bool> RunAsync( IActivityMonitor m, CCBOptions cCBOptions, string? solutionDirectory )
         {
-            Cake.Log.Verbosity = Verbosity.Diagnostic;
+            GlobalInfo = CreateStandardGlobalInfo( m, solutionDirectory, cCBOptions );
+            await GlobalInfo.AddDotnet( m );
+            GlobalInfo.SetCIBuildTag( m );
+            if( GlobalInfo.GetShouldStop( m ) ) return true;
+            if( !await GlobalInfo.GetDotnetSolution().Clean( m ) ) return false;
+            if( !await GlobalInfo.GetDotnetSolution().Build( m ) ) return false;
 
-            StandardGlobalInfo globalInfo = CreateStandardGlobalInfo()
-                                                .AddDotnet()
-                                                .SetCIBuildTag();
 
-            Task( "Check-Repository" )
-                .Does( () =>
-                {
-                    globalInfo.TerminateIfShouldStop();
-                } );
-                
-            Task( "Clean" )
-                .IsDependentOn( "Check-Repository" )
-                .Does( () =>
-                {
-                    globalInfo.GetDotnetSolution().Clean();
-                    Cake.CleanDirectories( globalInfo.ReleasesFolder );
-                    Cake.DeleteFiles( "Tests/**/TestResult*.xml" );
-                } );
+            if( GlobalInfo.InteractiveMode == InteractiveMode.NoInteraction
+            || GlobalInfo.ReadInteractiveOption( m, "RunUnitTests", "Run Unit Tests?", 'Y', 'N' ) == 'Y' )
+            {
+                await GlobalInfo.GetDotnetSolution().Test( m );
+            }
 
-            Task( "Build" )
-                .IsDependentOn( "Check-Repository" )
-                .IsDependentOn( "Clean" )
-                .Does( () =>
-                {
-                    globalInfo.GetDotnetSolution().Build();
-                } );
+            if( !await GlobalInfo.GetDotnetSolution().Pack( m ) ) return false;
 
-            Task( "Unit-Testing" )
-                .IsDependentOn( "Build" )
-                .WithCriteria( () => Cake.InteractiveMode() == InteractiveMode.NoInteraction
-                                     || Cake.ReadInteractiveOption( "RunUnitTests", "Run Unit Tests?", 'Y', 'N' ) == 'Y' )
-                .Does( () =>
-                {
-                    globalInfo.GetDotnetSolution().Test();
-                } );
 
-            Task( "Create-NuGet-Packages" )
-                .WithCriteria( () => globalInfo.IsValid )
-                .IsDependentOn( "Unit-Testing" )
-                .Does( () =>
-                {
-                    globalInfo.GetDotnetSolution().Pack();
-                } );
-
-            Task( "Push-Artifacts" )
-                .IsDependentOn( "Create-NuGet-Packages" )
-                .WithCriteria( () => globalInfo.IsValid )
-                .Does( () =>
-                {
-                    globalInfo.PushArtifacts();
-                } );
-
-            // The Default task for this script can be set here.
-            Task( "Default" )
-                .IsDependentOn( "Push-Artifacts" );
+            if( GlobalInfo.IsValid )
+            {
+                if( !await GlobalInfo.PushArtifacts( m ) ) return false;
+            }
+            return true;
         }
-
     }
 }

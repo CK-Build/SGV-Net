@@ -1,5 +1,4 @@
-using Cake.Common.Diagnostics;
-using Cake.Core;
+using CK.Core;
 using CK.Text;
 using CodeCake.Abstractions;
 using CSemVer;
@@ -145,25 +144,25 @@ namespace CodeCake
 
             class Logger : ILogger
             {
-                readonly ICakeContext _ctx;
                 readonly object _lock;
+                readonly IActivityMonitor _m;
 
-                public Logger( ICakeContext ctx )
+                public Logger( IActivityMonitor m )
                 {
-                    _ctx = ctx;
                     _lock = new object();
+                    _m = m;
                 }
 
-                public void LogDebug( string data ) { lock( _lock ) _ctx.Debug( $"NuGet: {data}" ); }
-                public void LogVerbose( string data ) { lock( _lock ) _ctx.Verbose( $"NuGet: {data}" ); }
-                public void LogInformation( string data ) { lock( _lock ) _ctx.Information( $"NuGet: {data}" ); }
-                public void LogMinimal( string data ) { lock( _lock ) _ctx.Information( $"NuGet: {data}" ); }
-                public void LogWarning( string data ) { lock( _lock ) _ctx.Warning( $"NuGet: {data}" ); }
-                public void LogError( string data ) { lock( _lock ) _ctx.Error( $"NuGet: {data}" ); }
-                public void LogSummary( string data ) { lock( _lock ) _ctx.Information( $"NuGet: {data}" ); }
-                public void LogInformationSummary( string data ) { lock( _lock ) _ctx.Information( $"NuGet: {data}" ); }
-                public void Log( LogLevel level, string data ) { lock( _lock ) _ctx.Information( $"NuGet ({level}): {data}" ); }
-                public Task LogAsync( LogLevel level, string data )
+                public void LogDebug( string data ) { lock( _lock ) _m.Debug( $"NuGet: {data}" ); }
+                public void LogVerbose( string data ) { lock( _lock ) _m.Trace( $"NuGet: {data}" ); }
+                public void LogInformation( string data ) { lock( _lock ) _m.Info( $"NuGet: {data}" ); }
+                public void LogMinimal( string data ) { lock( _lock ) _m.Info( $"NuGet: {data}" ); }
+                public void LogWarning( string data ) { lock( _lock ) _m.Warn( $"NuGet: {data}" ); }
+                public void LogError( string data ) { lock( _lock ) _m.Error( $"NuGet: {data}" ); }
+                public void LogSummary( string data ) { lock( _lock ) _m.Info( $"NuGet: {data}" ); }
+                public void LogInformationSummary( string data ) { lock( _lock ) _m.Info( $"NuGet: {data}" ); }
+                public void Log( NuGet.Common.LogLevel level, string data ) { lock( _lock ) _m.Info( $"NuGet ({level}): {data}" ); }
+                public Task LogAsync( NuGet.Common.LogLevel level, string data )
                 {
                     Log( level, data );
                     return System.Threading.Tasks.Task.CompletedTask;
@@ -171,26 +170,26 @@ namespace CodeCake
 
                 public void Log( ILogMessage message )
                 {
-                    lock( _lock ) _ctx.Information( $"NuGet ({message.Level}) - Code: {message.Code} - Project: {message.ProjectPath} - {message.Message}" );
+                    lock( _lock ) _m.Info( $"NuGet ({message.Level}) - Code: {message.Code} - Project: {message.ProjectPath} - {message.Message}" );
                 }
 
                 public Task LogAsync( ILogMessage message )
                 {
                     Log( message );
-                    return System.Threading.Tasks.Task.CompletedTask;
+                    return Task.CompletedTask;
                 }
             }
 
-            static ILogger InitializeAndGetLogger( ICakeContext ctx )
+            static ILogger InitializeAndGetLogger( IActivityMonitor m )
             {
                 if( _logger == null )
                 {
-                    ctx.Information( $"Initializing with sources:" );
+                    m.Info( $"Initializing with sources:" );
                     foreach( var s in _sourceProvider.LoadPackageSources() )
                     {
-                        ctx.Information( $"{s.Name} => {s.Source}" );
+                        m.Info( $"{s.Name} => {s.Source}" );
                     }
-                    _logger = new Logger( ctx );
+                    _logger = new Logger( m );
 
                 }
                 return _logger;
@@ -198,12 +197,9 @@ namespace CodeCake
 
             class Creds : ICredentialProvider
             {
-                private readonly ICakeContext _ctx;
+                private readonly StandardGlobalInfo _ctx;
 
-                public Creds( ICakeContext ctx )
-                {
-                    _ctx = ctx;
-                }
+                public Creds( StandardGlobalInfo ctx ) => _ctx = ctx;
 
                 public string Id { get; }
 
@@ -219,7 +215,7 @@ namespace CodeCake
                         new CredentialResponse(
                             new NetworkCredential(
                                 "CKli",
-                                _ctx.InteractiveEnvironmentVariable(
+                                _ctx.InteractiveEnvironmentVariable( new ActivityMonitor(),//TODO: we are doing a new ActivityMonitor there, can't we use a shared one ?
                                     _vstsFeeds.Single( p => new Uri( p.Url ).ToString() == uri.ToString() ).SecretKeyName
                                 )
                             )
@@ -254,8 +250,8 @@ namespace CodeCake
                             HttpHandlerResourceV3.CredentialService = new Lazy<ICredentialService>(
                             () => new CredentialService(
                                 providers: new AsyncLazy<IEnumerable<ICredentialProvider>>(
-                                    () => System.Threading.Tasks.Task.FromResult<IEnumerable<ICredentialProvider>>(
-                                        new List<Creds> { new Creds( Cake ) } )
+                                    () => Task.FromResult<IEnumerable<ICredentialProvider>>(
+                                        new List<Creds> { new Creds( GlobalInfo ) } )
                                 ),
                                 nonInteractive: true,
                                 handlesDefaultCredentials: true )
@@ -296,7 +292,7 @@ namespace CodeCake
                 /// Must provide the secret key name that must be found in the environment variables.
                 /// Without it push is skipped.
                 /// </summary>
-                public abstract string SecretKeyName { get; }
+                public abstract string? SecretKeyName { get; }
 
                 /// <summary>
                 /// The url of the source. Can be a local path.
@@ -320,21 +316,21 @@ namespace CodeCake
                 /// </summary>
                 /// <param name="artifacts">Local artifacts.</param>
                 /// <returns>The set of push into this feed.</returns>
-                public override async Task<IEnumerable<ArtifactPush>> CreatePushListAsync( IEnumerable<ILocalArtifact> artifacts )
+                public override async Task<IEnumerable<ArtifactPush>> CreatePushListAsync( IActivityMonitor m, IEnumerable<ILocalArtifact> artifacts )
                 {
                     var result = new List<ArtifactPush>();
-                    var logger = InitializeAndGetLogger( Cake );
+                    var logger = InitializeAndGetLogger( m );
                     MetadataResource meta = await _sourceRepository.GetResourceAsync<MetadataResource>();
                     foreach( var p in artifacts )
                     {
                         var pId = new PackageIdentity( p.ArtifactInstance.Artifact.Name, new NuGetVersion( p.ArtifactInstance.Version.ToNormalizedString() ) );
                         if( await meta.Exists( pId, _sourceCache, logger, CancellationToken.None ) )
                         {
-                            Cake.Debug( $" ==> Feed '{Name}' already contains {p.ArtifactInstance}." );
+                            m.Debug( $" ==> Feed '{Name}' already contains {p.ArtifactInstance}." );
                         }
                         else
                         {
-                            Cake.Debug( $"Package {p.ArtifactInstance} must be published to remote feed '{Name}'." );
+                            m.Debug( $"Package {p.ArtifactInstance} must be published to remote feed '{Name}'." );
                             result.Add( new ArtifactPush( p, this ) );
                         }
                     }
@@ -346,20 +342,20 @@ namespace CodeCake
                 /// </summary>
                 /// <param name="pushes">The instances to push (that necessary target this feed).</param>
                 /// <returns>The awaitable.</returns>
-                public override async Task PushAsync( IEnumerable<ArtifactPush> pushes )
+                public override async Task<bool> PushAsync( IActivityMonitor m, IEnumerable<ArtifactPush> pushes )
                 {
-                    string apiKey = null;
+                    string? apiKey = null;
                     if( !_packageSource.IsLocal )
                     {
-                        apiKey = ResolveAPIKey();
+                        apiKey = ResolveAPIKey( m );
                         if( string.IsNullOrEmpty( apiKey ) )
                         {
-                            Cake.Information( $"Could not resolve API key. Push to '{Name}' => '{Url}' is skipped." );
-                            return;
+                            m.Info( $"Could not resolve API key. Push to '{Name}' => '{Url}' is skipped." );
+                            return false;
                         }
                     }
-                    Cake.Information( $"Pushing packages to '{Name}' => '{Url}'." );
-                    var logger = InitializeAndGetLogger( Cake );
+                    m.Info( $"Pushing packages to '{Name}' => '{Url}'." );
+                    var logger = InitializeAndGetLogger( m );
                     var updater = await _updater;
                     foreach( var p in pushes )
                     {
@@ -377,7 +373,7 @@ namespace CodeCake
                             symbolPackageUpdateResource: null,
                             log: logger );
                     }
-                    await OnAllArtifactsPushed( pushes );
+                    return await OnAllArtifactsPushed( m, pushes );
                 }
 
                 /// <summary>
@@ -386,16 +382,13 @@ namespace CodeCake
                 /// </summary>
                 /// <param name="pushes">The instances to push (that necessary target this feed).</param>
                 /// <returns>The awaitable.</returns>
-                protected virtual Task OnAllArtifactsPushed( IEnumerable<ArtifactPush> pushes )
-                {
-                    return System.Threading.Tasks.Task.CompletedTask;
-                }
+                protected virtual Task<bool> OnAllArtifactsPushed( IActivityMonitor m, IEnumerable<ArtifactPush> pushes ) => Task.FromResult( true );
 
                 /// <summary>
                 /// Must resolve the API key required to push the package.
                 /// </summary>
                 /// <returns>The secret (that can be null or empty).</returns>
-                protected abstract string ResolveAPIKey();
+                protected abstract string? ResolveAPIKey( IActivityMonitor m );
             }
         }
 
@@ -408,7 +401,7 @@ namespace CodeCake
         /// </summary>
         class VSTSFeed : NuGetHelper.NuGetFeed
         {
-            string _azureFeedPAT;
+            string? _azureFeedPAT;
 
             /// <summary>
             /// Initialize a new remote VSTS feed.
@@ -436,12 +429,12 @@ namespace CodeCake
             /// </summary>
             /// <param name="ctx">The Cake context.</param>
             /// <returns>The "VSTS" API key or null to skip the push.</returns>
-            protected override string ResolveAPIKey()
+            protected override string? ResolveAPIKey( IActivityMonitor m )
             {
-                _azureFeedPAT = Cake.InteractiveEnvironmentVariable( SecretKeyName );
+                _azureFeedPAT = GlobalInfo.InteractiveEnvironmentVariable( m, SecretKeyName );
                 if( string.IsNullOrWhiteSpace( _azureFeedPAT ) )
                 {
-                    Cake.Warning( $"No {SecretKeyName} environment variable found." );
+                    m.Warn( $"No {SecretKeyName} environment variable found." );
                     _azureFeedPAT = null;
                 }
                 // The API key for the Credential Provider must be "VSTS".
@@ -506,9 +499,9 @@ namespace CodeCake
             /// <param name="ctx">The Cake context.</param>
             /// <param name="pushes">The set of artifacts to promote.</param>
             /// <returns>The awaitable.</returns>
-            protected override async Task OnAllArtifactsPushed( IEnumerable<ArtifactPush> pushes )
+            protected override async Task<bool> OnAllArtifactsPushed( IActivityMonitor m, IEnumerable<ArtifactPush> pushes )
             {
-                var basicAuth = Convert.ToBase64String( Encoding.ASCII.GetBytes( ":" + Cake.InteractiveEnvironmentVariable( SecretKeyName ) ) );
+                var basicAuth = Convert.ToBase64String( Encoding.ASCII.GetBytes( ":" + GlobalInfo.InteractiveEnvironmentVariable( m, SecretKeyName ) ) );
                 foreach( var p in pushes )
                 {
                     foreach( var view in p.Version.PackageQuality.GetAllQualities() )
@@ -516,27 +509,29 @@ namespace CodeCake
                         var url = ProjectName != null ?
                               $"https://pkgs.dev.azure.com/{Organization}/{ProjectName}/_apis/packaging/feeds/{FeedName}/nuget/packagesBatch?api-version=5.0-preview.1"
                             : $"https://pkgs.dev.azure.com/{Organization}/_apis/packaging/feeds/{FeedName}/nuget/packagesBatch?api-version=5.0-preview.1";
-                        using( HttpRequestMessage req = new HttpRequestMessage( HttpMethod.Post, url ) )
+                        using( HttpRequestMessage req = new( HttpMethod.Post, url ) )
                         {
                             req.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue( "Basic", basicAuth );
                             var body = GetPromotionJSONBody( p.Name, p.Version.ToNormalizedString(), view.ToString() );
                             req.Content = new StringContent( body, Encoding.UTF8, "application/json" );
-                            using( var m = await StandardGlobalInfo.SharedHttpClient.SendAsync( req ) )
+                            using( var message = await StandardGlobalInfo.SharedHttpClient.SendAsync( req ) )
                             {
-                                if( m.IsSuccessStatusCode )
+                                if( message.IsSuccessStatusCode )
                                 {
-                                    Cake.Information( $"Package '{p.Name}' promoted to view '@{view}'." );
+                                    m.Info( $"Package '{p.Name}' promoted to view '@{view}'." );
                                 }
                                 else
                                 {
-                                    Cake.Error( $"Package '{p.Name}' promotion to view '@{view}' failed." );
+                                    m.Error( $"Package '{p.Name}' promotion to view '@{view}' failed." );
                                     // Throws!
-                                    m.EnsureSuccessStatusCode();
+                                    return false;
                                 }
                             }
                         }
                     }
                 }
+
+                return true;
             }
 
             string GetPromotionJSONBody( string packageName, string packageVersion, string viewId, bool npm = false )
@@ -590,14 +585,14 @@ namespace CodeCake
             /// </summary>
             /// <param name="ctx">The Cake context.</param>
             /// <returns>The API key or null.</returns>
-            protected override string ResolveAPIKey()
+            protected override string? ResolveAPIKey( IActivityMonitor m )
             {
                 if( String.IsNullOrEmpty( SecretKeyName ) )
                 {
-                    Cake.Information( $"Remote feed '{Name}' APIKeyName is null or empty." );
+                    m.Info( $"Remote feed '{Name}' APIKeyName is null or empty." );
                     return null;
                 }
-                return Cake.InteractiveEnvironmentVariable( SecretKeyName );
+                return GlobalInfo.InteractiveEnvironmentVariable( m, SecretKeyName );
             }
         }
 
@@ -611,9 +606,9 @@ namespace CodeCake
             {
             }
 
-            public override string SecretKeyName => null;
+            public override string? SecretKeyName => null;
 
-            protected override string ResolveAPIKey() => null;
+            protected override string? ResolveAPIKey( IActivityMonitor m ) => null;
         }
     }
 }

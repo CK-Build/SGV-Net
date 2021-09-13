@@ -1,5 +1,12 @@
+using Cake.Arguments;
+using CK.Core;
+using CK.Monitoring;
+using CK.Monitoring.Handlers;
+using CodeCakeBuilder.Helpers;
 using System;
+using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace CodeCake
 {
@@ -18,21 +25,36 @@ namespace CodeCake
         /// </summary>
         /// <param name="args">The command line arguments.</param>
         /// <returns>An error code (typically negative), 0 on success.</returns>
-        static int Main( string[] args )
+        static async Task<int> Main( string[] args )
         {
-            string solutionDirectory = args.Contains( SolutionDirectoryIsCurrentDirectoryParameter, StringComparer.OrdinalIgnoreCase )
-                                        ? Environment.CurrentDirectory
-                                        : null;
-            var app = new CodeCakeApplication( solutionDirectory );
-            RunResult result = app.Run( args.Where( a => !StringComparer.OrdinalIgnoreCase.Equals( a, SolutionDirectoryIsCurrentDirectoryParameter ) ) );
-            if( result.InteractiveMode == InteractiveMode.Interactive )
+            GrandOutputConfiguration cfg = new();
+            cfg.AddHandler( new ConsoleConfiguration() );
+            GrandOutput.EnsureActiveDefault( cfg );
+            ArgumentParser parser = new();
+            var m = new ActivityMonitor();
+            try
             {
-                Console.WriteLine();
-                Console.WriteLine( $"Hit any key to exit." );
-                Console.WriteLine( $"Use -{InteractiveAliases.NoInteractionArgument} or -{InteractiveAliases.AutoInteractionArgument} parameter to exit immediately." );
-                Console.ReadKey();
+
+                CCBOptions options = parser.Parse( m, args ) ?? new CCBOptions();
+                string? solutionDirectory = args.Contains( SolutionDirectoryIsCurrentDirectoryParameter, StringComparer.OrdinalIgnoreCase )
+                                            ? Environment.CurrentDirectory
+                                            : null;
+                Build app = new();
+                bool result = await app.RunAsync( m, options, solutionDirectory );
+                if( app.GlobalInfo.InteractiveMode == InteractiveMode.Interactive )
+                {
+                    System.Console.WriteLine();
+                    System.Console.WriteLine( $"Hit any key to exit." );
+                    System.Console.WriteLine( $"Use -{Interactive.NoInteractionArgument} or -{Interactive.AutoInteractionArgument} parameter to exit immediately." );
+                    System.Console.ReadKey();
+                }
+                return result ? 0 : 1;
             }
-            return result.ReturnCode;
+            catch( Exception e )
+            {
+                m.Error( e );
+                return 1;
+            }
         }
     }
 }

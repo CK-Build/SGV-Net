@@ -1,12 +1,7 @@
-using Cake.Common;
-using Cake.Common.Build;
-using Cake.Common.Build.AppVeyor;
-using Cake.Common.Build.AzurePipelines;
-using Cake.Common.Build.TFBuild;
-using Cake.Common.Diagnostics;
-using Cake.Core;
+using CK.Core;
 using CK.Text;
 using CodeCake.Abstractions;
+using CodeCakeBuilder.Helpers;
 using CSemVer;
 using SimpleGitVersion;
 using System;
@@ -14,6 +9,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 
 namespace CodeCake
@@ -23,33 +19,28 @@ namespace CodeCake
     /// </summary>
     public class StandardGlobalInfo
     {
-        readonly ICakeContext _ctx;
-        readonly HashSet<ICIWorkflow> _solutions = new HashSet<ICIWorkflow>();
+        readonly HashSet<ISolution> _solutions = new();
         List<ArtifactPush> _artifactPushes;
         bool _ignoreNoArtifactsToProduce;
 
-        static StandardGlobalInfo()
+        public StandardGlobalInfo( CCBOptions cCBOptions, InteractiveMode interactiveMode, NormalizedPath rootFolder, ICommitBuildInfo finalBuildInfo )
         {
-            SharedHttpClient = new HttpClient();
-        }
-
-        public StandardGlobalInfo( ICakeContext ctx, ICommitBuildInfo finalBuildInfo )
-        {
-            _ctx = ctx;
+            Arguments = new CLIArguments( cCBOptions.Arguments );
+            InteractiveMode = interactiveMode;
+            RootFolder = rootFolder;
             BuildInfo = finalBuildInfo;
             ReleasesFolder = "CodeCakeBuilder/Releases";
             Directory.CreateDirectory( ReleasesFolder );
         }
 
-        public void RegisterSolution( ICIWorkflow solution )
+        public void RegisterSolution( ISolution solution )
         {
             _solutions.Add( solution );
         }
 
-        /// <summary>
-        /// Gets the Cake context.
-        /// </summary>
-        public ICakeContext Cake => _ctx;
+        public CLIArguments Arguments { get; }
+        public InteractiveMode InteractiveMode { get; }
+        public NormalizedPath RootFolder { get; }
 
         /// <summary>
         /// Gets the <see cref="ICommitBuildInfo"/> for this commit.
@@ -86,7 +77,7 @@ namespace CodeCake
         /// See: https://aspnetmonsters.com/2016/08/2016-08-27-httpclientwrong/
         /// Do not add any default on it.
         /// </summary>
-        public static readonly HttpClient SharedHttpClient;
+        public static readonly HttpClient SharedHttpClient = new HttpClient();
 
         /// <summary>
         /// Gets whether artifacts should be pushed to remote feeds.
@@ -100,27 +91,21 @@ namespace CodeCake
         public string LocalFeedPath { get; set; }
 
         /// <summary>
-        /// Gets or sets whether <see cref="NoArtifactsToProduce"/> should be ignored.
-        /// Defaults to false: by default if there is no packages to produce <see cref="ShouldStop"/> is true.
+        /// Gets or sets whether <see cref="GetNoArtifactsToProduce()"/> should be ignored.
+        /// Defaults to false: by default if there is no packages to produce <see cref="GetShouldStop()"/> is true.
         /// </summary>
         public bool IgnoreNoArtifactsToProduce
         {
-            get
-            {
-                return Cake.Argument( "IgnoreNoArtifactsToProduce", 'N' ) == 'Y' || _ignoreNoArtifactsToProduce;
-            }
-            set
-            {
-                _ignoreNoArtifactsToProduce = value;
-            }
+            get => Arguments.GetArgument( "IgnoreNoArtifactsToProduce" ) == "Y" || _ignoreNoArtifactsToProduce;
+            set => _ignoreNoArtifactsToProduce = value;
         }
 
         /// <summary>
         /// Gets whether <see cref="GetArtifactPushList"/> is empty: all artifacts are already available in all
         /// artifact repositories: unless <see cref="IgnoreNoArtifactsToProduce"/> is set to true, there is nothing to
-        /// do and <see cref="ShouldStop"/> is true.
+        /// do and <see cref="GetShouldStop()"/> is true.
         /// </summary>
-        public bool NoArtifactsToProduce => !GetArtifactPushList().Any();
+        public bool GetNoArtifactsToProduce( IActivityMonitor m ) => !GetArtifactPushList( m ).Any();
 
         /// <summary>
         /// Gets a read only list of all the pushes of artifacts for all <see cref="ArtifactType"/>.
@@ -130,12 +115,12 @@ namespace CodeCake
         /// (without reseting them).
         /// </param>
         /// <returns>The set of pushes.</returns>
-        public IReadOnlyList<ArtifactPush> GetArtifactPushList( bool reset = false )
+        public IReadOnlyList<ArtifactPush> GetArtifactPushList( IActivityMonitor m, bool reset = false )
         {
             if( _artifactPushes == null || reset )
             {
                 _artifactPushes = new List<ArtifactPush>();
-                var tasks = ArtifactTypes.Select( f => f.GetPushListAsync() ).ToArray();
+                var tasks = ArtifactTypes.Select( f => f.GetPushListAsync( m ) ).ToArray();
                 Task.WaitAll( tasks );
                 foreach( var p in tasks.Select( t => t.Result ) )
                 {
@@ -148,9 +133,9 @@ namespace CodeCake
         /// <summary>
         /// Gets whether there is no artifact to produce and <see cref="IgnoreNoArtifactsToProduce"/> is false.
         /// </summary>
-        public bool ShouldStop => NoArtifactsToProduce && !IgnoreNoArtifactsToProduce;
+        public bool GetShouldStop( IActivityMonitor m ) => GetNoArtifactsToProduce( m ) && !IgnoreNoArtifactsToProduce;
 
-        public IReadOnlyCollection<ICIWorkflow> Solutions => _solutions;
+        public IReadOnlyCollection<ISolution> Solutions => _solutions;
 
         #region Memory key support.
 
@@ -161,7 +146,7 @@ namespace CodeCake
             if( BuildInfo.IsValid() ) File.AppendAllLines( MemoryFilePath, new[] { key.ToString() } );
         }
 
-        public bool CheckCommitMemoryKey( NormalizedPath key )
+        public bool CheckCommitMemoryKey( IActivityMonitor m, NormalizedPath key )
         {
             bool done = File.Exists( MemoryFilePath )
                         ? Array.IndexOf( File.ReadAllLines( MemoryFilePath ), key.Path ) >= 0
@@ -170,12 +155,12 @@ namespace CodeCake
             {
                 if( !BuildInfo.IsValid() )
                 {
-                    Cake.Information( $"Zero commit. Key exists but is ignored: {key}" );
+                    m.Info( $"Zero commit. Key exists but is ignored: {key}" );
                     done = false;
                 }
                 else
                 {
-                    Cake.Information( $"Key exists on this commit: {key}" );
+                    m.Info( $"Key exists on this commit: {key}" );
                 }
             }
             return done;
@@ -187,76 +172,69 @@ namespace CodeCake
         /// Simply calls <see cref="ArtifactType.PushAsync(IEnumerable{ArtifactPush})"/> on each <see cref="ArtifactTypes"/>
         /// with their correct typed artifacts.
         /// </summary>
-        public void PushArtifacts( IEnumerable<ArtifactPush> pushes = null )
+        public async Task<bool> PushArtifacts( IActivityMonitor m, IEnumerable<ArtifactPush>? pushes = null )
         {
-            if( pushes == null ) pushes = GetArtifactPushList();
-            var tasks = ArtifactTypes.Select( t => t.PushAsync( pushes.Where( a => a.Feed.ArtifactType == t ) ) ).ToArray();
-            Task.WaitAll( tasks );
+            if( pushes == null ) pushes = GetArtifactPushList( m );
+            bool result = true;
+            // Kuinox: I removed the parallel pushes: the output was not readable, and it was hard to determine which package push caused an issue.
+            foreach( var pushGroup in pushes.GroupBy( s => s.Feed.ArtifactType ) )
+            {
+                result &= await pushGroup.Key.PushAsync( m, pushGroup );
+            }
+            return result;
         }
 
         /// <summary>
         /// Tags the build when running on Appveyor or AzureDevOps (GitLab does not support this).
-        /// Note that if <see cref="ShouldStop"/> is true, " (Skipped)" is appended.
+        /// Note that if <see cref="GetShouldStop()"/> is true, " (Skipped)" is appended.
         /// </summary>
         /// <returns>This info object (allowing fluent syntax).</returns>
-        public StandardGlobalInfo SetCIBuildTag()
+        public StandardGlobalInfo SetCIBuildTag( IActivityMonitor m )
         {
-            string AddSkipped( string s ) => ShouldStop ? s + " (Skipped)" : s;
+            //TODO.
+            //string AddSkipped( string s ) => ShouldStop ? s + " (Skipped)" : s;
 
-            string ComputeAzurePipelineUpdateBuildVersion( ICommitBuildInfo buildInfo )
-            {
-                // Azure (formerly VSTS, formerly VSO) analyzes the stdout to set its build number.
-                // On clash, the default Azure/VSTS/VSO build number is used: to ensure that the actual
-                // version will be always be available we need to inject a uniquifier.
-                string buildVersion = AddSkipped( $"{buildInfo.Version}_{DateTime.UtcNow:yyyyMMdd-HHmmss}" );
-                Cake.Information( $"Using Azure build number: {buildVersion}" );
-                return $"##vso[build.updatebuildnumber]{buildVersion}";
-            }
+            //string ComputeAzurePipelineUpdateBuildVersion( ICommitBuildInfo buildInfo )
+            //{
+            //    // Azure (formerly VSTS, formerly VSO) analyzes the stdout to set its build number.
+            //    // On clash, the default Azure/VSTS/VSO build number is used: to ensure that the actual
+            //    // version will be always be available we need to inject a uniquifier.
+            //    string buildVersion = AddSkipped( $"{buildInfo.Version}_{DateTime.UtcNow:yyyyMMdd-HHmmss}" );
+            //    m.Info( $"Using VSTS build number: {buildVersion}" );
+            //    return $"##vso[build.updatebuildnumber]{buildVersion}";
+            //}
 
-            void AzurePipelineUpdateBuildVersion( string buildInstruction )
-            {
-                Console.WriteLine();
-                Console.WriteLine( buildInstruction );
-                Console.WriteLine();
-            }
+            //void AzurePipelineUpdateBuildVersion( string buildInstruction )
+            //{
+            //    Console.WriteLine();
+            //    Console.WriteLine( buildInstruction );
+            //    Console.WriteLine();
+            //}
 
-            IAppVeyorProvider appVeyor = Cake.AppVeyor();
-            IAzurePipelinesProvider azure = Cake.AzurePipelines();
-            try
-            {
-                if( appVeyor.IsRunningOnAppVeyor )  
-                {
-                    appVeyor.UpdateBuildVersion( AddSkipped( BuildInfo.Version.ToString() ) );
-                }
+            //IAppVeyorProvider appVeyor = Cake.AppVeyor();
+            //ITFBuildProvider vsts = Cake.TFBuild();
+            //try
+            //{
+            //    if( appVeyor.IsRunningOnAppVeyor )
+            //    {
+            //        appVeyor.UpdateBuildVersion( AddSkipped( BuildInfo.Version.ToString() ) );
+            //    }
 
-                if( azure.IsRunningOnAzurePipelinesHosted || azure.IsRunningOnAzurePipelines )
-                {
-                    string azureVersion = ComputeAzurePipelineUpdateBuildVersion( BuildInfo );
-                    AzurePipelineUpdateBuildVersion( azureVersion );
-                }
-            }
-            catch( Exception e )
-            {
-                Cake.Warning( "Could not set the Build Version!" );
-                Cake.Warning( e );
-            }
+            //    if( vsts.IsRunningOnAzurePipelinesHosted || vsts.IsRunningOnAzurePipelines )
+            //    {
+            //        string azureVersion = ComputeAzurePipelineUpdateBuildVersion( BuildInfo );
+            //        AzurePipelineUpdateBuildVersion( azureVersion );
+            //    }
+            //}
+            //catch( Exception e )
+            //{
+            //    m.Warn( "Could not set the Build Version !!!" );
+            //    m.Warn( e );
+            //}
 
             return this;
         }
 
-        /// <summary>
-        /// Terminates the script with success if <see cref="ShouldStop"/> is true.
-        /// (Calls <see cref="TerminateAliases.TerminateWithSuccess(ICakeContext, string)">Cake.TerminateWithSuccess</see>.)
-        /// </summary>
-        /// <returns>This info object (allowing fluent syntax).</returns>
-        public StandardGlobalInfo TerminateIfShouldStop()
-        {
-            if( ShouldStop )
-            {
-                Cake.TerminateWithSuccess( "All packages from this commit are already available. Build skipped." );
-            }
-            return this;
-        }
 
     }
 

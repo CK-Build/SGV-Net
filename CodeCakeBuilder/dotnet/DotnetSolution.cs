@@ -1,56 +1,51 @@
-using Cake.Common.Diagnostics;
-using Cake.Common.IO;
-using Cake.Common.Solution;
-using Cake.Common.Tools.DotNetCore;
-using Cake.Common.Tools.DotNetCore.Build;
-using Cake.Common.Tools.DotNetCore.Test;
-using Cake.Common.Tools.NUnit;
-using Cake.Core;
-using Cake.Core.IO;
+using CK.Core;
 using CK.Text;
-using CodeCake.Abstractions;
 using SimpleGitVersion;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
+using CodeCake.Abstractions;
+using Kuinox.TypedCLI.Dotnet;
+using System.Threading.Tasks;
+using NuGet.Common;
+using CodeCakeBuilder.Helpers;
 
 namespace CodeCake
 {
 
     public static class StandardGlobalInfoDotnetExtension
     {
-        public static StandardGlobalInfo AddDotnet( this StandardGlobalInfo globalInfo )
-        {
-            DotnetSolution sln = DotnetSolution.FromSolutionInCurrentWorkingDirectory( globalInfo );
-            globalInfo.RegisterSolution( sln );
-            return globalInfo;
-        }
+        public static async Task AddDotnet( this StandardGlobalInfo globalInfo, IActivityMonitor m )
+            => globalInfo.RegisterSolution(
+                await DotnetSolution.FromSolution( m, globalInfo )
+            );
 
         public static DotnetSolution GetDotnetSolution( this StandardGlobalInfo globalInfo )
-        {
-            return globalInfo.Solutions.OfType<DotnetSolution>().Single();
-        }
+            => globalInfo.Solutions.OfType<DotnetSolution>().Single();
     }
 
-    public partial class DotnetSolution : ICIWorkflow
+    public partial class DotnetSolution : ISolution
     {
         readonly StandardGlobalInfo _globalInfo;
-        public readonly string SolutionFileName;
-        public readonly IReadOnlyList<SolutionProject> Projects;
-        public readonly IReadOnlyList<SolutionProject> ProjectsToPublish;
+        public string SolutionFileName { get; }
+        //public readonly IReadOnlyList<SolutionProject> Projects;
+        public IReadOnlyList<NormalizedPath> ProjectsPath { get; }
+        public IReadOnlyList<NormalizedPath> ProjectsToPublish { get; }
 
         DotnetSolution(
             StandardGlobalInfo globalInfo,
             string solutionFileName,
-            IReadOnlyList<SolutionProject> projects,
-            IReadOnlyList<SolutionProject> projectsToPublish )
+            IEnumerable<NormalizedPath> projects,
+            IEnumerable<NormalizedPath> projectsToPublish )
         {
             _globalInfo = globalInfo;
             SolutionFileName = solutionFileName;
-            Projects = projects;
-            ProjectsToPublish = projectsToPublish;
+            ProjectsPath = projects.ToArray();
+            if( ProjectsPath.Count == 0 ) throw new ArgumentException( "There is no project in this solution." );
+            ProjectsToPublish = projectsToPublish.ToArray();
         }
 
         /// <summary>
@@ -61,28 +56,32 @@ namespace CodeCake
         /// The predicate used to filter the project to publish. By default the predicate is p => !p.Path.Segments.Contains
         /// </param>
         /// <returns></returns>
-        public static DotnetSolution FromSolutionInCurrentWorkingDirectory(
-            StandardGlobalInfo globalInfo )
+        internal static async Task<DotnetSolution> FromSolution( IActivityMonitor m, StandardGlobalInfo globalInfo )
         {
-            string solutionFileName = System.IO.Path.GetFileName(
-                globalInfo.Cake.GetFiles( "*.sln",
-                    new GlobberSettings
-                    {
-                        Predicate = p => !System.IO.Path.GetFileName( p.Path.FullPath ).EndsWith( ".local.sln", StringComparison.OrdinalIgnoreCase )
-                    } ).Single().FullPath
-            );
-            var sln = globalInfo.Cake.ParseSolution( solutionFileName );
+            NormalizedPath rootFolder = globalInfo.RootFolder;
+            string[] files = Directory.GetFiles( rootFolder, "*.sln" );
+            if( files.Length > 1 ) throw new InvalidOperationException( "There is multiple sln at the root folder." ); //TODO: make temp SLN delete on hard exit. (it's probably feasible)
+            if( files.Length == 0 ) throw new InvalidOperationException( "There is no sln in the root folder." );
+            string solutionFileName = files[0];
+            IEnumerable<string>? slnProjects = await Dotnet.Sln.List( m, rootFolder, solutionFileName );
+            IEnumerable<NormalizedPath>? projects = slnProjects?.Select( s => new NormalizedPath( Path.GetDirectoryName( s ) ) );
+            if( projects == null ) throw new InvalidOperationException( "Could not read projects from the sln." );
+            int count = projects.Count();
+            projects = projects.Where( s => s.LastPart != "CodeCakeBuilder" );
+            if( projects.Count() == count ) throw new InvalidOperationException( "Could not exclude the 'CodeCakeBuilder' is it correctly named ?" );
 
-            var projects = sln
-                .Projects
-                .Where( p => !(p is SolutionFolder)
-                            && p.Name != "CodeCakeBuilder" )
-                .ToList();
-            var projectsToPublish = projects.Where(
-                    p => ((bool?)XDocument.Load( p.Path.FullPath )
-                        .Root
-                        .Elements( "PropertyGroup" )
-                        .Elements( "IsPackable" ).LastOrDefault() ?? true) == true
+            List<NormalizedPath> projectsToPublish = projects.Where(
+                    p =>
+                    {
+                        var fullPath = rootFolder.Combine( p );
+                        fullPath = fullPath.AppendPart( fullPath.LastPart + ".csproj" );
+                        return ((bool?)XDocument.Load( fullPath )
+                                                .Root
+                                                .Elements( "PropertyGroup" )
+                                                .Elements( "IsPackable" ).LastOrDefault() ?? true) == true;
+                    }
+                //TODO: azure functions are not packable but are published. Something like that.
+                // It mean we must add another tag for these case.
                 )
                 .ToList();
 
@@ -92,124 +91,189 @@ namespace CodeCake
         /// <summary>
         /// Cleans the bin/obj of the projects and the TestResults xml.
         /// </summary>
-        public void Clean()
+        public async Task<bool> Clean( IActivityMonitor m )
         {
-            _globalInfo.Cake.CleanDirectories( Projects.Select( p => p.Path.GetDirectory().Combine( "bin" ) ) );
-            _globalInfo.Cake.CleanDirectories( Projects.Select( p => p.Path.GetDirectory().Combine( "obj" ) ) );
-            _globalInfo.Cake.DeleteFiles( "Tests/**/TestResult*.xml" );
+            using( m.OpenTrace( "Cleaning the dotnet solution..." ) )
+            using( var tempSln = TemporarySolutionFile.Create( SolutionFileName ) )
+            {
+                var exclude = new List<string>() { "CodeCakeBuilder" };
+                await tempSln.ExcludeProjectsFromBuild( m, exclude.ToArray() );
+                await Dotnet.Clean( m, Path.GetDirectoryName( tempSln.Path )!, tempSln.Path );
+                using( m.OpenTrace( "Deleting bin folders..." ) )
+                {
+                    FileHelpers.DeleteDirectories( m, ProjectsPath.Select( p => p.RemoveLastPart().Combine( "bin" ) ) );
+                }
+                using( m.OpenTrace( "Deleting obj folders..." ) )
+                {
+                    FileHelpers.DeleteDirectories( m, ProjectsPath.Select( p => p.RemoveLastPart().Combine( "obj" ) ) );
+                }
+                using( m.OpenTrace( "Deleting TestResult xml files..." ) )
+                {
+                    FileHelpers.DeleteFiles( m, "Tests/**/TestResult*.xml" );
+                }
+            }
+            return true;
         }
+
+
+
 
         /// <summary>
         /// Builds the solution without "CodeCakeBuilder" project itself and
         /// optionally other projects.
         /// </summary>
         /// <param name="excludedProjectName">Optional project names (without path nor .csproj extension).</param>
-        public void Build( params string[] excludedProjectsName )
+        public async Task<bool> Build( IActivityMonitor m, params string[] excludedProjectsName )
         {
-            using( var tempSln = _globalInfo.Cake.CreateTemporarySolutionFile( SolutionFileName ) )
+            using( var tempSln = TemporarySolutionFile.Create( SolutionFileName ) )
             {
                 var exclude = new List<string>( excludedProjectsName ) { "CodeCakeBuilder" };
-                tempSln.ExcludeProjectsFromBuild( exclude.ToArray() );
-                _globalInfo.Cake.DotNetCoreBuild( tempSln.FullPath.FullPath,
-                    new DotNetCoreBuildSettings().AddVersionArguments( _globalInfo.BuildInfo, s =>
+                await tempSln.ExcludeProjectsFromBuild( m, exclude.ToArray() );
+                ICommitBuildInfo info = _globalInfo.BuildInfo;
+                bool result = await Dotnet.Build( m,
+                    projectOrSolution: tempSln.Path,
+                    configuration: _globalInfo.BuildInfo.BuildConfiguration,
+                    workingDirectory: _globalInfo.RootFolder,
+                    noLogo: true,
+                    msbuildProperties: new Dictionary<string, string>()
                     {
-                        s.Configuration = _globalInfo.BuildInfo.BuildConfiguration;
-                    } ) );
+                        { "CakeBuild","true" },
+                        { "Version", info.Version.ToString() },
+                        { "AssemblyVersion", info.AssemblyVersion },
+                        { "FileVersion", info.FileVersion },
+                        { "InformationalVersion", info.InformationalVersion }
+                    } );
+                return result;
             }
         }
 
-        public void Test( IEnumerable<SolutionProject> testProjects = null )
+        public Task<bool> Build( IActivityMonitor m ) => Build( m, Array.Empty<string>() );
+
+        public Task<bool> Test( IActivityMonitor m ) => Test( m, Array.Empty<NormalizedPath>() );
+
+        public async Task<bool> Test( IActivityMonitor m, IEnumerable<NormalizedPath>? testProjects = null )
         {
-            if( testProjects == null )
+            if( testProjects == null || !testProjects.Any() )
             {
-                testProjects = Projects.Where( p => p.Name.EndsWith( ".Tests" ) );
+                testProjects = ProjectsPath.Where( p => p.EndsWith( ".Tests" ) );
             }
-
-            foreach( SolutionProject project in testProjects )
+            using( m.OpenTrace( "Testing projects..." ) )
             {
-                NormalizedPath projectPath = project.Path.GetDirectory().FullPath;
-                NormalizedPath binDir = projectPath.AppendPart( "bin" ).AppendPart( _globalInfo.BuildInfo.BuildConfiguration );
-                NormalizedPath objDir = projectPath.AppendPart( "obj" );
-                string assetsJson = File.ReadAllText( objDir.AppendPart( "project.assets.json" ) );
-                bool isNunitLite = assetsJson.Contains( "NUnitLite" );
-                bool isVSTest = assetsJson.Contains( "Microsoft.NET.Test.Sdk" );
-                foreach( NormalizedPath buildDir in
-                    Directory.GetDirectories( binDir )
-                        .Where( p => Directory.EnumerateFiles( p ).Any() )
-                )
+                foreach( NormalizedPath projectPath in testProjects )
                 {
-                    string framework = buildDir.LastPart;
-                    bool isNetFramework = framework.StartsWith( "net" ) && framework.Length == 6 && int.TryParse( framework.Substring( 3 ), out var _ );
-                    string fileWithoutExtension = buildDir.AppendPart( project.Name );
-                    string testBinariesPath = "";
-                    if( isNunitLite )
+                    using( m.OpenTrace( $"Testing project {projectPath}..." ) )
                     {
-                        // Using NUnitLite.
-                        if( isNetFramework && File.Exists( (testBinariesPath = fileWithoutExtension + ".exe") ) )
+                        string projectName = System.IO.Path.GetFileName( projectPath );
+                        NormalizedPath binDir = projectPath.AppendPart( "bin" ).AppendPart( _globalInfo.BuildInfo.BuildConfiguration );
+                        NormalizedPath objDir = projectPath.AppendPart( "obj" );
+                        string assetsJson = File.ReadAllText( objDir.AppendPart( "project.assets.json" ) );
+                        bool isNunitLite = assetsJson.Contains( "NUnitLite" );
+                        if( isNunitLite ) m.Trace( "'NUnitLite' string detected in 'project.assets.json', this is probably a test project usign NunitLite." );
+                        bool isVSTest = assetsJson.Contains( "Microsoft.NET.Test.Sdk" );
+                        if( isVSTest ) m.Trace( "'Microsoft.NET.Test.Sdk' string detected in 'project.assets.json', this is probably a test project using VSTest." );
+                        foreach( NormalizedPath buildDir in
+                            Directory.GetDirectories( binDir )
+                                .Where( p => Directory.EnumerateFiles( p ).Any() )
+                        )
                         {
-                            _globalInfo.Cake.Information( $"Testing via NUnitLite ({framework}): {testBinariesPath}" );
-                            if( !_globalInfo.CheckCommitMemoryKey( testBinariesPath ) )
+                            string runtimeIdentifier = buildDir.LastPart;
+                            using( m.OpenTrace( $"Running tests in {runtimeIdentifier}." ) )
                             {
-                                _globalInfo.Cake.NUnit3( new[] { testBinariesPath }, new NUnit3Settings
+                                bool isNetFramework =
+                                    runtimeIdentifier.StartsWith( "net" )
+                                    && int.TryParse( runtimeIdentifier.Substring( 3 ), NumberStyles.Float, CultureInfo.InvariantCulture, out int frameworkVersion )
+                                    && frameworkVersion < 5;
+                                if( isNetFramework ) m.Trace( "Detected legacy .NET Framework." );
+                                string fileWithoutExtension = buildDir.AppendPart( projectName );
+                                string testBinariesPath;
+                                if( isVSTest )
                                 {
-                                    Results = new[] { new NUnit3Result() { FileName = FilePath.FromString( projectPath.AppendPart( "TestResult.Net461.xml" ) ) } }
-                                } );
-                            }
-                        }
-                        else
-                        {
-                            testBinariesPath = fileWithoutExtension + ".dll";
-                            _globalInfo.Cake.Information( $"Testing via NUnitLite ({framework}): {testBinariesPath}" );
-                            if( !_globalInfo.CheckCommitMemoryKey( testBinariesPath ) )
-                            {
-                                _globalInfo.Cake.DotNetCoreExecute( testBinariesPath );
-                            }
-                        }
-                    }
-                    if( isVSTest )
-                    {
-                        testBinariesPath = fileWithoutExtension + ".dll";
-                        // VS Tests
-                        _globalInfo.Cake.Information( $"Testing via VSTest ({framework}): {testBinariesPath}" );
-                        if( !_globalInfo.CheckCommitMemoryKey( testBinariesPath ) )
-                        {
-                            var options = new DotNetCoreTestSettings()
-                            {
-                                Configuration = _globalInfo.BuildInfo.BuildConfiguration,
-                                Framework = framework,
-                                NoRestore = true,
-                                NoBuild = true,
-                                Logger = "trx"
-                            };
-                            if( _globalInfo.Cake.Environment.GetEnvironmentVariable( "DisableNodeReUse" ) != null )
-                            {
-                                options.ArgumentCustomization = args => args.Append( "/nodeReuse:false" );
-                            }
-                            _globalInfo.Cake.DotNetCoreTest( projectPath, options );
-                        }
-                    }
+                                    testBinariesPath = fileWithoutExtension + ".dll";
+                                    // VS Tests
+                                    using( var grp = m.OpenInfo( $"Testing via VSTest ({runtimeIdentifier}): {testBinariesPath}" ) )
+                                    {
 
-                    if( !isVSTest && !isNunitLite )
-                    {
-                        testBinariesPath = fileWithoutExtension + ".dll";
-                        _globalInfo.Cake.Information( "Testing via NUnit: {0}", testBinariesPath );
-                        if( !_globalInfo.CheckCommitMemoryKey( testBinariesPath ) )
-                        {
-                            _globalInfo.Cake.NUnit( new[] { testBinariesPath }, new NUnitSettings()
-                            {
-                                Framework = "v4.5",
-                                ResultsFile = FilePath.FromString( projectPath.AppendPart( "TestResult.Net461.xml" ) )
-                            } );
+                                        if( !_globalInfo.CheckCommitMemoryKey( m, testBinariesPath ) )
+                                        {
+                                            bool result = await Dotnet.Test( m,
+                                                projectOrSolutionOrDirectoryOrDll: testBinariesPath,
+                                                workingDirectory: _globalInfo.RootFolder,
+                                                noBuild: true,
+                                                noRestore: true,
+                                                framework: runtimeIdentifier,
+                                                configuration: _globalInfo.BuildInfo.BuildConfiguration );
+                                            if( !result ) return false;
+                                            _globalInfo.WriteCommitMemoryKey( testBinariesPath ?? throw new InvalidOperationException( nameof( testBinariesPath ) + "was not set." ) );
+                                        }
+                                        else
+                                        {
+                                            grp.ConcludeWith( () => "The commit memory key was present: test has already been successfully completed." );
+                                        }
+                                    }
+                                    continue;
+                                }
 
+                                if( isNunitLite )
+                                {
+                                    // Using NUnitLite.
+                                    if( isNetFramework && File.Exists( testBinariesPath = fileWithoutExtension + ".exe" ) )
+                                    {
+                                        using( var grp = m.OpenInfo( $"Testing via NUnitLite ({runtimeIdentifier}): {testBinariesPath}" ) )
+                                        {
+
+                                            if( !_globalInfo.CheckCommitMemoryKey( m, testBinariesPath ) )
+                                            {
+                                                bool result = await CLIRunner.RunAsync( m, "nunit3-console.exe", new string[] { "--result=\"TestResult.Net461.xml\"" }, buildDir );
+                                                if( !result ) return false;
+                                                _globalInfo.WriteCommitMemoryKey( testBinariesPath ?? throw new InvalidOperationException( nameof( testBinariesPath ) + "was not set." ) );
+                                            }
+                                            else
+                                            {
+                                                grp.ConcludeWith( () => "The commit memory key was present: test has already been successfully completed." );
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        testBinariesPath = fileWithoutExtension + ".dll";
+                                        using( var grp = m.OpenInfo( $"Testing via NUnitLite ({runtimeIdentifier}): {testBinariesPath}" ) )
+                                        {
+                                            if( !_globalInfo.CheckCommitMemoryKey( m, testBinariesPath ) )
+                                            {
+                                                if( !await Dotnet.Run( m, thingToRun: testBinariesPath, workingDirectory: buildDir ) ) return false;
+                                                _globalInfo.WriteCommitMemoryKey( testBinariesPath ?? throw new InvalidOperationException( nameof( testBinariesPath ) + "was not set." ) );
+                                            }
+                                            else
+                                            {
+                                                grp.ConcludeWith( () => "The commit memory key was present: test has already been successfully completed." );
+                                            }
+                                        }
+                                    }
+                                    continue;
+                                }
+                                testBinariesPath = fileWithoutExtension + ".dll";
+                                using( var grp = m.OpenInfo( $"Testing via NUnit: {testBinariesPath}" ) )
+                                {
+                                    if( !_globalInfo.CheckCommitMemoryKey( m, testBinariesPath ) )
+                                    {
+                                        bool result = await CLIRunner.RunAsync( m, "nunit-console.exe",
+                                            new string[] { $"-framework:v4.5 -result:{projectPath.AppendPart( "TestResult.Net461.xml" )}" },
+                                            workingDirectory: buildDir
+                                        );
+                                        if( !result ) return false;
+                                    }
+                                    else
+                                    {
+                                        grp.ConcludeWith( () => "The commit memory key was present: test has already been successfully completed." );
+                                    }
+                                }
+                                _globalInfo.WriteCommitMemoryKey( testBinariesPath ?? throw new InvalidOperationException( nameof( testBinariesPath ) + "was not set." ) );
+                            }
                         }
                     }
-                    _globalInfo.WriteCommitMemoryKey( testBinariesPath );
                 }
             }
+            return true;
         }
-
-        void ICIWorkflow.Build() => Build();
-
-        void ICIWorkflow.Test() => Test();
     }
 }

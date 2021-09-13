@@ -3,15 +3,35 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <OutputType>Exe</OutputType>
     <IsPackable>False</IsPackable>
+    <LangVersion>9</LangVersion>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="NuGet.Protocol" Version="5.8.0" />
+    <PackageReference Include="SimpleGitVersion.Core" Version="5.1.1" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="NuGet.Credentials" Version="5.8.0" />
+    <PackageReference Include="Microsoft.Extensions.FileSystemGlobbing" Version="3.1.18" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="CK.Text" Version="9.0.0" />
-    <ProjectReference Include="../SimpleGitVersion.Cake/SimpleGitVersion.Cake.csproj" />
+    <PackageReference Include="CK.Monitoring" Version="14.1.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Kuinox.TypedCLI.NPM" Version="0.1.10" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Kuinox.TypedCLI.Dotnet" Version="0.1.10" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="CK.ActivityMonitor.SimpleSender" Version="14.1.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="NuGet.Protocol" Version="5.9.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="NuGet.Credentials" Version="5.9.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="CK.Text" Version="9.0.1" />
+    <ProjectReference Include="../SimpleGitVersion.Core/SimpleGitVersion.Core.csproj" />
   </ItemGroup>
 </Project>

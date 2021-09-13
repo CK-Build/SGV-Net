@@ -1,3 +1,6 @@
+using CK.Core;
+using System.Threading.Tasks;
+
 namespace CodeCake.Abstractions
 {
     interface ICIPublishWorkflow
@@ -5,7 +8,7 @@ namespace CodeCake.Abstractions
         /// <summary>
         /// Pack the solution: it produce the artifacts.
         /// </summary>
-        void Pack();
+        Task<bool> Pack( IActivityMonitor m );
 
         ArtifactType ArtifactType { get; }
     }

@@ -1,5 +1,4 @@
-using Cake.Common.Diagnostics;
-using Cake.Core.Diagnostics;
+using CK.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -45,7 +44,7 @@ namespace CodeCake.Abstractions
         /// Gets a mutable list of all the target feeds into which artifacts of this type should be pushed.
         /// </summary>
         /// <returns>The list of feeds.</returns>
-        public IList<ArtifactFeed> GetTargetFeeds( bool reset = false )
+        public IList<ArtifactFeed> GetTargetFeeds( IActivityMonitor m, bool reset = false )
         {
             if( _feeds == null || reset )
             {
@@ -54,7 +53,7 @@ namespace CodeCake.Abstractions
                 {
                     foreach( var f in GetLocalFeeds() )
                     {
-                        GlobalInfo.Cake.Information( $"Adding local feed {f.Name}." );
+                        m.Info( $"Adding local feed {f.Name}." );
                         if( f.ArtifactType != this )
                         {
                             throw new InvalidOperationException( $"Feed type mismatch." );
@@ -66,7 +65,7 @@ namespace CodeCake.Abstractions
                 {
                     foreach( ArtifactFeed f in GetRemoteFeeds() )
                     {
-                        GlobalInfo.Cake.Information( $"Adding remote feed: {f.Name}" );
+                        m.Info( $"Adding remote feed: {f.Name}" );
                         if( f.ArtifactType != this )
                         {
                             throw new InvalidOperationException( $"Feed type mismatch." );
@@ -104,13 +103,13 @@ namespace CodeCake.Abstractions
         /// Gets a mutable list of all the pushes of artifacts into target feeds for this type.
         /// </summary>
         /// <returns>The set of pushes.</returns>
-        public async Task<IList<ArtifactPush>> GetPushListAsync( bool reset = false )
+        public async Task<IList<ArtifactPush>> GetPushListAsync( IActivityMonitor m, bool reset = false )
         {
             if( _pushes == null || reset )
             {
                 _pushes = new List<ArtifactPush>();
                 var locals = GetArtifacts();
-                var tasks = GetTargetFeeds().Select( f => f.CreatePushListAsync( locals ) ).ToArray();
+                var tasks = GetTargetFeeds( m ).Select( f => f.CreatePushListAsync( m, locals ) ).ToArray();
                 foreach( var p in await Task.WhenAll( tasks ) )
                 {
                     _pushes.AddRange( p );
@@ -124,11 +123,15 @@ namespace CodeCake.Abstractions
         /// This uses the <see cref="GetPushListAsync(bool)"/> by default.
         /// </summary>
         /// <param name="pushes">Push details: defaults to the result of <see cref="GetPushListAsync"/>.</param>
-        public async Task PushAsync( IEnumerable<ArtifactPush> pushes = null )
+        public async Task<bool> PushAsync( IActivityMonitor m, IEnumerable<ArtifactPush>? pushes = null )
         {
-            if( pushes == null ) pushes = await GetPushListAsync();
-            var tasks = pushes.GroupBy( p => p.Feed ).Select( g => g.Key.PushAsync( g ) ).ToArray();
-            await Task.WhenAll( tasks );
+            bool result = true;
+            if( pushes == null ) pushes = await GetPushListAsync( m );
+            foreach( var pushGroups in pushes.GroupBy( p => p.Feed ) )
+            {
+                result &= await pushGroups.Key.PushAsync( m, pushGroups );
+            }
+            return result;
         }
 
         /// <summary>
