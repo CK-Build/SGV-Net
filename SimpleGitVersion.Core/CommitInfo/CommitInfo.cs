@@ -297,15 +297,19 @@ namespace SimpleGitVersion
                                     errors.AppendLine( "'." )
                                             .AppendLine( "Adds a Branch element in RepositoryInfo.xml with the branch name of interest, for instance:" )
                                             .AppendLine( "<Branches>" )
-                                            .AppendLine( @"  <Branch Name=""develop"" CIVersionMode=""LastReleaseBased"" />." )
-                                            .AppendLine( @"  <Branch Name=""exploratory"" CIVersionMode=""ZeroTimed"" VersionName=""explo"" UseReleaseBuildConfigurationFrom=""CI"" />." )
-                                            .AppendLine( @"  <Branch Name=""fx/new-computation"" CIVersionMode=""ZeroTimed"" VersionName=""explo"" />." )
+                                            .AppendLine( @"  <Branch Name=""develop"" CIVersionMode=""LastReleaseBased"" />" )
+                                            .AppendLine( @"  <Branch Name=""vNext"" CIVersionMode=""ZeroTimed"" VersionName=""vnext"" />" )
+                                            .AppendLine( @"  " )
+                                            .AppendLine( @"  <!-- The 'explo' packages will always be in ""Debug"" mode when coming from the 'exploratory' branch. -->" )
+                                            .AppendLine( @"  <Branch Name=""exploratory"" CIVersionMode=""ZeroTimed"" VersionName=""explo"" UseReleaseBuildConfigurationFrom=""None"" />" )
+                                            .AppendLine( @"  <!-- The 'explo' packages will always be in ""Release"" mode when coming from the 'fx/new-computation' branch. -->" )
+                                            .AppendLine( @"  <Branch Name=""fx/new-computation"" CIVersionMode=""ZeroTimed"" VersionName=""explo"" UseReleaseBuildConfigurationFrom=""CI"" />" )
                                             .AppendLine( "</Branches>" );
                                     ErrorCode = ErrorCodeStatus.CIBuildMissingBranchOption;
                                 }
                                 else
                                 {
-                                    errors.AppendLine( $@"configured CI branch '{StartingCommit.FoundBranchOption.Name}' found explicitly states that CIVersionMode=""None""." )
+                                    errors.AppendLine( $@"configured CI branch '{StartingCommit.FoundBranchOption.Name}' explicitly states that CIVersionMode=""None""." )
                                             .AppendLine( @"Use CIVersionMode=""ZeroTimed"" or CIVersionMode=""LastReleaseBased"" to enable CI build on this branch." );
                                     ErrorCode = ErrorCodeStatus.CIBuildBranchExplicitNone;
                                 }
