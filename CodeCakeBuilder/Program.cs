@@ -21,7 +21,7 @@ namespace CodeCake
         /// <returns>An error code (typically negative), 0 on success.</returns>
         static async Task<int> Main( string[] args )
         {
-            string solutionDirectory = args.Contains( SolutionDirectoryIsCurrentDirectoryParameter, StringComparer.OrdinalIgnoreCase )
+            string? solutionDirectory = args.Contains( SolutionDirectoryIsCurrentDirectoryParameter, StringComparer.OrdinalIgnoreCase )
                                         ? Environment.CurrentDirectory
                                         : null;
             var app = new CodeCakeApplication( solutionDirectory );

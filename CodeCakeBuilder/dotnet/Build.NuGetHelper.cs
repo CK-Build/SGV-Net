@@ -101,9 +101,9 @@ namespace CodeCake
                     throw new NotSupportedException( "Should not be called in this scenario." );
                 }
 
-                PackageSource IPackageSourceProvider.GetPackageSourceByName( string name ) => _sources.Value.FirstOrDefault( s => s.Name == name );
+                PackageSource? IPackageSourceProvider.GetPackageSourceByName( string name ) => _sources.Value.FirstOrDefault( s => s.Name == name );
 
-                PackageSource IPackageSourceProvider.GetPackageSourceBySource( string source ) => _sources.Value.FirstOrDefault( s => s.Source == source );
+                PackageSource? IPackageSourceProvider.GetPackageSourceBySource( string source ) => _sources.Value.FirstOrDefault( s => s.Source == source );
 
                 void IPackageSourceProvider.RemovePackageSource( string name )
                 {
@@ -205,7 +205,7 @@ namespace CodeCake
                     _ctx = ctx;
                 }
 
-                public string Id { get; }
+                public string Id { get; } = "Cake";
 
                 public Task<CredentialResponse> GetAsync(
                     Uri uri,
@@ -375,7 +375,6 @@ namespace CodeCake
                         skipDuplicate: true,
                         symbolPackageUpdateResource: null,
                         log: logger );
-
                     await OnAllArtifactsPushed( pushes );
                 }
 
@@ -394,7 +393,7 @@ namespace CodeCake
                 /// Must resolve the API key required to push the package.
                 /// </summary>
                 /// <returns>The secret (that can be null or empty).</returns>
-                protected abstract string ResolveAPIKey();
+                protected abstract string? ResolveAPIKey();
             }
         }
 
@@ -407,7 +406,7 @@ namespace CodeCake
         /// </summary>
         class VSTSFeed : NuGetHelper.NuGetFeed
         {
-            string _azureFeedPAT;
+            string? _azureFeedPAT;
 
             /// <summary>
             /// Initialize a new remote VSTS feed.
@@ -425,7 +424,7 @@ namespace CodeCake
             /// Gets the name of the environment variable that must contain the
             /// Personal Access Token that allows push to this feed.
             /// The  https://github.com/Microsoft/artifacts-credprovider VSS_NUGET_EXTERNAL_FEED_ENDPOINTS
-            /// will be dynalically generated.
+            /// will be dynamically generated.
             /// </summary>
             public override string SecretKeyName { get; }
 
@@ -435,7 +434,7 @@ namespace CodeCake
             /// </summary>
             /// <param name="ctx">The Cake context.</param>
             /// <returns>The "VSTS" API key or null to skip the push.</returns>
-            protected override string ResolveAPIKey()
+            protected override string? ResolveAPIKey()
             {
                 _azureFeedPAT = Cake.InteractiveEnvironmentVariable( SecretKeyName );
                 if( string.IsNullOrWhiteSpace( _azureFeedPAT ) )
@@ -475,10 +474,10 @@ namespace CodeCake
             /// </summary>
             /// <param name="organization">Name of the organization.</param>
             /// <param name="feedName">Identifier of the feed in Azure, inside the organization.</param>
-            public SignatureVSTSFeed( NuGetArtifactType t, string organization, string feedName, string projectName )
+            public SignatureVSTSFeed( NuGetArtifactType t, string organization, string feedName, string? projectName )
                 : base( t, organization + "-" + feedName,
-                      projectName != null ?
-                          $"https://pkgs.dev.azure.com/{organization}/{projectName}/_packaging/{feedName}/nuget/v3/index.json"
+                      projectName != null
+                        ? $"https://pkgs.dev.azure.com/{organization}/{projectName}/_packaging/{feedName}/nuget/v3/index.json"
                         : $"https://pkgs.dev.azure.com/{organization}/_packaging/{feedName}/nuget/v3/index.json",
                         GetSecretKeyName( organization ) )
             {
@@ -497,7 +496,7 @@ namespace CodeCake
             /// </summary>
             public string FeedName { get; }
 
-            public string ProjectName { get; }
+            public string? ProjectName { get; }
 
             /// <summary>
             /// Implements Package promotion in @CI, @Exploratory, @Preview, @Latest and @Stable views.
@@ -589,7 +588,7 @@ namespace CodeCake
             /// </summary>
             /// <param name="ctx">The Cake context.</param>
             /// <returns>The API key or null.</returns>
-            protected override string ResolveAPIKey()
+            protected override string? ResolveAPIKey()
             {
                 if( String.IsNullOrEmpty( SecretKeyName ) )
                 {
@@ -612,7 +611,7 @@ namespace CodeCake
 
             public override string SecretKeyName => null;
 
-            protected override string ResolveAPIKey() => null;
+            protected override string? ResolveAPIKey() => null;
         }
     }
 }
