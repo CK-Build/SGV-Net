@@ -186,11 +186,10 @@ namespace CodeCake
         /// Simply calls <see cref="ArtifactType.PushAsync(IEnumerable{ArtifactPush})"/> on each <see cref="ArtifactTypes"/>
         /// with their correct typed artifacts.
         /// </summary>
-        public void PushArtifacts( IEnumerable<ArtifactPush> pushes = null )
+        public Task PushArtifactsAsync( IEnumerable<ArtifactPush> pushes = null )
         {
             if( pushes == null ) pushes = GetArtifactPushList();
-            var tasks = ArtifactTypes.Select( t => t.PushAsync( pushes.Where( a => a.Feed.ArtifactType == t ) ) ).ToArray();
-            Task.WaitAll( tasks );
+            return Task.WhenAll( ArtifactTypes.Select( t => t.PushAsync( pushes.Where( a => a.Feed.ArtifactType == t ) ) ) );
         }
 
         /// <summary>
@@ -228,7 +227,7 @@ namespace CodeCake
                     appVeyor.UpdateBuildVersion( AddSkipped( BuildInfo.Version.ToString() ) );
                 }
 
-                if( azure.IsRunningOnAzurePipelinesHosted || azure.IsRunningOnAzurePipelines )
+                if( azure.IsRunningOnAzurePipelines )
                 {
                     string azureVersion = ComputeAzurePipelineUpdateBuildVersion( BuildInfo );
                     AzurePipelineUpdateBuildVersion( azureVersion );

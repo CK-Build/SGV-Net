@@ -33,7 +33,7 @@ namespace CodeCake
                 .Does( () =>
                 {
                     globalInfo.GetDotnetSolution().Clean();
-                    Cake.CleanDirectories( globalInfo.ReleasesFolder );
+                    Cake.CleanDirectories( globalInfo.ReleasesFolder.ToString() );
                     Cake.DeleteFiles( "Tests/**/TestResult*.xml" );
                 } );
 
@@ -65,9 +65,9 @@ namespace CodeCake
             Task( "Push-Artifacts" )
                 .IsDependentOn( "Create-NuGet-Packages" )
                 .WithCriteria( () => globalInfo.IsValid )
-                .Does( () =>
+                .Does( async () =>
                 {
-                    globalInfo.PushArtifacts();
+                    await globalInfo.PushArtifactsAsync();
                 } );
 
             // The Default task for this script can be set here.
