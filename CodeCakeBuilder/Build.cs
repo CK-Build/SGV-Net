@@ -11,7 +11,6 @@ using System.Linq;
 
 namespace CodeCake
 {
-    [AddPath( "%UserProfile%/.nuget/packages/**/tools*" )]
     public partial class Build : CodeCakeHost
     {
         public Build()
