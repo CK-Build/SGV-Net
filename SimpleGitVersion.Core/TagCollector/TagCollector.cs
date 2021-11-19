@@ -37,7 +37,7 @@ namespace SimpleGitVersion
         /// </summary>
         /// <param name="errors">A collector of errors. One line per error.</param>
         /// <param name="repo">The Git repository.</param>
-        /// <param name="startingVersion">Vesion tags lower than this version will be ignored.</param>
+        /// <param name="startingVersion">Version tags lower than this version will be ignored.</param>
         /// <param name="overriddenTags">Optional commits with associated tags that are applied as if they exist in the repository.</param>
         /// <param name="singleMajor">Optional major filter.</param>
         /// <param name="checkExistingVersions">True to check existing </param>
