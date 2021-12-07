@@ -1,3 +1,4 @@
+using Cake.Common.Tools.DotNet;
 using Cake.Common.Tools.DotNetCore;
 using Cake.Common.Tools.MSBuild;
 using Cake.Core;
@@ -15,14 +16,14 @@ namespace SimpleGitVersion
     public static class ToolSettingsSettingsVersionExtension
     {
         /// <summary>
-        /// Adds standard version information on <see cref="DotNetCoreSettings"/> objects.
+        /// Adds standard version information on <see cref="DotNetSettings"/> objects.
         /// </summary>
         /// <typeparam name="T">Specialized DotNetCoreSettings type.</typeparam>
         /// <param name="this">This settings.</param>
         /// <param name="info">The commit build information.</param>
         /// <param name="conf">Optional configuration to apply after version arguments have been injected.</param>
         /// <returns>This settings.</returns>
-        public static T AddVersionArguments<T>( this T @this, ICommitBuildInfo info, Action<T> conf = null ) where T : DotNetCoreSettings
+        public static T AddVersionArguments<T>( this T @this, ICommitBuildInfo info, Action<T> conf = null ) where T : DotNetSettings
         {
             AddVersionToolArguments( @this, info );
             conf?.Invoke( @this );
