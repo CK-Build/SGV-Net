@@ -7,6 +7,6 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="CSemVer" Version="10.0.1--0001-develop" />
+    <PackageReference Include="CSemVer" Version="10.0.1--0003-develop" />
   </ItemGroup>
 </Project>
