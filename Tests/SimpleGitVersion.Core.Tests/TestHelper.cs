@@ -73,7 +73,7 @@ namespace SimpleGitVersion
 
         static void InitalizePaths()
         {
-            string p = new Uri( System.Reflection.Assembly.GetExecutingAssembly().CodeBase ).LocalPath;
+            string p = System.Reflection.Assembly.GetExecutingAssembly().Location;
             do
             {
                 p = Path.GetDirectoryName( p );

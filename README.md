@@ -165,8 +165,9 @@ When the release is invalid, the file version is 0.0.0.0 (and the _Product Versi
 
 ## Background & links
 
-Please have a look at https://www.lionhack.com/2014/03/09/software-versioning-strategies/: this is a very good overview of
-the domain that explains .Net Version attributes, FileVersion attributes, version schemes, packages, etc. *
+Please have a look at https://www.lionhack.com/2014/03/09/software-versioning-strategies/
+(web archive [here](https://web.archive.org/web/20210225125305/https://www.lionhack.com/2014/03/09/software-versioning-strategies/), just in case):
+this is a very good overview of the domain that explains .Net Version attributes, FileVersion attributes, version schemes, packages, etc. *
 Of course, semantic versioning is a must: http://semver.org/ as well as http://csemver.org/.
 
 To discover NuGet:
