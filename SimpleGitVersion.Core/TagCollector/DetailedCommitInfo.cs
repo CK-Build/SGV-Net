@@ -28,7 +28,7 @@ namespace SimpleGitVersion
         public readonly BasicCommitInfo? BasicInfo;
 
         /// <summary>
-        /// Whether the parent graph has not been fully analyzed because we are on a shallow cloned repositry.
+        /// Whether the parent graph has not been fully analyzed because we are on a shallow cloned repository.
         /// </summary>
         public readonly bool IsShallowCloned;
 
@@ -44,7 +44,7 @@ namespace SimpleGitVersion
         public readonly ITagCommit? BestCommitBelow;
 
         /// <summary>
-        /// Gets the possible next versions based on on this commit.
+        /// Gets the possible next versions based on this commit.
         /// </summary>
         public readonly IReadOnlyList<CSVersion> NextPossibleVersions;
 

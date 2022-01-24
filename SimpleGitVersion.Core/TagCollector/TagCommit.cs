@@ -11,7 +11,7 @@ namespace SimpleGitVersion
 {
     class TagCommit : IFullTagCommit
     {
-        readonly static CSVersion InvalidMarker = CSVersion.TryParse( "Invalid TagCommit." );
+        readonly static CSVersion _invalidMarker = CSVersion.TryParse( "Invalid TagCommit." );
 
         readonly string _commitSha;
         readonly string _contentSha;
@@ -63,7 +63,7 @@ namespace SimpleGitVersion
         {
             var best = BestCommit;
             if( best.ThisTag != v ) return best;
-            return _headSameTree != null ? _headSameTree._altBestTagCommit : null;
+            return _headSameTree?._altBestTagCommit;
         }
 
         /// <summary>
@@ -117,7 +117,7 @@ namespace SimpleGitVersion
                 _thisTag = t;
                 return true;
             }
-            _thisTag = InvalidMarker;
+            _thisTag = _invalidMarker;
             return false;
         }
 

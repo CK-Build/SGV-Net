@@ -186,8 +186,7 @@ namespace SimpleGitVersion
 
         void RegisterContent( TagCommit tagCommit )
         {
-            TagCommit contentExists;
-            if( _collector.TryGetValue( tagCommit.ContentSha, out contentExists ) )
+            if( _collector.TryGetValue( tagCommit.ContentSha, out TagCommit contentExists ) )
             {
                 if( tagCommit != contentExists ) contentExists.AddSameTree( tagCommit );
             }
@@ -196,8 +195,7 @@ namespace SimpleGitVersion
 
         TagCommit? GetCommit( string sha )
         {
-            TagCommit t;
-            _collector.TryGetValue( sha, out t );
+            _collector.TryGetValue( sha, out TagCommit t );
             return t;
         }
     }   

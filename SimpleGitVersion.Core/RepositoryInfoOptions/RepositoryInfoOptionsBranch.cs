@@ -37,12 +37,11 @@ namespace SimpleGitVersion
             VersionName = (string?)e.Attribute( SGVSchema.VersionName ) ?? (string?)e.Attribute( OldXmlSchema.VersionName ); 
 
             var a = e.Attribute( SGVSchema.CIVersionMode ) ?? e.Attribute( OldXmlSchema.CIVersionMode );
-            CIBranchVersionMode mode;
-            if( a != null ) 
+            if( a != null )
             {
-                if( !Enum.TryParse( a.Value, true, out mode ) )
+                if( !Enum.TryParse( a.Value, true, out CIBranchVersionMode mode ) )
                 {
-                    throw new XmlException( $"Invalid CIVersionMode attribute value '{a.Value}'. It must be '{nameof(CIBranchVersionMode.None)}', '{nameof( CIBranchVersionMode.ZeroTimed )}' or '{CIBranchVersionMode.LastReleaseBased}'." );
+                    throw new XmlException( $"Invalid CIVersionMode attribute value '{a.Value}'. It must be '{nameof( CIBranchVersionMode.None )}', '{nameof( CIBranchVersionMode.ZeroTimed )}' or '{CIBranchVersionMode.LastReleaseBased}'." );
                 }
                 CIVersionMode = mode;
             }
