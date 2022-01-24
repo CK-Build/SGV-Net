@@ -23,28 +23,20 @@ namespace SimpleGitVersion
         string? Error { get; }
 
         /// <summary>
-        /// Gets whether the parent graph of the starting commit has not been fully anlayzed because we
-        /// are on a shallow cloned repositry.
+        /// Gets whether the parent graph of the starting commit has not been fully analyzed because we
+        /// are on a shallow cloned repository.
         /// </summary>
         public bool IsShallowCloned { get; }
 
         /// <summary>
-        /// Gets the version directly associated to this commit.
-        /// Null if there is no release tag on the current commit (or an <see cref="Error"/> occured).
+        /// Gets this commit and its tag if it's tagged with a version.
+        /// Null if there is no release tag on the current commit (or an <see cref="Error"/> occurred).
+        /// <para>
+        /// You can always use the <see cref="FinalBuildInfo"/> that holds the <see cref="ICommitBuildInfo.CommitSha"/>
+        /// and <see cref="ICommitBuildInfo.CommitDateUtc"/> of this starting commit if needed.
+        /// </para>
         /// </summary>
-        CSVersion? ReleaseTag { get; }
-
-        /// <summary>
-        /// Gets CI informations if a CI release can be done: <see cref="ReleaseTag"/> is necessarily null.
-        /// </summary>
-        ICIReleaseInfo? CIRelease { get; }
-
-        /// <summary>
-        /// Gets the commit with the version for that exact same content if it exists.
-        /// This is independent of <see cref="ReleaseTag"/> (except that, if both exist, they are
-        /// necessarily different).
-        /// </summary>
-        ITagCommit? AlreadyExistingVersion { get; }
+        ITagCommit? ThisReleaseTag { get; }
 
         /// <summary>
         /// Gets the previous version, that is the best version associated to a commit
@@ -52,6 +44,24 @@ namespace SimpleGitVersion
         /// This is null if no previous version has been found.
         /// </summary>
         ITagCommit? BestCommitBelow { get; }
+
+        /// <summary>
+        /// Gets the commit with the version for that exact same content if it exists.
+        /// This is independent of <see cref="ReleaseTag"/> (except that, if both exist, they are
+        /// necessarily different).
+        /// <para>
+        /// When there is an already tag for this commit's content, release should usually be skipped.
+        /// However exceptions exists and this can be ignored (SimpleGitVersionCore RepositoryInfoOptions has a
+        /// IgnoreAlreadyExistingVersion boolean optional flag that allows <see cref="PossibleVersions"/> to be
+        /// computed even if a commit with the same content has a release tag).
+        /// </para>
+        /// </summary>
+        ITagCommit? AlreadyExistingVersion { get; }
+
+        /// <summary>
+        /// Gets CI informations if a CI release can be done: <see cref="ThisReleaseTag"/> is necessarily null.
+        /// </summary>
+        ICIReleaseInfo? CIRelease { get; }
 
         /// <summary>
         /// Gets the possible versions for the current commit point.

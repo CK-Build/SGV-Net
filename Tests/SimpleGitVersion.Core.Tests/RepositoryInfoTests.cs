@@ -24,7 +24,7 @@ namespace SimpleGitVersion.Core.Tests
                 CommitInfo i = repoTest.GetRepositoryInfo( c.Sha );
                 (i.ErrorCode == CommitInfo.ErrorCodeStatus.CIBuildHeadCommitIsDetached
                  || i.ErrorCode == CommitInfo.ErrorCodeStatus.CIBuildMissingBranchOption).Should().BeTrue();
-                i.ReleaseTag.Should().BeNull();
+                i.ThisReleaseTag.Should().BeNull();
                 i.DetailedCommitInfo.BasicInfo.Should().BeNull();
                 i.PossibleVersions.Should().BeEquivalentTo( CSVersion.FirstPossibleVersions );
                 i.NextPossibleVersions.Should().BeEquivalentTo( CSVersion.FirstPossibleVersions );
@@ -107,7 +107,7 @@ namespace SimpleGitVersion.Core.Tests
             var bb1Tag = CSVersion.VeryFirstVersion;
             var overrides = new TagsOverride().MutableAdd( tagged.Sha, bb1Tag.ToString() );
 
-            Action<SimpleCommit> checkOK = sc =>
+            void CheckOK( SimpleCommit sc )
             {
                 var i = repoTest.GetRepositoryInfo( sc.Sha, overrides );
 
@@ -123,9 +123,9 @@ namespace SimpleGitVersion.Core.Tests
                     Assert.That( iWithTag.FinalVersion, Is.EqualTo( next ) );
                 }
                 i.IsShallowCloned.Should().BeFalse();
-            };
+            }
 
-            Action<SimpleCommit> checkKO = sc =>
+            void CheckKO( SimpleCommit sc )
             {
                 var i = repoTest.GetRepositoryInfo( sc.Sha, overrides );
                 i.ErrorCode.Should().Be( CommitInfo.ErrorCodeStatus.CIBuildHeadCommitIsDetached );
@@ -138,7 +138,7 @@ namespace SimpleGitVersion.Core.Tests
                     iWithTag.ErrorCode.Should().Be( CommitInfo.ErrorCodeStatus.ReleaseTagIsNotPossible );
                     iWithTag.FinalVersion.Should().Be( SVersion.ZeroVersion );
                 }
-            };
+            }
 
             // The version on the commit point.
             {
@@ -149,19 +149,19 @@ namespace SimpleGitVersion.Core.Tests
 
             // Checking possible versions before: none.
             var before1 = repoTest.Commits.First( sc => sc.Message.StartsWith( "Merge branch 'a' into b" ) );
-            checkKO( before1 );
+            CheckKO( before1 );
             var before2 = repoTest.Commits.First( sc => sc.Message.StartsWith( "Second a/a2" ) );
-            checkKO( before2 );
+            CheckKO( before2 );
             var before3 = repoTest.Commits.First( sc => sc.Message.StartsWith( "On master again" ) );
-            checkKO( before3 );
+            CheckKO( before3 );
 
             // Checking possible versions after: all successors are allowed.
             var after1 = repoTest.Commits.First( sc => sc.Message.StartsWith( "Second b/b2" ) );
-            checkOK( after1 );
+            CheckOK( after1 );
             var after2 = repoTest.Commits.First( sc => sc.Message.StartsWith( "Merge branch 'b' into c" ) );
-            checkOK( after2 );
+            CheckOK( after2 );
             var after3 = repoTest.Commits.First( sc => sc.Message.StartsWith( "Merge branches 'c', 'd' and 'e'" ) );
-            checkOK( after3 );
+            CheckOK( after3 );
 
         }
 
@@ -193,8 +193,8 @@ namespace SimpleGitVersion.Core.Tests
                 } );
                 i.Error.Should().BeNull();
                 i.ErrorCode.Should().Be( CommitInfo.ErrorCodeStatus.None );
-                i.ReleaseTag.ToString().Should().Be( "4.0.3-b" );
-                i.FinalVersion.Should().BeSameAs( i.ReleaseTag );
+                i.ThisReleaseTag.ToString().Should().Be( "4.0.3-b" );
+                i.FinalVersion.Should().BeSameAs( i.ThisReleaseTag.ThisTag );
                 i.PossibleVersions.Select( t => t.ToString() ).Should().BeEquivalentTo( new[] { "4.0.3-b" } );
             }
             {
@@ -298,7 +298,7 @@ namespace SimpleGitVersion.Core.Tests
                 i.Error.Should().StartWith( "No release tag found and CI build is not possible: no CI Branch information defined for branch 'parallel-world'." );
                 i.AlreadyExistingVersion.CommitSha.Should().Be( cAlpha.Sha );
                 i.DetailedCommitInfo.BasicInfo.BestCommitBelow.ThisTag.Should().Be( v1beta );
-                i.ReleaseTag.Should().BeNull();
+                i.ThisReleaseTag.Should().BeNull();
                 i.PossibleVersions.Should().BeEquivalentTo( v1beta.GetDirectSuccessors(), "The possible versions are not reset by the existing AlreadyExistingVersion." );
             }
             // Releasing it is possible.
@@ -379,7 +379,7 @@ namespace SimpleGitVersion.Core.Tests
                     OverriddenTags = overrides.Overrides
                 } );
                 i.Error.Should().Contain( "is not valid here." );
-                i.ReleaseTag.ToString().Should().Be( "2.0.0" );
+                i.ThisReleaseTag.ThisTag.ToString().Should().Be( "2.0.0" );
                 i.FinalVersion.Should().Be( SVersion.ZeroVersion );
             }
             // Use the StartingVersion:
@@ -391,7 +391,7 @@ namespace SimpleGitVersion.Core.Tests
                     OverriddenTags = overrides.Overrides
                 } );
                 i.Error.Should().BeNull();
-                i.ReleaseTag.ToString().Should().Be( "2.0.0" );
+                i.ThisReleaseTag.ToString().Should().Be( "2.0.0" );
                 i.FinalVersion.ToString().Should().Be( "2.0.0" );
             }
             // Using IgnoreAlreadyExistingVersion is not enough: 1.0.0-b cannot be followed by 2.0.0.
@@ -404,7 +404,7 @@ namespace SimpleGitVersion.Core.Tests
                 } );
                 i.ErrorCode.Should().Be( CommitInfo.ErrorCodeStatus.ReleaseTagIsNotPossible );
                 i.Error.Should().StartWith( "Release tag '2.0.0' is not valid here." );
-                i.ReleaseTag.ToString().Should().Be( "2.0.0" );
+                i.ThisReleaseTag.ToString().Should().Be( "2.0.0" );
                 i.FinalVersion.Should().Be( SVersion.ZeroVersion );
             }
             // Subsequent developments of alpha branch now starts after 2.0.0, for instance 2.1.0-beta.
@@ -518,7 +518,7 @@ namespace SimpleGitVersion.Core.Tests
                     }
                 } );
                 i.Error.Should().BeNull();
-                i.ReleaseTag.Should().BeNull();
+                i.ThisReleaseTag.Should().BeNull();
                 i.FinalVersion.Should().BeSameAs( i.CIRelease.BuildVersion );
                 i.FinalVersion.NormalizedText.Should().Be( "0.0.0--009y09h-gamma+v2.0.0" );
             }
@@ -534,7 +534,7 @@ namespace SimpleGitVersion.Core.Tests
                     }
                 } );
                 i.Error.Should().BeNull();
-                i.ReleaseTag.Should().BeNull();
+                i.ThisReleaseTag.Should().BeNull();
                 i.FinalVersion.Should().BeSameAs( i.CIRelease.BuildVersion );
                 i.FinalVersion.NormalizedText.Should().Be( "2.0.1--0006-ALPHAAAA" );
             }
@@ -607,7 +607,7 @@ namespace SimpleGitVersion.Core.Tests
                     }
                 } );
                 i.Error.Should().BeNull();
-                i.ReleaseTag.Should().BeNull();
+                i.ThisReleaseTag.Should().BeNull();
                 i.FinalVersion.Should().BeSameAs( i.CIRelease.BuildVersion );
                 i.FinalVersion.ToString().Should().Be( ciBuildVersion );
             }
@@ -671,7 +671,7 @@ namespace SimpleGitVersion.Core.Tests
                     }
                 } );
                 i.Error.Should().BeNull();
-                i.ReleaseTag.Should().BeNull();
+                i.ThisReleaseTag.Should().BeNull();
                 i.FinalVersion.Should().BeSameAs( i.CIRelease.BuildVersion );
                 i.FinalVersion.NormalizedText.Should().Be( ciBuildVersion );
             }
@@ -1003,7 +1003,7 @@ namespace SimpleGitVersion.Core.Tests
                     HeadCommit = cRealDevInAlpha.Sha,
                     OverriddenTags = overrides.Overrides,
                 } );
-                i.ReleaseTag.Should().BeNull();
+                i.ThisReleaseTag.Should().BeNull();
                 i.Error.Trim().Should().Be( $"Commit '{cRealDevInAlpha.Sha}' has 2 different released version tags. Delete some of them or create +invalid tag(s) if they are already pushed to a remote repository." );
             }
             {
@@ -1014,8 +1014,8 @@ namespace SimpleGitVersion.Core.Tests
                     StartingVersion = "2.0.0"
                 } );
                 i.Error.Should().BeNull();
-                i.ReleaseTag.Should().Be( CSVersion.Parse( "2.0.0" ) );
-                i.FinalVersion.Should().BeSameAs( i.ReleaseTag );
+                i.ThisReleaseTag.ThisTag.Should().Be( CSVersion.Parse( "2.0.0" ) );
+                i.FinalVersion.Should().BeSameAs( i.ThisReleaseTag.ThisTag );
             }
         }
 

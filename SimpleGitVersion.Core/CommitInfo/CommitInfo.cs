@@ -80,7 +80,7 @@ namespace SimpleGitVersion
         public ITagCommit? BestCommitBelow { get; }
 
         /// <inheritdoc/>
-        public CSVersion? ReleaseTag { get; }
+        public ITagCommit? ThisReleaseTag { get; }
 
         /// <summary>
         /// Gets the <see cref="SimpleGitVersion.DetailedCommitInfo"/> of the current commit point.
@@ -90,7 +90,7 @@ namespace SimpleGitVersion
 
         /// <summary>
         /// Gets whether the parent graph of the <see cref="DetailedCommitInfo.BasicInfo"/> has not been fully anlayzed
-        /// because we are on a shallow cloned repositry.
+        /// because we are on a shallow cloned repository.
         /// </summary>
         public bool IsShallowCloned { get; }
 
@@ -221,22 +221,20 @@ namespace SimpleGitVersion
                         if( options.SingleMajor.HasValue ) nextPossibles = nextPossibles.Where( v => v.Major == options.SingleMajor.Value );
                         NextPossibleVersions = nextPossibles != rawNextPossible ? nextPossibles.ToList() : rawNextPossible;
 
-                        ITagCommit? thisReleaseTag = info.BasicInfo?.UnfilteredThisCommit;
+                        ThisReleaseTag = info.BasicInfo?.UnfilteredThisCommit;
 
-                        if( thisReleaseTag != null )
+                        if( ThisReleaseTag != null )
                         {
-                            ReleaseTag = thisReleaseTag.ThisTag;
-
-                            if( PossibleVersions.Contains( ReleaseTag ) )
+                            if( PossibleVersions.Contains( ThisReleaseTag.ThisTag ) )
                             {
-                                finalVersion = ReleaseTag;
+                                finalVersion = ThisReleaseTag.ThisTag;
                             }
                             else
                             {
                                 errors.Append( "Release tag '" )
-                                        .Append( ReleaseTag )
+                                        .Append( ThisReleaseTag.ThisTag )
                                         .AppendLine( "' is not valid here. " );
-                                if( PossibleVersions != rawPossible && rawPossible.Contains( ReleaseTag ) )
+                                if( PossibleVersions != rawPossible && rawPossible.Contains( ThisReleaseTag.ThisTag ) )
                                 {
                                     errors.AppendLine( "Note: this version is invalid because of <SingleMajor> or <OnlyPatch> setting in RepositoryInfo.xml." );
                                     ErrorCode = ErrorCodeStatus.ReleaseTagConflictsWithSingleMajorOrOnlyPatch;
@@ -388,8 +386,8 @@ namespace SimpleGitVersion
                 }
                 else
                 {
-                    Debug.Assert( ReleaseTag != null, "Otherwise there is an Error." );
-                    logger.Info( $"Release: '{ReleaseTag}'." );
+                    Debug.Assert( ThisReleaseTag != null, "Otherwise there is an Error." );
+                    logger.Info( $"Release: '{ThisReleaseTag.ThisTag}'." );
                 }
             }
 
@@ -402,7 +400,7 @@ namespace SimpleGitVersion
                 }
                 else
                 {
-                    logger.Info( ReleaseTag != null ? $"Tag: {ReleaseTag}" : "No tag found on the commit itself." );
+                    logger.Info( ThisReleaseTag != null ? $"Tag: {ThisReleaseTag.ThisTag}" : "No tag found on the commit itself." );
                     logger.Info( BestCommitBelow != null ? $"Base tag below: {BestCommitBelow}" : "No base tag found below this commit." );
                     if( AlreadyExistingVersion != null && Error == null )
                     {
@@ -410,7 +408,7 @@ namespace SimpleGitVersion
                     }
                     if( basic.IsShallowCloned )
                     {
-                        logger.Warn( "The parent graph analysis is not complete because we are on a shallow cloned repositry." );
+                        logger.Warn( "The parent graph analysis is not complete because we are on a shallow cloned repository." );
                     }
                 }
             }
@@ -448,7 +446,6 @@ namespace SimpleGitVersion
         {
             readonly Repository _r;
             readonly Commit _commit;
-            readonly StatusEntry _entry;
             Blob? _committedBlob;
             string? _committedText;
 
@@ -457,7 +454,6 @@ namespace SimpleGitVersion
                 Debug.Assert( entryFilePath == e.FilePath );
                 _r = r;
                 _commit = commit;
-                _entry = e;
                 Path = entryFilePath;
             }
 

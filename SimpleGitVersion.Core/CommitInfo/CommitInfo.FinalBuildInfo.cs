@@ -67,8 +67,8 @@ namespace SimpleGitVersion
                     }
                     else 
                     {
-                        Debug.Assert( info.ReleaseTag != null );
-                        FileVersion = info.ReleaseTag.ToStringFileVersion( false );
+                        Debug.Assert( info.ThisReleaseTag != null );
+                        FileVersion = info.ThisReleaseTag.ThisTag.ToStringFileVersion( false );
                     }
                 }
                 else
