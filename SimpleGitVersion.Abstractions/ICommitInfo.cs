@@ -47,7 +47,7 @@ namespace SimpleGitVersion
 
         /// <summary>
         /// Gets the commit with the version for that exact same content if it exists.
-        /// This is independent of <see cref="ReleaseTag"/> (except that, if both exist, they are
+        /// This is independent of <see cref="ThisReleaseTag"/> (except that, if both exist, they are
         /// necessarily different).
         /// <para>
         /// When there is an already tag for this commit's content, release should usually be skipped.
