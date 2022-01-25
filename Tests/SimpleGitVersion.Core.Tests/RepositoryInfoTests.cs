@@ -268,6 +268,8 @@ namespace SimpleGitVersion.Core.Tests
                 i.StartingCommit.ConsideredBranchNames.Should().BeEquivalentTo( "parallel-world" );
                 i.BestCommitBelow.ThisTag.Should().Be( v1beta );
                 i.AlreadyExistingVersion.ThisTag.Should().Be( v1beta );
+                // Here, the already existing version is the same as the best commit below.
+                i.AlreadyExistingVersion.Should().BeSameAs( i.BestCommitBelow );
                 i.FinalVersion.Should().Be( SVersion.ZeroVersion );
                 i.PossibleVersions.Should().BeEmpty( "Since there is a AlreadyExistingVersion." );
             }
@@ -287,6 +289,7 @@ namespace SimpleGitVersion.Core.Tests
             }
 
             // Same but with IgnoreAlreadyExistingVersion = true.
+            // => PossibleVersions are not reset by AlreadyExistingVersion.
             {
                 CommitInfo i = repoTest.GetRepositoryInfo( new RepositoryInfoOptions
                 {
@@ -299,7 +302,7 @@ namespace SimpleGitVersion.Core.Tests
                 i.AlreadyExistingVersion.CommitSha.Should().Be( cAlpha.Sha );
                 i.DetailedCommitInfo.BasicInfo.BestCommitBelow.ThisTag.Should().Be( v1beta );
                 i.ThisReleaseTag.Should().BeNull();
-                i.PossibleVersions.Should().BeEquivalentTo( v1beta.GetDirectSuccessors(), "The possible versions are not reset by the existing AlreadyExistingVersion." );
+                i.PossibleVersions.Should().BeEquivalentTo( v1beta.GetDirectSuccessors(), "The possible versions are not reset by AlreadyExistingVersion." );
             }
             // Releasing it is possible.
             {
@@ -361,8 +364,8 @@ namespace SimpleGitVersion.Core.Tests
             }
 
             var cAlphaContinue = repoTest.Commits.First( sc => sc.Message.StartsWith( "Dev again in Alpha." ) );
-            // We set 2.0.0 on cReleased. Its content is the same as cAlpha (mege commits with no changes).
-            // To be able to do this we NEED to use the StartingVersion
+            // We set 2.0.0 on cReleased. Its content is the same as cAlpha (merge commits with no changes).
+            // To be able to do this we NEED to use the StartingVersion otherwise we allow a 
             //
             // cAlphaContinue
             //   |
@@ -811,14 +814,14 @@ namespace SimpleGitVersion.Core.Tests
             var cC = repoTest.Commits.Single( sc => sc.Message.StartsWith( "C-Commit." ) );
             var cF = repoTest.Commits.Single( sc => sc.Sha == "27a629754c6b9034f7ca580442b589a0241773c5" );
             var cB = repoTest.Commits.Single( sc => sc.Message.StartsWith( "B-Commit." ) );
-            var cA = repoTest.Commits.Single( sc => sc.Message.StartsWith( "Merge branch 'fumble-develop' into fumble-master" ) );
+            var cM = repoTest.Commits.Single( sc => sc.Message.StartsWith( "Merge branch 'fumble-develop' into fumble-master" ) );
             var cFix = repoTest.Commits.Single( sc => sc.Sha == "e6766d127f9a2df42567151222c6569601614626" );
             var cX = repoTest.Commits.Single( sc => sc.Message.StartsWith( "X-Commit." ) );
             var overrides = new TagsOverride()
                 .MutableAdd( cD.Sha, "v4.3.2" )
                 .MutableAdd( cC.Sha, "v4.4.0-alpha" )
                 .MutableAdd( cB.Sha, "v5.0.0-rc" )
-                .MutableAdd( cA.Sha, "v5.0.0" );
+                .MutableAdd( cM.Sha, "v5.0.0" );
             var v5 = CSVersion.TryParse( "v5.0.0" );
             var v5rc = CSVersion.TryParse( "v5.0.0-rc" );
             var v5rc01 = CSVersion.TryParse( "v5.0.0-rc.0.1" );

@@ -353,6 +353,10 @@ namespace SimpleGitVersion
             FinalInformationalVersion = CommitSha != null
                                            ? FinalVersion.GetInformationalVersion( CommitSha, CommitDateUtc )
                                            : InformationalVersion.ZeroInformationalVersion;
+            Debug.Assert( Error != null
+                          || ThisReleaseTag == null
+                          || (ThisReleaseTag.ThisTag > BestCommitBelow?.ThisTag && ThisReleaseTag.ThisTag > AlreadyExistingVersion?.ThisTag),
+                          "If there's no error and ThisReleaseTag is not null then it's version is necessarily greater than the ones of the AlreadyExisitingVersion or BestCommitBelow." );
         }
 
         /// <summary>

@@ -32,6 +32,13 @@ namespace SimpleGitVersion
         /// Gets this commit and its tag if it's tagged with a version.
         /// Null if there is no release tag on the current commit (or an <see cref="Error"/> occurred).
         /// <para>
+        /// If there's no error and this is not null then this version necessarily:
+        /// <list type="bullet">
+        ///     <item>appears in the <see cref="PossibleVersions"/>;</item>
+        ///     <item>is greater than the <see cref="BestCommitBelow"/> or <see cref="AlreadyExistingVersion"/>;</item>
+        /// </list>
+        /// </para>
+        /// <para>
         /// You can always use the <see cref="FinalBuildInfo"/> that holds the <see cref="ICommitBuildInfo.CommitSha"/>
         /// and <see cref="ICommitBuildInfo.CommitDateUtc"/> of this starting commit if needed.
         /// </para>

@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace SimpleGitVersion
 {
     /// <summary>
-    /// Encapsulates CI release information: must be available if and only a CI build can be done.
+    /// Encapsulates CI release information: must be available if and only if a CI build can be done.
     /// </summary>
     public interface ICIReleaseInfo
     {
@@ -21,7 +21,7 @@ namespace SimpleGitVersion
         SVersion BaseTag { get; }
 
         /// <summary>
-        /// The greatest number of commits between the current commit and the deepest occurence 
+        /// The greatest number of commits between the current commit and the deepest occurrence 
         /// of <see cref="BaseTag"/>.
         /// </summary>
         int Depth { get; }
