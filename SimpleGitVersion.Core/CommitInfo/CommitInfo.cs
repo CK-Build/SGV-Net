@@ -114,7 +114,7 @@ namespace SimpleGitVersion
         public IReadOnlyList<CSVersion>? NextPossibleVersions { get; }
 
         /// <summary>
-        /// Gets CI informations if a CI release can be done: <see cref="ReleaseTag"/> is necessarily null.
+        /// Gets CI informations if a CI release can be done: <see cref="ThisReleaseTag"/> is necessarily null.
         /// Not null only if we are on a branch that is enabled in <see cref="RepositoryInfoOptions.Branches"/> (either 
         /// because it is the current branch or <see cref="RepositoryInfoOptions.HeadBranchName"/> specifies it),
         /// and the <see cref="RepositoryInfoOptions.HeadCommit"/> is null or empty.
@@ -353,6 +353,10 @@ namespace SimpleGitVersion
             FinalInformationalVersion = CommitSha != null
                                            ? FinalVersion.GetInformationalVersion( CommitSha, CommitDateUtc )
                                            : InformationalVersion.ZeroInformationalVersion;
+            Debug.Assert( Error != null
+                          || ThisReleaseTag == null
+                          || (ThisReleaseTag.ThisTag > BestCommitBelow?.ThisTag && ThisReleaseTag.ThisTag > AlreadyExistingVersion?.ThisTag),
+                          "If there's no error and ThisReleaseTag is not null then it's version is necessarily greater than the ones of the AlreadyExisitingVersion or BestCommitBelow." );
         }
 
         /// <summary>

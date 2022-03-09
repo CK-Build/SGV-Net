@@ -81,16 +81,20 @@ namespace SimpleGitVersion
                         }
                         else
                         {
-                            // Since this commit is tagged, to compute the PossibleVersions,  we must do as if this tag doesn't exist at all.
+                            // Since this commit is tagged, to compute the PossibleVersions, we must do as if this tag doesn't exist at all.
                             // This is where we need the "View" that excludes this version.
                             var excluded = basic.UnfilteredThisCommit.ThisTag;
-                            var noThisVersion = GetCommitView( excluded ).GetInfo( c ).Info;
+                            BasicCommitInfo? noThisVersion = GetCommitView( excluded ).GetInfo( c ).Info;
                             // Since we excluded this tag, there may be... nothing: noThisVersion can be null.
                             // The BestCommit of this noThisVersion is our high level AlreadyExistingVersion and
                             // its BestCommitBelow is also our high level BestCommitBelow.
-                            bestCommitBelow = noThisVersion?.BestCommitBelow;
-                            // The possible versions for this commit is computed based on noThisVersion's MaxCommit. 
                             alreadyExistingVersion = noThisVersion?.BestCommit;
+                            bestCommitBelow = noThisVersion?.BestCommitBelow;
+                            // The possible versions for this commit is computed based on noThisVersion's MaxCommit.
+                            // Final ThisReleaseTag (that is basic.UnfilteredThisCommit.ThisTag) will be tested
+                            // against this set of versions and if it doesn't appear in them, the ReleaseTagIsNotPossible
+                            // error is set: when the CommitInfo has no error and ThisReleaseTag is not null then it's
+                            // version is necessarily greater than the ones of the AlreadyExisitingVersion or BestCommitBelow.
                             possibleVersions = GetPossibleVersions( noThisVersion?.MaxCommit.ThisTag, excluded );
                         }
                     }
