@@ -1,5 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="..\Common\Shared.props" />
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <Description>Minimal Simple Git Version abstraction that enables to reason on new versions and configure a build.</Description>
@@ -7,6 +6,6 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="CSemVer" Version="10.1.0" />
+    <PackageReference Include="CSemVer" Version="10.1.1--0010-develop" />
   </ItemGroup>
 </Project>
