@@ -607,7 +607,7 @@ namespace SimpleGitVersion
                 if( optionsChecker == null )
                 {
                     logger.Info( fileExists
-                                    ? "Using RepositoryInfo.xml, with SimpleGitVersion element: " + options.ToXml().ToString()
+                                    ? "Using RepositoryInfo.xml, with SimpleGitVersion element: " + Environment.NewLine + options.ToXml().ToString()
                                     : "File RepositoryInfo.xml not found. Creating default RepositoryInfoOptions object." );
                 }
                 else

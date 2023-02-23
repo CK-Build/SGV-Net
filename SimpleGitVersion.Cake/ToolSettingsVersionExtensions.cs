@@ -1,17 +1,13 @@
 using Cake.Common.Tools.DotNet;
-using Cake.Common.Tools.DotNetCore;
 using Cake.Common.Tools.MSBuild;
 using Cake.Core;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SimpleGitVersion
 {
     /// <summary>
-    /// Provides AddVersionArguments on <see cref="MSBuildSettings"/> and <see cref="DotNetCoreSettings"/>.
+    /// Provides AddVersionArguments on <see cref="MSBuildSettings"/> and <see cref="DotNetSettings"/>.
     /// </summary>
     public static class ToolSettingsSettingsVersionExtension
     {
