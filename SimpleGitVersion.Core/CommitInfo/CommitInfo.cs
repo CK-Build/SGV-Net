@@ -153,6 +153,12 @@ namespace SimpleGitVersion
         public readonly string? CommitSha;
 
         /// <summary>
+        /// Gets a minimal repository info where the <see cref="IRepositoryInfo.RemoteUrl"/>
+        /// is the one of <see cref="RepositoryInfoOptions.RemoteName"/> if found.
+        /// </summary>
+        public IRepositoryInfo RepositoryInfo => StartingCommit;
+
+        /// <summary>
         /// Initializes a new <see cref="CommitInfo"/> on a LibGit2Sharp <see cref="Repository"/>.
         /// </summary>
         /// <param name="r">The repository (can be invalid and even null).</param>

@@ -13,39 +13,39 @@ namespace SimpleGitVersion
         /// <summary>
         /// Captures the first analysis of a repository based on a <see cref="RepositoryInfoOptions"/>.
         /// </summary>
-        public readonly struct InitialInfo
+        public sealed class InitialInfo : IRepositoryInfo
         {
             /// <summary>
             /// Gets the options from which this starting commit information is derived.
             /// </summary>
-            public readonly RepositoryInfoOptions Options;
+            public RepositoryInfoOptions Options { get; }
 
             /// <summary>
             /// Gets the fatal error text if locating this starting commit failed: when not null, it is one line of
             /// text like 'No Git repository.' or 'Uninitialized Git repository.'.
             /// </summary>
-            public readonly string? Error;
+            public string? Error { get; }
 
             /// <summary>
             /// Error code of the <see cref="Error"/>.
             /// </summary>
-            public readonly CommitInfo.ErrorCodeStatus ErrorCode;
+            public CommitInfo.ErrorCodeStatus ErrorCode { get; }
 
             /// <summary>
             /// Gets the commit. Null if it has not been resolved.
             /// </summary>
-            public readonly Commit? Commit;
+            public Commit? Commit { get; }
 
             /// <summary>
             /// Gets the name of the branches that have been considered.
             /// </summary>
-            public readonly IReadOnlyCollection<string> ConsideredBranchNames;
+            public IReadOnlyCollection<string> ConsideredBranchNames { get; }
 
             /// <summary>
             /// Gets the found branch option among the <see cref="RepositoryInfoOptions.Branches"/> based
             /// on the <see cref="ConsideredBranchNames"/> that must be used.
             /// </summary>
-            public readonly RepositoryInfoOptionsBranch? FoundBranchOption;
+            public RepositoryInfoOptionsBranch? FoundBranchOption { get; }
 
             /// <summary>
             /// Gets the mode to use for CI build: this comes from the <see cref="FoundBranchOption"/>.
@@ -62,6 +62,16 @@ namespace SimpleGitVersion
                                                     : String.IsNullOrWhiteSpace( FoundBranchOption!.VersionName )
                                                         ? FoundBranchOption.Name
                                                         : FoundBranchOption.VersionName;
+
+            /// <summary>
+            /// Gets the remote url of <see cref="RepositoryInfoOptions.RemoteName"/> if found.
+            /// </summary>
+            public string? RemoteUrl { get; }
+
+            /// <summary>
+            /// Gets the working directory.
+            /// </summary>
+            public string? WorkingDirectory { get; }
 
             /// <summary>
             /// Initializes a new <see cref="InitialInfo"/>.
@@ -88,6 +98,11 @@ namespace SimpleGitVersion
                     Error = "No Git repository.";
                     return;
                 }
+                // Use the API to retrieve this. No risk.
+                // We may expose other Info properties if needed on the IRepositoryInfo.
+                RemoteUrl = r.Network.Remotes[options.RemoteName]?.Url;
+                WorkingDirectory = r.Info.WorkingDirectory;
+
                 string? objectish = options.HeadCommit;
 
                 IReadOnlyCollection<string>? branchNames = null;
