@@ -371,7 +371,7 @@ namespace SimpleGitVersion
         /// <param name="logger">A target logger.</param>
         public void Explain( ILogger logger )
         {
-            if( logger == null ) throw new ArgumentNullException( nameof( logger ) );
+            ArgumentNullException.ThrowIfNull( logger );
             if( Error != null )
             {
                 logger.Error( Error );
@@ -563,7 +563,7 @@ namespace SimpleGitVersion
         /// <returns>An immutable RepositoryInfo instance. Never null.</returns>
         public static CommitInfo LoadFromPath( string path, RepositoryInfoOptions? options = null )
         {
-            if( path == null ) throw new ArgumentNullException( nameof( path ) );
+            ArgumentNullException.ThrowIfNull( path );
             path = Repository.Discover( path );
             using( var repo = path != null ? new Repository( path ) : null )
             {
@@ -580,8 +580,8 @@ namespace SimpleGitVersion
         /// <returns>An immutable RepositoryInfo instance. Never null.</returns>
         public static CommitInfo LoadFromPath( string path, Func<string,RepositoryInfoOptions> optionsBuilder )
         {
-            if( path == null ) throw new ArgumentNullException( nameof( path ) );
-            if( optionsBuilder == null ) throw new ArgumentNullException( nameof( optionsBuilder ) );
+            ArgumentNullException.ThrowIfNull( path );
+            ArgumentNullException.ThrowIfNull( optionsBuilder );
 
             path = Repository.Discover( path );
             using( var repo = path != null ? new Repository( path ) : null )
@@ -604,7 +604,7 @@ namespace SimpleGitVersion
         /// <returns>A RepositoryInfo instance.</returns>
         static public CommitInfo LoadFromPath( ILogger logger, string path, Action<ILogger, bool, RepositoryInfoOptions>? optionsChecker = null )
         {
-            if( logger == null ) throw new ArgumentNullException( nameof( logger ) );
+            ArgumentNullException.ThrowIfNull( logger );
             return LoadFromPath( path, gitPath =>
             {
                 string optionFile = Path.Combine( gitPath, "RepositoryInfo.xml" );

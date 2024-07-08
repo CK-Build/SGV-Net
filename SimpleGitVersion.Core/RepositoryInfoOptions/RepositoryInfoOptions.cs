@@ -72,14 +72,14 @@ namespace SimpleGitVersion
                 XmlMigrationRequired = true;
 
                 IgnoreDirtyWorkingFolder = (bool?)e.Element( OldXmlSchema.Debug )?.Attribute( OldXmlSchema.IgnoreDirtyWorkingFolder ) ?? false;
-                StartingVersion = (string)e.Element( OldXmlSchema.StartingVersionForCSemVer );
+                StartingVersion = (string?)e.Element( OldXmlSchema.StartingVersionForCSemVer );
                 SingleMajor = (int?)e.Element( OldXmlSchema.SingleMajor );
                 OnlyPatch = (bool?)e.Element( OldXmlSchema.OnlyPatch ) ?? false;
                 Branches.AddRange( e.Elements( OldXmlSchema.Branches )
                                     .Elements( OldXmlSchema.Branch )
                                     .Select( b => new RepositoryInfoOptionsBranch( b ) ) );
                 IgnoreModifiedFiles.UnionWith( e.Elements( OldXmlSchema.IgnoreModifiedFiles ).Elements( OldXmlSchema.Add ).Select( i => i.Value ) );
-                RemoteName = (string)e.Element( OldXmlSchema.RemoteName );
+                RemoteName = (string?)e.Element( OldXmlSchema.RemoteName );
             }
         }
 
@@ -294,7 +294,7 @@ namespace SimpleGitVersion
         /// <returns>Returns a configured <see cref="RepositoryInfoOptions"/>.</returns>
         public static RepositoryInfoOptions Read( string existingFilePath )
         {
-            return new RepositoryInfoOptions( XDocument.Load( existingFilePath ).Root );
+            return new RepositoryInfoOptions( XDocument.Load( existingFilePath ).Root! );
         }
 
     }

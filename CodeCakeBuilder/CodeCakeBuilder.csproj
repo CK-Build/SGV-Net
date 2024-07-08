@@ -9,7 +9,7 @@
     <Nullable>annotations</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="NuGet.Credentials" Version="6.5.0" />
+    <PackageReference Include="NuGet.Credentials" Version="6.10.1" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="CK.Core" Version="20.0.0" />
