@@ -195,7 +195,7 @@ namespace SimpleGitVersion.Core.Tests
                 i.ErrorCode.Should().Be( CommitInfo.ErrorCodeStatus.None );
                 i.ThisReleaseTag.ToString().Should().Be( "4.0.3-b" );
                 i.FinalVersion.Should().BeSameAs( i.ThisReleaseTag.ThisTag );
-                i.PossibleVersions.Select( t => t.ToString() ).Should().BeEquivalentTo( new[] { "4.0.3-b" } );
+                i.PossibleVersions.Select( t => t.ToString() ).Should().BeEquivalentTo( ["4.0.3-b"] );
             }
             {
                 var cAbove = repoTest.Commits.First( sc => sc.Message.StartsWith( "Second b/b2" ) );
@@ -209,7 +209,7 @@ namespace SimpleGitVersion.Core.Tests
                 Assert.That( i.DetailedCommitInfo.BasicInfo.BestCommitBelow.ThisTag.ToString(), Is.EqualTo( "4.0.3-b" ) );
                 i.Error.Should().NotBeNull();
                 i.FinalVersion.Should().Be( SVersion.ZeroVersion );
-                CollectionAssert.Contains( i.PossibleVersions.Select( t => t.ToString() ), "4.0.3-b00-01", "4.0.3-b01", "4.0.3-d", "4.0.3", "4.1.0-r", "4.1.0", "5.0.0" );
+                i.PossibleVersions.Select( t => t.ToString() ).Should().Contain( "4.0.3-b00-01", "4.0.3-b01", "4.0.3-d", "4.0.3", "4.1.0-r", "4.1.0", "5.0.0" );
             }
 
             // Commit before the StartingVersion has no PossibleVersions.

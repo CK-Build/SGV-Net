@@ -39,7 +39,7 @@ namespace CodeCake
             /// </summary>
             class PackageProviderProxy : IPackageSourceProvider
             {
-                readonly IPackageSourceProvider _fromSettings;
+                readonly PackageSourceProvider _fromSettings;
                 readonly Lazy<List<PackageSource>> _sources;
                 int _definedSourceCount;
 
@@ -126,6 +126,11 @@ namespace CodeCake
                 }
 
                 void IPackageSourceProvider.AddPackageSource( PackageSource source )
+                {
+                    throw new NotSupportedException( "Should not be called in this scenario." );
+                }
+
+                public IReadOnlyList<PackageSource> LoadAuditSources()
                 {
                     throw new NotSupportedException( "Should not be called in this scenario." );
                 }

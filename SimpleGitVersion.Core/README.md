@@ -6,6 +6,12 @@ Implements [SimpleGitVersion.Abstractions](../SimpleGitVersion.Abstractions) tha
 The [CommitInfo](CommitInfo/CommitInfo.cs) is the main object of this library.
 The hard work is done by the [TagCollector](TagCollector).
 
+Simplest usage (other overloads exist):
+```csharp
+// path can be in any folder. The first parent with a /.git folder is found.
+var info = CommitInfo.LoadFromPath( path );
+```
+
 Configurations can be done thanks to the optional **RepositoryInfo.xml** file that may appear at the root level in the repository.
 
 ## RepositoryInfo.xml: the &lt;SimpleGitVersion&gt; element

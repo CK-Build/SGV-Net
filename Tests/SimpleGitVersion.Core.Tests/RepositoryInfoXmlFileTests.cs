@@ -31,7 +31,7 @@ namespace SimpleGitVersion.Core.Tests
             Assert.That( opt.Branches, Is.Empty );
             Assert.That( opt.StartingVersion, Is.EqualTo( "v4.2.0" ) );
             Assert.That( opt.HeadCommit, Is.Null );
-            CollectionAssert.AreEquivalent( opt.IgnoreModifiedFiles, new[] { "SharedKey.snk" } );
+            opt.IgnoreModifiedFiles.Should().BeEquivalentTo( ["SharedKey.snk"] );
 
             var expected = XElement.Parse( @"
 <SimpleGitVersion StartingVersion=""v4.2.0"">

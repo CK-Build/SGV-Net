@@ -88,5 +88,10 @@ namespace SimpleGitVersion
         /// This holds the <see cref="ICommitBuildInfo.CommitSha"/> and <see cref="ICommitBuildInfo.CommitDateUtc"/> of this commit.
         /// </summary>
         ICommitBuildInfo FinalBuildInfo { get; }
+
+        /// <summary>
+        /// Gets the <see cref="IRepositoryInfo"/> of this commit.
+        /// </summary>
+        IRepositoryInfo RepositoryInfo { get; }
     }
 }

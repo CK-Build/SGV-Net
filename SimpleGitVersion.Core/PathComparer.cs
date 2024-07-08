@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -18,7 +19,7 @@ namespace SimpleGitVersion
         /// </summary>
         public readonly static IEqualityComparer<string> Default = new PathComparer();
 
-        bool IEqualityComparer<string>.Equals( string x, string y )
+        bool IEqualityComparer<string>.Equals( string? x, string? y )
         {
             return StringComparer.OrdinalIgnoreCase.Equals( Normalize( x ), Normalize( y ) );
         }
@@ -28,11 +29,12 @@ namespace SimpleGitVersion
             return Normalize( path ).GetHashCode();
         }
 
-        static readonly char[] _dirChars = new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar };
+        static readonly char[] _dirChars = [Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar];
 
-        static string Normalize( string path )
+        [return: NotNullIfNotNull( nameof( path ) )]
+        static string? Normalize( string? path )
         {
-            return path.Trim( _dirChars ).Replace( Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar );
+            return path?.Trim( _dirChars ).Replace( Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar );
         }
     }
 

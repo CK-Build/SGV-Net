@@ -127,7 +127,7 @@ namespace SimpleGitVersion
             _extraCollectedTags.Add( _thisTag );
             var best = _extraCollectedTags.GroupBy( v => v )
                             .Select( g => g.MaxBy( v => v.DefinitionStrength ) )
-                            .Where( v => !v.IsMarkedInvalid )
+                            .Where( v => !v!.IsMarkedInvalid )
                             .ToList();
             if( best.Count == 0 ) return null;
             if( best.Count > 1 )

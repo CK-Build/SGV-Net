@@ -54,14 +54,13 @@ namespace SimpleGitVersion
         public readonly IReadOnlyList<CSVersion> PossibleVersions;
 
 
-        internal DetailedCommitInfo(
-            string sha,
-            BasicCommitInfo? basic,
-            bool isShallowCloned,
-            ITagCommit? alreadyExistingVersion,
-            ITagCommit? bestCommitBelow,
-            IReadOnlyList<CSVersion> possibleVersions,
-            IReadOnlyList<CSVersion> nextPossibleVersions)
+        internal DetailedCommitInfo( string sha,
+                                     BasicCommitInfo? basic,
+                                     bool isShallowCloned,
+                                     ITagCommit? alreadyExistingVersion,
+                                     ITagCommit? bestCommitBelow,
+                                     IReadOnlyList<CSVersion> possibleVersions,
+                                     IReadOnlyList<CSVersion> nextPossibleVersions )
         {
             CommitSha = sha;
             BasicInfo = basic;

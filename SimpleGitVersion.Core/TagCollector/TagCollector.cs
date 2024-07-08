@@ -66,7 +66,7 @@ namespace SimpleGitVersion
                     ErrorCode = CommitInfo.ErrorCodeStatus.StartingVersionConflictsWithSingleMajor;
                     errors.Append( "StartingVersion '" )
                           .Append( _startingVersion )
-                          .Append( "'is defined, its major must not be greater than defined SingleMajor = " ).Append( singleMajor ).Append( "." )
+                          .Append( "'is defined, its major must not be greater than defined SingleMajor = " ).Append( singleMajor ).Append( '.' )
                           .AppendLine();
                     return;
                 }
@@ -186,17 +186,13 @@ namespace SimpleGitVersion
 
         void RegisterContent( TagCommit tagCommit )
         {
-            if( _collector.TryGetValue( tagCommit.ContentSha, out TagCommit contentExists ) )
+            if( _collector.TryGetValue( tagCommit.ContentSha, out TagCommit? contentExists ) )
             {
                 if( tagCommit != contentExists ) contentExists.AddSameTree( tagCommit );
             }
             else _collector.Add( tagCommit.ContentSha, tagCommit );
         }
 
-        TagCommit? GetCommit( string sha )
-        {
-            _collector.TryGetValue( sha, out TagCommit t );
-            return t;
-        }
+        TagCommit? GetCommit( string sha ) => _collector.GetValueOrDefault( sha );
     }   
 }
