@@ -127,6 +127,7 @@ namespace CodeCake
             {
                 var options = new DotNetTestSettings()
                 {
+                    Configuration = _globalInfo.BuildInfo.BuildConfiguration,
                     NoRestore = true,
                     NoBuild = true,
                     Loggers = ["trx"]
