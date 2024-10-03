@@ -15,4 +15,7 @@
     <PackageReference Include="CK.Core" Version="20.0.0" />
     <ProjectReference Include="../SimpleGitVersion.Cake/SimpleGitVersion.Cake.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Update="DotNet.ReproducibleBuilds" Version="1.2.25" />
+  </ItemGroup>
 </Project>

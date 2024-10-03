@@ -36,8 +36,7 @@ namespace SimpleGitVersion
         {
             // Look for the RepositoryInfoOptionsBranch first.
             PackageQuality q = commitInfo.FoundBranchOption?.UseReleaseBuildConfigurationFrom ?? commitInfo.Options.UseReleaseBuildConfigurationFrom;
-            // None means "Always Debug", "CI" means always "Release".
-            return q == PackageQuality.None || finalVersion.PackageQuality < q ? "Debug" : "Release";
+            return finalVersion.PackageQuality <= q ? "Debug" : "Release";
         }
 
         class RepoCommitBuildInfo : ICommitBuildInfo

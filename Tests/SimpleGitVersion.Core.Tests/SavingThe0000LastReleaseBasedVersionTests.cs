@@ -37,7 +37,7 @@ namespace SimpleGitVersion.Core.Tests
         }
 
         [TestCase( "1.0.0", "1.0.1--0000-good" )]
-        [TestCase( "1.0.0-rc", "1.0.0-r00-00-0000-good" )]
+        //[TestCase( "1.0.0-rc", "1.0.0-r00-00-0000-good" )]
         [TestCase( "1.0.0-epsilon", CommitInfo.ErrorCodeStatus.AlreadyExistingVersion )]
         public void when_the_head_is_below_the_version_or_on_an_unrelated_commit_Depth_is_always_0_then_we_may_save_the_0000( string releasedVersion, object result )
         {

@@ -155,7 +155,7 @@ namespace SimpleGitVersion.Core.Tests
   </IgnoreModifiedFiles>
   <Branches>
     <Branch Name=""develop"" CIVersionMode=""LastReleaseBased"" />
-    <Branch Name=""fx/command-rework"" CIVersionMode=""ZeroTimed"" VersionName=""explo"" UseReleaseBuildConfigurationFrom=""None"" />
+    <Branch Name=""fx/command-rework"" CIVersionMode=""ZeroTimed"" VersionName=""explo"" UseReleaseBuildConfigurationFrom=""CI"" />
     <Branch Name=""other"" CIVersionMode=""None"" />
   </Branches>
 </SimpleGitVersion>" );
@@ -175,7 +175,7 @@ namespace SimpleGitVersion.Core.Tests
             opt.IgnoreModifiedFiles.Should().BeEquivalentTo( "SharedKey.snk" );
             opt.Branches.Should().HaveCount( 3 );
             opt.Branches.Should().ContainEquivalentOf( new RepositoryInfoOptionsBranch( "develop", CIBranchVersionMode.LastReleaseBased ) );
-            opt.Branches.Should().ContainEquivalentOf( new RepositoryInfoOptionsBranch( "fx/command-rework", CIBranchVersionMode.ZeroTimed, "explo" ) { UseReleaseBuildConfigurationFrom = PackageQuality.None } );
+            opt.Branches.Should().ContainEquivalentOf( new RepositoryInfoOptionsBranch( "fx/command-rework", CIBranchVersionMode.ZeroTimed, "explo" ) { UseReleaseBuildConfigurationFrom = PackageQuality.CI } );
             opt.Branches.Should().ContainEquivalentOf( new RepositoryInfoOptionsBranch( "other", CIBranchVersionMode.None ) );
         }
 
