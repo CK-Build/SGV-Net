@@ -12,9 +12,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		appveyor.yml = appveyor.yml
 		Directory.Build.props = Directory.Build.props
 		NuGet.config = NuGet.config
+		CK-Build\SGV-Net\branches\develop\NuGet.config = CK-Build\SGV-Net\branches\develop\NuGet.config
 		README.md = README.md
 		RepositoryInfo.xml = RepositoryInfo.xml
-		SimpleGitVersion.png = SimpleGitVersion.png
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SimpleGitVersion.Core.Tests", "Tests\SimpleGitVersion.Core.Tests\SimpleGitVersion.Core.Tests.csproj", "{86B0C218-3BF3-4A33-B4E2-D44D712DDF59}"

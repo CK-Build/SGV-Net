@@ -269,7 +269,7 @@ namespace SimpleGitVersion
                                     errors.AppendLine( "the branch name must not be longer than 8 characters. " )
                                             .AppendLine( "Adds a VersionName attribute to the branch element in RepositoryInfo.xml with a shorter name: " )
                                             .AppendLine( "<Branches>" )
-                                            .AppendLine( $@"  <Branch Name=""{ciBuildName}"" VersionName=""{ciBuildName.Substring( 0, 8 )}"" ... />." )
+                                            .AppendLine( $@"  <Branch Name=""{ciBuildName}"" VersionName=""{ciBuildName.AsSpan( 0, 8 )}"" ... />." )
                                             .AppendLine( "</Branches>" );
                                     ErrorCode = ErrorCodeStatus.CIBuildVersionNameTooLong;
                                 }

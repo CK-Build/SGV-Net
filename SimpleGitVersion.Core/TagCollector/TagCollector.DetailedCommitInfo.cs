@@ -21,7 +21,7 @@ namespace SimpleGitVersion
             Debug.Assert( excluded == null || ExistingVersions.Versions.Any( t => t.ThisTag == excluded ) );
             if( excluded == null )
             {
-                if( _default == null ) _default = new FilteredView( this, null );
+                _default ??= new FilteredView( this, null );
                 return _default;
             }
             if( _filtered == null ) _filtered = new Dictionary<CSVersion, FilteredView>();

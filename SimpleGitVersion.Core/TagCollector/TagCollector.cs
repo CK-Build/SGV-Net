@@ -170,7 +170,7 @@ namespace SimpleGitVersion
             {
                 if( !c.CloseCollect( errors ) )
                 {
-                    if( invalidTags == null ) invalidTags = new List<TagCommit>();
+                    invalidTags ??= new List<TagCommit>();
                     invalidTags.Add( c );
                 }
             }

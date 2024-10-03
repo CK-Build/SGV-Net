@@ -98,7 +98,7 @@ namespace SimpleGitVersion
             }
             else
             {
-                if( _extraCollectedTags == null ) _extraCollectedTags = new List<CSVersion>();
+                _extraCollectedTags ??= new List<CSVersion>();
                 _extraCollectedTags.Add( t );
             }
         }

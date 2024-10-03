@@ -59,16 +59,16 @@
   <!--</SPDXLicense>-->
   <!--<Analyzers>: This analyzer provides very welcome guidelines about async and threading issues.-->
   <ItemGroup Condition=" '$(MSBuildProjectName)' != 'CodeCakeBuilder' ">
-    <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="17.10.48" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="17.11.20" PrivateAssets="All" IncludeAssets="runtime;build;native;contentfiles;analyzers" />
   </ItemGroup>
   <!--</Analyzers>-->
   <!--<ReproducibleBuilds>-->
   <!--Enable Deterministic build. https://github.com/dotnet/reproducible-builds. SourceLink is automatically managed by this package.-->
   <ItemGroup>
-    <PackageReference Include="DotNet.ReproducibleBuilds" Version="1.2.4" PrivateAssets="All" />
+    <PackageReference Include="DotNet.ReproducibleBuilds" Version="1.2.25" PrivateAssets="All" />
   </ItemGroup>
   <!--Guaranty that the build is isolated. https://github.com/dotnet/reproducible-builds#dotnetreproduciblebuildsisolated-documentation-and-nuget-package-->
-  <Sdk Name="DotNet.ReproducibleBuilds.Isolated" Version="1.2.4" />
+  <Sdk Name="DotNet.ReproducibleBuilds.Isolated" Version="1.2.25" />
   <!--</ReproducibleBuilds>-->
   <!--<_CopyXmlDocFiles>:
     It's a mess... See  https://github.com/dotnet/sdk/issues/1458#issuecomment-695119194

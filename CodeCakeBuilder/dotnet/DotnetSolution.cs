@@ -74,8 +74,7 @@ namespace CodeCake
 
             var projects = sln
                 .Projects
-                .Where( p => !(p is SolutionFolder)
-                            && p.Name != "CodeCakeBuilder" )
+                .Where( p => p is not SolutionFolder && p.Name != "CodeCakeBuilder" )
                 .ToList();
             var projectsToPublish = projects.Where(
                     p => ((bool?)XDocument.Load( p.Path.FullPath )
@@ -163,7 +162,7 @@ namespace CodeCake
                 )
                 {
                     string framework = buildDir.LastPart;
-                    bool isNetFramework = framework.StartsWith( "net" ) && framework.Length == 6 && int.TryParse( framework.Substring( 3 ), out var _ );
+                    bool isNetFramework = framework.StartsWith( "net" ) && framework.Length == 6 && int.TryParse( framework.AsSpan( 3 ), out var _ );
                     string fileWithoutExtension = buildDir.AppendPart( project.Name );
                     string testBinariesPath = "";
                     if( isNunitLite )
@@ -234,6 +233,6 @@ namespace CodeCake
 
         void ICIWorkflow.Build() => Build();
 
-        void ICIWorkflow.Test() => Test();
+        void ICIWorkflow.Test() => SolutionTest();
     }
 }

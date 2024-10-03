@@ -85,15 +85,16 @@ namespace SimpleGitVersion
 
         internal static PackageQuality ParsePackageQualityOrThrow( string s, bool rcIsDefault )
         {
-            if( !PackageQualityExtension.TryMatch( s.Trim(), out var q ) )
+            var q = PackageQuality.ReleaseCandidate;
+            if( !PackageQualityExtension.TryMatch( s.Trim(), ref q ) )
             {
                 var msg = $"Invalid UseReleaseBuildConfigurationFrom attribute value '{s}'. "
-                        + $"When specified, it must be: '{nameof( PackageQuality.None )}' (always use \"Debug\" build configuration), "
+                        + $"When specified, it must be: "
                         + $"'{nameof( PackageQuality.CI )}' (always use \"Release\" build configuration), "
                         + $"'{nameof( PackageQuality.Exploratory )}', "
                         + $"'{nameof( PackageQuality.Preview )}', "
                         + $"'{nameof( PackageQuality.ReleaseCandidate )}' or 'rc'{(rcIsDefault ? " (this is the default)" : "")}, "
-                        + $"or '{nameof( PackageQuality.Stable )}' (only stable versions will use \"Release\").";
+                        + $"or '{nameof( PackageQuality.Stable )}' (stable versions will always use \"Release\").";
                 throw new XmlException( msg );
             }
             return q;
@@ -199,10 +200,10 @@ namespace SimpleGitVersion
         ///<para>
         /// Defaults to "rc" (<see cref="PackageQuality.ReleaseCandidate"/>):
         /// only <see cref="PackageQuality.Stable"/> and <see cref="PackageQuality.ReleaseCandidate"/> will
-        /// be use "Release", the others will use "Debug".
+        /// use "Release", the others will use "Debug".
         /// </para>
         /// <para>
-        /// When <see cref="PackageQuality.None"/> is specified, "Debug" build configuration will always be used.
+        /// <see cref="PackageQuality.Stable"/> is always in Release.
         /// </para>
         /// <para>
         /// The same property can be set at the branch level and overrides this one (<see cref="RepositoryInfoOptionsBranch.UseReleaseBuildConfigurationFrom"/>).
