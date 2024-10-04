@@ -1,5 +1,4 @@
 using CSemVer;
-using System.Collections.Generic;
 
 namespace SimpleGitVersion
 {
