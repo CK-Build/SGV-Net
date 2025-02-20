@@ -70,7 +70,7 @@ public class SimpleMiscTests
     [Explicit]
     public void testing_SimpleGitRepositoryInfo_on_other_repository()
     {
-        var info = CommitInfo.LoadFromPath( new ConsoleLogger(), @"C:\Dev\CK-Build\CK-Build\SGV-Net\Tests\ThisRepoDevDepth5" );
+        var info = CommitInfo.LoadFromPath( new ConsoleLogger(), @"C:\Dev\SC\Core-Projects\CK-Mechatronics" );
         Console.WriteLine( $"This repo's InformationalVersion: '{info.FinalInformationalVersion}'." );
 
     }

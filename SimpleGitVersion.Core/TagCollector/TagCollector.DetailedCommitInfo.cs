@@ -7,7 +7,7 @@ using System.Linq;
 namespace SimpleGitVersion;
 
 
-partial class TagCollector
+sealed partial class TagCollector
 {
     FilteredView? _default;
     Dictionary<CSVersion, FilteredView>? _filtered;
@@ -15,7 +15,7 @@ partial class TagCollector
     FilteredView GetCommitView( CSVersion? excluded )
     {
         Debug.Assert( ExistingVersions != null, "No error." );
-        Debug.Assert( excluded == null || ExistingVersions.Versions.Any( t => t.ThisTag == excluded ) );
+        Debug.Assert( excluded == null || ExistingVersions.TagCommits.Any( t => t.ThisTag == excluded ) );
         if( excluded == null )
         {
             _default ??= new FilteredView( this, null );
@@ -39,11 +39,35 @@ partial class TagCollector
 
         IReadOnlyList<CSVersion> nextPossibleVersions;
         IReadOnlyList<CSVersion> possibleVersions;
-        // Special case: there is no existing versions but there is a startingVersion, every commit may be
-        // this starting version (and alreadyExistingVersion and bestCommitBelow are obviously null). 
-        if( _startingVersion != null && ExistingVersions.Versions.Count == 0 )
+
+        // If we have a StartingVersion:
+        // - A commit exists for it: there's nothing special to do, the current commit point
+        //   will be handled normally below (the starting version is considered).
+        // - A commit doesn't exist:
+        //    - There is no commit at all: the existing versioned commits (if any) are all lower
+        //      than our StartingVersion and have been filtered out.
+        //      The possible versions are the StartingVersions and we allow its direct successors
+        //      (considereing any greater versions would be right but we don't want to concretize and
+        //      return a huge list!).
+        //    - There are commits: ExistingVersions are necessarily greater than the StartingVerion and
+        //      we consider that, as this StartingVersion has never been released to be a new "starting point"
+        //      (typically in a new branch from an old commit point for which new versions must be produced - typically
+        //      patch or minor). We allow the StartingVersion and its direct successors up to the lowest existing version.
+        if( _startingVersion != null && ExistingVersions.StartingVersionCommit == null )
         {
-            possibleVersions = nextPossibleVersions = new[] { _startingVersion };
+            var v = new List<CSVersion> { _startingVersion };
+            if( ExistingVersions.TagCommits.Count == 0 )
+            {
+                v.AddRange( _startingVersion.GetDirectSuccessors() );
+            }
+            else
+            {
+                Debug.Assert( ExistingVersions.TagCommits.All( t => t.ThisTag > _startingVersion ) );
+                // Existing versions are in ascending order.
+                var nextReleased = ExistingVersions.TagCommits[0].ThisTag;
+                v.AddRange( _startingVersion.GetDirectSuccessors().Where( next => next < nextReleased ) );
+            }
+            possibleVersions = nextPossibleVersions = v;
         }
         else
         {
@@ -72,7 +96,7 @@ partial class TagCollector
                 {
                     // Special case: there is no existing versions (other than this tag on the commit itself) but there is a
                     // StartingVersion, every commit may be the first one (and alreadyExistingVersion and bestCommitBelow remain null). 
-                    if( _startingVersion != null && ExistingVersions.Versions.Count == 1 )
+                    if( _startingVersion != null && ExistingVersions.TagCommits.Count == 1 )
                     {
                         possibleVersions = new[] { _startingVersion };
                     }
@@ -106,7 +130,7 @@ partial class TagCollector
         Debug.Assert( ExistingVersions != null, "No error." );
         // The base version can be null here: a null version tag correctly generates 
         // the very first possible versions (and the comparison operators handle null).
-        IEnumerable<IFullTagCommit> allVersions = ExistingVersions.Versions;
+        IEnumerable<TagCommit> allVersions = ExistingVersions.TagCommits;
         if( excluded != null ) allVersions = allVersions.Where( c => c.ThisTag != excluded );
         var nextReleased = allVersions.FirstOrDefault( c => c.ThisTag > baseVersion );
         var successors = CSVersion.GetDirectSuccessors( false, baseVersion );

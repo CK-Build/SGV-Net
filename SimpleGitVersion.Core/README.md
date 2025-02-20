@@ -29,12 +29,17 @@ This defines the first version that should be considered in the repository:
 </RepositoryInfo>
 ```
 
-When this version is specified, any existing commit tag with a version lower than it is simply ignored.
+When this version is specified, any existing commit tag with a version lower than it are ignored.
 This is typically used to start using CSemVer on a repository that did not use it before and therefore
 has incoherent or invalid tags.
 
 Another common use is when for any reason one need to boost the actual version: jumping from any current
 version (like 1.0.0) to a target that violates the SemVer rule of consecutive versions (like 10.0.0).
+
+The last usage it to restart a branch from an old commit point for which new versions must be produced,
+typically patches or minor versions. For this scenario, set StartingVersion to any non released version:
+this version and its direct successors will be allowed (excluding any version greater than or equal to
+the lowest existing version if any).
 
 ### UseReleaseBuildConfigurationFrom (attribute)
 
