@@ -7,14 +7,16 @@ using System.Text;
 
 namespace SimpleGitVersion;
 
-class RepositoryVersions
+sealed class RepositoryVersions
 {
     readonly IReadOnlyList<TagCommit> _versions;
+    readonly TagCommit? _startingVersionCommit;
 
-    internal RepositoryVersions( IEnumerable<TagCommit> collected, StringBuilder errors )
+    internal RepositoryVersions( IEnumerable<TagCommit> collected, TagCommit? startingVersionCommit )
     {
         Debug.Assert( collected.All( c => c.ThisTag != null ) );
         _versions = collected.OrderBy( t => t.ThisTag ).ToList();
+        _startingVersionCommit = startingVersionCommit;
     }
 
     public CommitInfo.ErrorCodeStatus CheckExistingVersions( StringBuilder errors, CSVersion? startingVersion )
@@ -26,18 +28,16 @@ class RepositoryVersions
             {
                 if( !CSVersion.FirstPossibleVersions.Contains( first ) )
                 {
-                    errors.AppendFormat( $"First existing version is '{first}' (on '{_versions[0].CommitSha}'). A very first version is missing ({String.Join( ", ", CSVersion.FirstPossibleVersions.Select( v => v.ToString() ) )}) or a StartingVersion must be specified.." )
+                    errors.AppendFormat( $"First existing version is '{first}' (on '{_versions[0].CommitSha}'). A very first version is missing ({String.Join( ", ", CSVersion.FirstPossibleVersions.Select( v => v.ToString() ) )}) or a StartingVersion must be specified." )
                             .AppendLine();
                     return CommitInfo.ErrorCodeStatus.CheckExistingVersionFirstMissing;
                 }
             }
-            bool foundStartingVersion = first == startingVersion;
             bool atLeastOneHole = false;
             for( int i = 0; i < _versions.Count - 1; ++i )
             {
                 var prev = _versions[i].ThisTag;
                 var next = _versions[i + 1].ThisTag;
-                foundStartingVersion |= next == startingVersion;
                 Debug.Assert( next != prev, "Unicity has already been handled." );
                 if( !next.IsDirectPredecessor( prev ) )
                 {
@@ -46,7 +46,7 @@ class RepositoryVersions
                     atLeastOneHole = true;
                 }
             }
-            if( !foundStartingVersion && startingVersion != null )
+            if( startingVersion != null && _startingVersionCommit == null )
             {
                 errors.AppendLine( $"Missing specified StartingVersion='{startingVersion}'." );
                 return CommitInfo.ErrorCodeStatus.CheckExistingVersionStartingVersionNotFound;
@@ -58,6 +58,5 @@ class RepositoryVersions
 
     internal IReadOnlyList<TagCommit> TagCommits => _versions;
 
-    public IReadOnlyList<IFullTagCommit> Versions => _versions;
-
+    internal TagCommit? StartingVersionCommit => _startingVersionCommit;
 }

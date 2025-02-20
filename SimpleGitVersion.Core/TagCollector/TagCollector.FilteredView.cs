@@ -6,7 +6,7 @@ using System.Collections.Generic;
 namespace SimpleGitVersion;
 
 
-partial class TagCollector
+sealed partial class TagCollector
 {
     class FilteredView
     {
