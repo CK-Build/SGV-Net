@@ -6,14 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="LibGit2Sharp" Version="0.30.0" />
+    <PackageReference Include="LibGit2Sharp" Version="0.31.0" />
     <ProjectReference Include="..\SimpleGitVersion.Abstractions\SimpleGitVersion.Abstractions.csproj" />
   </ItemGroup>
-  <ItemGroup>
-    <PackageReference Update="DotNet.ReproducibleBuilds" Version="1.2.25" />
-    <PackageReference Update="Microsoft.VisualStudio.Threading.Analyzers" Version="17.11.20">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-    </PackageReference>
-  </ItemGroup>
+
 </Project>

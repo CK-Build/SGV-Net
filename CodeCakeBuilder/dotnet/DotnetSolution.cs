@@ -3,6 +3,7 @@ using Cake.Common.IO;
 using Cake.Common.Solution;
 using Cake.Common.Tools.DotNet;
 using Cake.Common.Tools.DotNet.Build;
+using Cake.Common.Tools.DotNet.MSBuild;
 using Cake.Common.Tools.DotNet.Test;
 using Cake.Common.Tools.NUnit;
 using Cake.Core;
@@ -107,7 +108,7 @@ public partial class DotnetSolution : ICIWorkflow
         using( var tempSln = _globalInfo.Cake.CreateTemporarySolutionFile( SolutionFileName ) )
         {
             var exclude = new List<string>( excludedProjectsName ) { "CodeCakeBuilder" };
-            tempSln.ExcludeProjectsFromBuild( exclude.ToArray() );
+            tempSln.ExcludeProjectsFromBuild( [.. exclude] );
             _globalInfo.Cake.DotNetBuild( tempSln.FullPath.FullPath,
                 new DotNetBuildSettings().AddVersionArguments( _globalInfo.BuildInfo, s =>
                 {
@@ -129,12 +130,12 @@ public partial class DotnetSolution : ICIWorkflow
                 Configuration = _globalInfo.BuildInfo.BuildConfiguration,
                 NoRestore = true,
                 NoBuild = true,
-                Loggers = ["trx"]
+                Loggers = ["trx"],
+                MSBuildSettings = new DotNetMSBuildSettings()
+                {
+                    MaxCpuCount = 1
+                }
             };
-            if( _globalInfo.Cake.Environment.GetEnvironmentVariable( "DisableNodeReUse" ) != null )
-            {
-                options.MSBuildSettings.NodeReuse = false;
-            }
             _globalInfo.Cake.DotNetTest( null, options );
         }
         _globalInfo.WriteCommitMemoryKey( memKey );
@@ -143,10 +144,7 @@ public partial class DotnetSolution : ICIWorkflow
     [Obsolete( "Use the simpler SolutionTest() that simply 'dotnet test --no-restore --no-build' the solution." )]
     public void Test( IEnumerable<SolutionProject>? testProjects = null )
     {
-        if( testProjects == null )
-        {
-            testProjects = Projects.Where( p => p.Name.EndsWith( ".Tests" ) );
-        }
+        testProjects ??= Projects.Where( p => p.Name.EndsWith( ".Tests" ) );
 
         foreach( SolutionProject project in testProjects )
         {
@@ -202,7 +200,7 @@ public partial class DotnetSolution : ICIWorkflow
                             Framework = framework,
                             NoRestore = true,
                             NoBuild = true,
-                            Loggers = new List<string>() { "trx" }
+                            Loggers = ["trx"]
                         };
                         if( _globalInfo.Cake.Environment.GetEnvironmentVariable( "DisableNodeReUse" ) != null )
                         {

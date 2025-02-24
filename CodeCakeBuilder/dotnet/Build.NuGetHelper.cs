@@ -9,6 +9,7 @@ using NuGet.Credentials;
 using NuGet.Packaging.Core;
 using NuGet.Protocol;
 using NuGet.Protocol.Core.Types;
+using NuGet.Protocol.Plugins;
 using NuGet.Versioning;
 using System;
 using System.Collections.Generic;
@@ -38,7 +39,7 @@ public partial class Build
         /// </summary>
         class PackageProviderProxy : IPackageSourceProvider
         {
-            readonly PackageSourceProvider _fromSettings;
+            readonly IPackageSourceProvider _fromSettings;
             readonly Lazy<List<PackageSource>> _sources;
             int _definedSourceCount;
 
@@ -366,12 +367,12 @@ public partial class Build
                 var logger = InitializeAndGetLogger( Cake );
                 var updater = await _updater;
                 var names = pushes.Select( p => p.Name + "." + p.Version.WithBuildMetaData( null ).ToNormalizedString() );
-                var fullPaths = names.Select( n => ArtifactType.GlobalInfo.ReleasesFolder.AppendPart( n + ".nupkg" ).ToString() );
+                var fullPaths = names.Select( n => ArtifactType.GlobalInfo.ReleasesFolder.AppendPart( n + ".nupkg" ).ToString() ).ToList();
 
                 await updater.Push(
-                    fullPaths.ToList(),
+                    fullPaths,
                     string.Empty, // no Symbol source.
-                    20, //20 seconds timeout
+                    30 * fullPaths.Count, // 30 seconds per package timeout.
                     disableBuffering: false,
                     getApiKey: endpoint => apiKey,
                     getSymbolApiKey: symbolsEndpoint => null,
