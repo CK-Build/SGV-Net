@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <Description>Generates the assembly version information.</Description>
+        <IncludeBuildOutput>false</IncludeBuildOutput>
+        <DevelopmentDependency>true</DevelopmentDependency>
+
+        <SimpleGitVersionCorePath>../SimpleGitVersion.Core/bin/$(Configuration)/net8.0</SimpleGitVersionCorePath>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\SimpleGitVersion.Core\SimpleGitVersion.Core.csproj" PrivateAssets="All" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="msbuild/build/*.*" Pack="true" PackagePath="build" />
+        <None Include="msbuild/buildMultiTargeting/*.*" Pack="true" PackagePath="buildMultiTargeting" />
+        <None Include="msbuild/tools/*.*" Pack="true" PackagePath="tools" />
+        <None Include="$(SimpleGitVersionCorePath)/**/*" Pack="true" PackagePath="tools" />
+    </ItemGroup>
+
+</Project>
+
