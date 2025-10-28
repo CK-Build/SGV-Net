@@ -6,7 +6,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../../SimpleGitVersion.Core/SimpleGitVersion.Core.csproj" />
-    <PackageReference Include="FluentAssertions" Version="6.12.1" />
+    <PackageReference Include="AwesomeAssertions" Version="9.2.1" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.13.0" />
     <PackageReference Include="NUnit" Version="4.3.2" />
     <PackageReference Include="NUnit3TestAdapter" Version="5.0.0" PrivateAssets="all" />
