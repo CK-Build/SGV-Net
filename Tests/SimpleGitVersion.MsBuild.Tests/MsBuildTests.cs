@@ -39,7 +39,7 @@ public class MSBuildTests
             logs.ExtractCurrentTexts()
                 .ShouldContain( "  | [Error] Working folder has non committed changes." )
                 .ShouldContain( "  |         At least one Modified file found: Naked/Naked.csproj." )
-                .ShouldContain( "  |=> 0.0.0-0" );
+                .ShouldContain( "  |=> 0.0.0-0 (Configuration: Debug)" );
         }
         var versions = File.ReadAllText( nakedProject.Combine( "obj/SimpleGitVersionFile.txt" ) );
         var expected = $"""
@@ -47,6 +47,7 @@ public class MSBuildTests
             0.0
             0.0.0.0
             0.0.0-0/499d526ccd46f92c57293b56530ae1e8d2834ca2/2025-10-28 11:00:58Z
+            Debug
             {TestHelper.SolutionFolder}/Tests/SimpleGitVersion.MsBuild.Tests/Playground/Remotes/Naked
             
             """;
@@ -67,7 +68,7 @@ public class MSBuildTests
                      .ShouldBe( 0 );
             logs.ExtractCurrentTexts()
                 .ShouldContain( "  | No version information found on or below this commit." )
-                .ShouldContain( "  |=> 0.0.0-0" );
+                .ShouldContain( "  |=> 0.0.0-0 (Configuration: Debug)" );
         }
         builtVersion = InformationalVersion.ReadFromFile( builtDllPath );
         builtVersion.IsValidSyntax.ShouldBeTrue();
@@ -86,7 +87,7 @@ public class MSBuildTests
                 .ShouldContain( "  | Tag: 1.2.3-a" )
                 .ShouldContain( "  | No base tag found below this commit." )
                 .ShouldContain( "  | Possible version(s) : 0.0.0-a, 0.0.0-b, 0.0.0-d, 0.0.0-e, 0.0.0-g, 0.0.0-k, 0.0.0-p, 0.0.0-r, 0.0.0, 0.1.0-a, 0.1.0-b, 0.1.0-d, 0.1.0-e, 0.1.0-g, 0.1.0-k, 0.1.0-p, 0.1.0-r, 0.1.0, 1.0.0-a, 1.0.0-b, 1.0.0-d, 1.0.0-e, 1.0.0-g, 1.0.0-k, 1.0.0-p, 1.0.0-r, 1.0.0" )
-                .ShouldContain( "  |=> 0.0.0-0" );
+                .ShouldContain( "  |=> 0.0.0-0 (Configuration: Debug)" );
         }
 
         ProcessRunner.RunProcess( TestHelper.Monitor, "git", "tag -d v1.2.3-alpha", testFolder, null )
@@ -101,7 +102,7 @@ public class MSBuildTests
                      .ShouldBe( 0 );
             logs.ExtractCurrentTexts()
                 .ShouldContain( "  | Tag: 0.1.0-r" )
-                .ShouldContain( "  |=> 0.1.0-r" );
+                .ShouldContain( "  |=> 0.1.0-r (Configuration: Release)" );
         }
 
         builtVersion = InformationalVersion.ReadFromFile( builtDllPath );

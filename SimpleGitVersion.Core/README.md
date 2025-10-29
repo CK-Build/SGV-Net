@@ -48,18 +48,18 @@ By default, it is the [ReleaseCandidate](https://github.com/CK-Build/CSemVer-Net
 quality: only release candidates or stable versions will use "Release".
 ```xml
 <RepositoryInfo>
-  <SimpleGitVersion UseReleaseBuildConfigurationFrom="None"> <!-- Always uses "Debug" --> 
-  </SimpleGitVersion>
+  <!-- Always uses "Debug" -->
+  <SimpleGitVersion UseReleaseBuildConfigurationFrom="None" /> 
 </RepositoryInfo>
 ```
 
 When specified, it must be:
- - `None`: always use "Debug" build configuration.
  - `CI`: always use "Release" build configuration.
  - `Exploratory`: always use "Release" except for CI builds.
  - `Preview`: use "Debug" for CI and Exploratory qualities, "Release" otherwise.
  - `ReleaseCandidate` or `rc`: this is the default.
  - `Stable`: only stable versions will use "Release", all prerelease versions will use "Debug".
+ - `None`: always use "Debug" build configuration.
 
 This attribute can also be set at a branch level and overrides the top-level one:
 ```xml
@@ -85,8 +85,7 @@ The RepositoryInfo.xml file can define two attributes:
   - `SingleMajor`: Setting this major number will only allow versions with this exact number as their Major.
 ```xml
 <RepositoryInfo>
-  <SimpleGitVersion SingleMajor="4">
-  </SimpleGitVersion>
+  <SimpleGitVersion SingleMajor="4" />
 </RepositoryInfo>
 ```
 
@@ -94,8 +93,7 @@ The RepositoryInfo.xml file can define two attributes:
  the Major or the Minor part will be forbidden). 
 ```xml
 <RepositoryInfo>
-  <SimpleGitVersion OnlyPatch="true">
-  </SimpleGitVersion>
+  <SimpleGitVersion OnlyPatch="true" />
 </RepositoryInfo>
 ```
 This `SingleMajor` and `OnlyPatch` are enough to fully drive the behavior of SimpleGitVersion
@@ -183,8 +181,7 @@ These are really strong constraints and that's why this option defaults to false
 
 ```xml
 <RepositoryInfo>
-  <SimpleGitVersion CheckExistingVersions="true">
-  </SimpleGitVersion>
+  <SimpleGitVersion CheckExistingVersions="true" />
 </RepositoryInfo>
 ```
 
@@ -195,7 +192,6 @@ that will be considered when working with branches.
 
 ```xml
 <RepositoryInfo>
-  <SimpleGitVersion RemoteName="dev-lead">
-  </SimpleGitVersion>
+  <SimpleGitVersion RemoteName="dev-lead" />
 </RepositoryInfo>
 ```

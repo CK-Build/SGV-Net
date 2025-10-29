@@ -22,6 +22,9 @@ public class GetSimpleGitVersionTask : Task
     public string InformationalVersion { get; set; }
 
     [Output]
+    public string BuildConfiguration { get; set; }
+
+    [Output]
     public string RemoteUrl { get; set; }
 
     public override bool Execute()
@@ -31,7 +34,8 @@ public class GetSimpleGitVersionTask : Task
         AssemblyVersion = lines[1];
         FileVersion = lines[2];
         InformationalVersion = lines[3];
-        RemoteUrl = lines[4];
+        BuildConfiguration = lines[4];
+        RemoteUrl = lines[5];
         return true;
     }
 }

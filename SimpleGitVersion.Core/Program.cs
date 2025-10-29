@@ -1,6 +1,6 @@
-using CSemVer;
 using SimpleGitVersion;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 
@@ -53,19 +53,20 @@ if( idxOutDir >= 0 )
 
 var info = CommitInfo.LoadFromPath( logger, Environment.CurrentDirectory );
 info.Explain( logger );
+var finalBuildInfo = info.FinalBuildInfo;
 if( outPath != null )
 {
-    var finalBuildInfo = info.FinalBuildInfo;
     File.WriteAllText( outPath, $"""
     {finalBuildInfo.Version}
     {finalBuildInfo.AssemblyVersion}
     {finalBuildInfo.FileVersion}
     {finalBuildInfo.InformationalVersion}
+    {finalBuildInfo.BuildConfiguration}
     {info.RepositoryInfo.RemoteUrl}
     
     """ );
 }
-Console.Write( logger.Conclude( info.FinalVersion ) );
+Console.Write( logger.Conclude( finalBuildInfo ) );
 return info.Error != null ? -1 : 0;
 
 sealed class Logger : ILogger
@@ -102,6 +103,9 @@ sealed class Logger : ILogger
 
     public void Warn( string msg ) => Append( "| [Warn] ", "|        ", msg );
 
-    public string Conclude( SVersion v ) => _b.Append( "|=> " ).Append( v ).AppendLine().ToString();
+    public string Conclude( ICommitBuildInfo final ) => _b.Append( "|=> " )
+                                                          .Append( final.Version )
+                                                          .Append( " (Configuration: " ).Append( final.BuildConfiguration )
+                                                          .Append( ')' ).AppendLine().ToString();
 }
 
