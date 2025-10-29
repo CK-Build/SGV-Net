@@ -1,16 +1,11 @@
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
-using System;
 using System.IO;
 
-namespace SimpleGitVersion.MSBuild;
+namespace SimpleGitVersion.MsBuild;
 
-public abstract class GetSimpleGitVersionTask : Task
+public class GetSimpleGitVersionTask : Task
 {
-    protected GetSimpleGitVersionTask()
-    {
-    }
-
     [Required]
     public string SGVFilePath { get; set; }
 

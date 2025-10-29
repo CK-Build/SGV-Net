@@ -2,9 +2,9 @@
 
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
-    <UsingTask TaskName="GetSimpleGitVersionTask" AssemblyFile="$(MSBuildThisFileDirectory)SimpleGitVersion.MSBuild.dll" />
+    <UsingTask TaskName="GetSimpleGitVersionTask" AssemblyFile="$(MSBuildThisFileDirectory)..\lib\netstandard2.0\SimpleGitVersion.MsBuild.dll" />
     
-    <Target Name="RunSimpleGitVersion" BeforeTargets="BeforeCompile;CoreCompile;GenerateNuspec">
+    <Target Name="RunSimpleGitVersion">
         <!-- The working directory is by default the project directory. No need to specify it. -->
         <Exec
             Command="dotnet &quot;$(MSBuildThisFileDirectory)SimpleGitVersion.Core.dll&quot; --out-file &quot;$(SimpleGitVersionFilePath)&quot;"

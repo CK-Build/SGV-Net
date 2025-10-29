@@ -38,7 +38,7 @@ public static class NuGetHelper
     public static void EnsureNuGetConfigFile( NormalizedPath solutionPath )
     {
         Throw.CheckArgument( Directory.Exists( solutionPath.AppendPart( ".git" ) ) );
-        var f = solutionPath.AppendPart( "NuGet.config" );
+        var f = solutionPath.AppendPart( "nuget.config" );
         if( !File.Exists( f ) )
         {
             File.WriteAllText( f, """

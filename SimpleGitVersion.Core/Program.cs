@@ -1,7 +1,8 @@
+using CSemVer;
 using SimpleGitVersion;
 using System;
-using System.Diagnostics;
 using System.IO;
+using System.Text;
 
 var logger = new Logger();
 
@@ -34,8 +35,11 @@ if( idxOutDir >= 0 )
                 }
                 else
                 {
-                    logger.Info( $"Creating output folder '{directory}'." );
-                    if( !Directory.Exists( directory ) ) Directory.CreateDirectory( directory );
+                    if( !Directory.Exists( directory ) )
+                    {
+                        logger.Info( $"Creating output folder '{directory}'." );
+                        Directory.CreateDirectory( directory );
+                    }
                 }
             }
             catch( Exception ex )
@@ -61,14 +65,43 @@ if( outPath != null )
     
     """ );
 }
+Console.Write( logger.Conclude( info.FinalVersion ) );
 return info.Error != null ? -1 : 0;
 
 sealed class Logger : ILogger
 {
-    public void Error( string msg ) => Console.Error.WriteLine( msg );
+    readonly StringBuilder _b;
 
-    public void Info( string msg ) => Console.Out.WriteLine( msg );
+    public Logger()
+    {
+        _b = new StringBuilder( 4096 );
+        _b.Append( "SimpleGitVersion:" ).AppendLine();
+    }
 
-    public void Warn( string msg ) => Console.Out.WriteLine( msg );
+    void Append( string header, string prefix, string msg )
+    {
+        _b.Append( header );
+        var lines = msg.AsSpan().EnumerateLines();
+        if( lines.MoveNext() )
+        {
+            _b.Append( lines.Current ).AppendLine();
+            while( lines.MoveNext() )
+            {
+                _b.Append( prefix ).Append( lines.Current ).AppendLine();
+            }
+        }
+        else
+        {
+            _b.AppendLine();
+        }
+    }
+
+    public void Error( string msg ) => Append( "| [Error] ", "|         ", msg );
+
+    public void Info( string msg ) => Append( "| ", "| ", msg );
+
+    public void Warn( string msg ) => Append( "| [Warn] ", "|        ", msg );
+
+    public string Conclude( SVersion v ) => _b.Append( "|=> " ).Append( v ).AppendLine().ToString();
 }
 

@@ -1,0 +1,19 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="appveyor.yml" />
+    <File Path="Directory.Build.props" />
+    <File Path="nuget.config" />
+    <File Path="README.md" />
+    <File Path="RepositoryInfo.xml" />
+  </Folder>
+  <Folder Name="/Tests/">
+    <Project Path="Tests/SimpleGitVersion.Core.Tests/SimpleGitVersion.Core.Tests.csproj" />
+    <Project Path="Tests/SimpleGitVersion.MsBuild.Tests/SimpleGitVersion.MsBuild.Tests.csproj" />
+  </Folder>
+  <Project Path="SimpleGitVersion.Abstractions/SimpleGitVersion.Abstractions.csproj" />
+  <Project Path="SimpleGitVersion.Cake/SimpleGitVersion.Cake.csproj" />
+  <Project Path="SimpleGitVersion.Core/SimpleGitVersion.Core.csproj" />
+  <Project Path="SimpleGitVersion.MsBuild/SimpleGitVersion.MsBuild.csproj">
+    <BuildDependency Project="SimpleGitVersion.Core/SimpleGitVersion.Core.csproj" />
+  </Project>
+</Solution>

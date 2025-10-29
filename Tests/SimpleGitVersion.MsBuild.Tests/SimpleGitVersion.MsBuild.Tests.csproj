@@ -7,10 +7,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="LibGit2Sharp" Version="0.31.0" />
-        <PackageReference Include="CSemVer" Version="12.0.3" />
+        <PackageReference Include="CSemVer" Version="13.0.0" />
         <!-- Build order only. No actual reference to the SimpleGitVersion.MsBuild here. -->
-        <ProjectReference Include="SimpleGitVersion.MsBuild" ReferenceOutputAssembly="false" SkipGetTargetFrameworkProperties="true" />
+        <ProjectReference Include="SimpleGitVersion.MsBuild"
+                          ReferenceOutputAssembly="false"
+                          SkipGetTargetFrameworkProperties="true" />
     </ItemGroup>
 
     <ItemGroup>

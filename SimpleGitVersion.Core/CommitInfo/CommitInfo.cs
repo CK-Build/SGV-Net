@@ -396,7 +396,14 @@ public partial class CommitInfo : ICommitInfo
             else
             {
                 Debug.Assert( ThisReleaseTag != null, "Otherwise there is an Error." );
-                logger.Info( $"Release: '{ThisReleaseTag.ThisTag}'." );
+                if( ThisReleaseTag.ThisTag.IsPrerelease )
+                {
+                    logger.Info( $"Pre release: '{ThisReleaseTag.ThisTag}'." );
+                }
+                else
+                {
+                    logger.Info( $"Stable release: '{ThisReleaseTag.ThisTag}'." );
+                }
             }
         }
 

@@ -3,7 +3,6 @@
     <PropertyGroup>
         <TargetFramework>netstandard2.0</TargetFramework>
         <Description>Generates the assembly version information.</Description>
-        <IncludeBuildOutput>false</IncludeBuildOutput>
         <DevelopmentDependency>true</DevelopmentDependency>
         <LangVersion>13</LangVersion>
         <Nullable>disable</Nullable>
@@ -12,13 +11,6 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.Build.Utilities.Core" Version="17.14.28" PrivateAssets="All" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <ProjectReference Include="..\SimpleGitVersion.Core\SimpleGitVersion.Core.csproj"
-                        ReferenceOutputAssembly="false"
-                        SkipGetTargetFrameworkProperties="true"
-                        PrivateAssets="All" />
     </ItemGroup>
 
     <ItemGroup>

@@ -7,6 +7,6 @@
         <LangVersion>13</LangVersion>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="CSemVer" Version="13.0.0-r" />
+        <PackageReference Include="CSemVer" Version="13.0.0" />
     </ItemGroup>
 </Project>

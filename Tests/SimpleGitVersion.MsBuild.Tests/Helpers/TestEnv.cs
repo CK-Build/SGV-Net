@@ -38,9 +38,16 @@ static partial class TestEnv
     {
         TestHelper.CleanupFolder( _nugetSourcePath );
         NuGetHelper.ClearGlobalCache( TestHelper.Monitor, "SimpleGitVersion.MSBuild", null );
+        // Unfortunately: https://github.com/dotnet/msbuild/issues/4303#issuecomment-3460008540
         ProcessRunner.RunProcess( TestHelper.Monitor.ParallelLogger,
                                   "dotnet",
-                                  $"pack -c {TestHelper.BuildConfiguration} --no-restore -tl:off --nologo --no-restore -o \"{_nugetSourcePath}\"",
+                                  $"build -c {TestHelper.BuildConfiguration} --no-restore -tl:off --nologo",
+                                  TestHelper.SolutionFolder.AppendPart( "SimpleGitVersion.Core" ),
+                                  null )
+                     .ShouldBe( 0 );
+        ProcessRunner.RunProcess( TestHelper.Monitor.ParallelLogger,
+                                  "dotnet",
+                                  $"pack -c {TestHelper.BuildConfiguration} --no-restore -tl:off --nologo -o \"{_nugetSourcePath}\"",
                                   TestHelper.SolutionFolder.AppendPart( "SimpleGitVersion.MSBuild" ),
                                   null )
                      .ShouldBe( 0 );
