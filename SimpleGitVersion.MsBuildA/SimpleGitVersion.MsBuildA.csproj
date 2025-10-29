@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
+        <Description>Generates the assembly version information.</Description>
+        <IncludeBuildOutput>false</IncludeBuildOutput>
+        <DevelopmentDependency>true</DevelopmentDependency>
+        <LangVersion>13</LangVersion>
+        <Nullable>disable</Nullable>
+        <SimpleGitVersionCorePath>../SimpleGitVersion.Core/bin/$(Configuration)/net8.0</SimpleGitVersionCorePath>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Build.Utilities.Core" Version="17.14.28" PrivateAssets="All" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\SimpleGitVersion.Core\SimpleGitVersion.Core.csproj"
+                        ReferenceOutputAssembly="false"
+                        SkipGetTargetFrameworkProperties="true"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="MSBuild/build/*.*" Pack="true" PackagePath="build" Visible="false" />
+        <None Include="MSBuild/buildMultiTargeting/*.*" Pack="true" PackagePath="buildMultiTargeting" Visible="false"  />
+        <None Include="MSBuild/tools/*.*" Pack="true" PackagePath="tools" Visible="false"  />
+        <None Include="$(SimpleGitVersionCorePath)/**/*" Pack="true" PackagePath="tools" Visible="false"  />
+    </ItemGroup>
+
+</Project>
+

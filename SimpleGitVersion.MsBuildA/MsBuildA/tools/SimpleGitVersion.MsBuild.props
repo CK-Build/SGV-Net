@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <SimpleGitVersionFilePath Condition="'$(SimpleGitVersionFilePath)' == ''">$([MSBuild]::EnsureTrailingSlash($(BaseIntermediateOutputPath)))SimpleGitVersionFile.txt</SimpleGitVersionFilePath>
+
+        <!-- With the precious help of https://github.com/GitTools/GitVersion. -->
+        <SimpleGitVersionTargetsBefore>
+            BeforeCompile;
+            CoreCompile;
+            GetAssemblyVersion;
+            GenerateNuspec;
+            _GenerateRestoreProjectSpec;
+            _GetOutputItemsFromPack;
+            EnsureWixToolsetInstalled
+        </SimpleGitVersionTargetsBefore>
+        <!--
+          Ensure GetVersion runs prior to XAML's Markup Compiler in order to have the assembly version available.
+          Otherwise the generated resource URI's are ambiguous when multiple versions are loaded simultaneously (i.e. in plugins)
+        -->
+        <MarkupCompilePass1DependsOn>$(MarkupCompilePass1DependsOn);GetSimpleGitVersion;UpdateAssemblyInfo;GenerateGitVersionInformation</MarkupCompilePass1DependsOn>
+        <GetPackageVersionDependsOn>$(GetPackageVersionDependsOn);GetSimpleGitVersion</GetPackageVersionDependsOn>
+    </PropertyGroup>
+
+</Project>
