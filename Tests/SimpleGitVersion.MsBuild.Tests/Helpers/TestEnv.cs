@@ -19,7 +19,6 @@ static partial class TestEnv
     readonly static NormalizedPath _nugetSourcePath = _playgroundPath.AppendPart( "NuGetSource" );
     readonly static NormalizedPath _clonedPath = _playgroundPath.AppendPart( "Cloned" );
     static SVersion? _sgvPackageVersion;
-    static XDocument? _packagedDirectoryPackagesProps;
 
     [OneTimeSetUp]
     public static void SetupEnv() => TestHelper.OnlyOnce( Initialize );

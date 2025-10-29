@@ -17,7 +17,8 @@
     <ItemGroup>
       <ProjectReference Include="..\SimpleGitVersion.Core\SimpleGitVersion.Core.csproj"
                         ReferenceOutputAssembly="false"
-                        SkipGetTargetFrameworkProperties="true"/>
+                        SkipGetTargetFrameworkProperties="true"
+                        PrivateAssets="All" />
     </ItemGroup>
 
     <ItemGroup>
