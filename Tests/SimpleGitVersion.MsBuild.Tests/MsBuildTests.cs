@@ -53,8 +53,10 @@ public class MSBuildTests
             """;
         versions.ShouldBe( expected );
 
-        var builtDllPath = nakedProject.Combine( $"{TestHelper.PathToBin}/Naked.dll" );
-        var builtVersion = InformationalVersion.ReadFromFile( builtDllPath );
+        var builtDebugDllPath = nakedProject.Combine( $"bin/Debug/net8.0/Naked.dll" );
+        var builtReleaseDllPath = nakedProject.Combine( $"bin/Release/net8.0/Naked.dll" );
+
+        var builtVersion = InformationalVersion.ReadFromFile( builtDebugDllPath );
         builtVersion.IsValidSyntax.ShouldBeTrue();
         builtVersion.ToString().ShouldBe( "0.0.0-0/499d526ccd46f92c57293b56530ae1e8d2834ca2/2025-10-28 11:00:58Z" );
 
@@ -70,7 +72,7 @@ public class MSBuildTests
                 .ShouldContain( "  | No version information found on or below this commit." )
                 .ShouldContain( "  |=> 0.0.0-0 (Configuration: Debug)" );
         }
-        builtVersion = InformationalVersion.ReadFromFile( builtDllPath );
+        builtVersion = InformationalVersion.ReadFromFile( builtDebugDllPath );
         builtVersion.IsValidSyntax.ShouldBeTrue();
         builtVersion.ToString().ShouldNotBe( "0.0.0-0/499d526ccd46f92c57293b56530ae1e8d2834ca2/2025-10-28 11:00:58Z" );
         builtVersion.Version.ShouldBe( SVersion.ZeroVersion );
@@ -98,14 +100,14 @@ public class MSBuildTests
 
         using( var logs = GrandOutput.Default.ShouldNotBeNull().CreateMemoryCollector( 50 ) )
         {
-            ProcessRunner.RunProcess( TestHelper.Monitor, "dotnet", "build", testFolder, null )
+            ProcessRunner.RunProcess( TestHelper.Monitor, "dotnet", "build -c Release", testFolder, null )
                      .ShouldBe( 0 );
             logs.ExtractCurrentTexts()
                 .ShouldContain( "  | Tag: 0.1.0-r" )
                 .ShouldContain( "  |=> 0.1.0-r (Configuration: Release)" );
         }
 
-        builtVersion = InformationalVersion.ReadFromFile( builtDllPath );
+        builtVersion = InformationalVersion.ReadFromFile( builtReleaseDllPath );
         builtVersion.IsValidSyntax.ShouldBeTrue();
         builtVersion.Version.ToString().ShouldBe( "0.1.0-r" );
         builtVersion.CommitDate.ShouldBe( commitDateTime, TimeSpan.FromSeconds( 1 ) );

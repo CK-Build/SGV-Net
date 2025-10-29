@@ -9,6 +9,8 @@ public class GetSimpleGitVersionTask : Task
     [Required]
     public string SGVFilePath { get; set; }
 
+    public string InputCheckBuildConfiguration { get; set; }
+
     [Output]
     public string Version { get; set; }
 
@@ -36,6 +38,11 @@ public class GetSimpleGitVersionTask : Task
         InformationalVersion = lines[3];
         BuildConfiguration = lines[4];
         RemoteUrl = lines[5];
+        if( !string.IsNullOrEmpty( InputCheckBuildConfiguration ) && InputCheckBuildConfiguration != BuildConfiguration )
+        {
+            Log.LogError( $"Invalid Configuration '{InputCheckBuildConfiguration}'. Version '{Version}' must be produced in '{BuildConfiguration}'." );
+            return false;
+        }
         return true;
     }
 }

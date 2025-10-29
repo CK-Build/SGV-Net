@@ -1,6 +1,7 @@
 using CK.Core;
 using CSemVer;
 using NUnit.Framework;
+using Shouldly;
 using System;
 using System.IO;
 using System.IO.Compression;
@@ -37,7 +38,9 @@ static partial class TestEnv
     static void InitializeNuGetSource()
     {
         TestHelper.CleanupFolder( _nugetSourcePath );
-        NuGetHelper.ClearGlobalCache( TestHelper.Monitor, "SimpleGitVersion.MSBuild", null );
+
+        NuGetHelper.ClearGlobalCache( TestHelper.Monitor, "SimpleGitVersion.MSBuild", null ).ShouldBeTrue();
+
         // Unfortunately: https://github.com/dotnet/msbuild/issues/4303#issuecomment-3460008540
         ProcessRunner.RunProcess( TestHelper.Monitor.ParallelLogger,
                                   "dotnet",
@@ -51,6 +54,7 @@ static partial class TestEnv
                                   TestHelper.SolutionFolder.AppendPart( "SimpleGitVersion.MSBuild" ),
                                   null )
                      .ShouldBe( 0 );
+
         var packageName = Path.GetFileNameWithoutExtension( Directory.EnumerateFiles( _nugetSourcePath ).Single() );
         _sgvPackageVersion = SVersion.Parse( packageName["SimpleGitVersion.MSBuild.".Length..] );
     }

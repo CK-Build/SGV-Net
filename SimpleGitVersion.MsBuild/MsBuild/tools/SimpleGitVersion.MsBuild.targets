@@ -15,7 +15,7 @@
 
     <Target Name="GetSimpleGitVersion" DependsOnTargets="RunSimpleGitVersion" BeforeTargets="$(SimpleGitVersionTargetsBefore)">
 
-        <GetSimpleGitVersionTask SGVFilePath="$(SimpleGitVersionFilePath)">
+        <GetSimpleGitVersionTask SGVFilePath="$(SimpleGitVersionFilePath)" >
             <Output TaskParameter="Version" PropertyName="Version" />
             <Output TaskParameter="AssemblyVersion" PropertyName="AssemblyVersion" />
             <Output TaskParameter="FileVersion" PropertyName="FileVersion" />
