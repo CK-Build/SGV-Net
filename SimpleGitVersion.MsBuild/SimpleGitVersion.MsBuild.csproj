@@ -21,9 +21,9 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Include="MSBuild/build/*.*" Pack="true" PackagePath="build" Visible="false" />
-        <None Include="MSBuild/buildMultiTargeting/*.*" Pack="true" PackagePath="buildMultiTargeting" Visible="false"  />
-        <None Include="MSBuild/tools/*.*" Pack="true" PackagePath="tools" Visible="false"  />
+        <None Include="MsBuild/build/*.*" Pack="true" PackagePath="build" Visible="false" />
+        <None Include="MsBuild/buildMultiTargeting/*.*" Pack="true" PackagePath="buildMultiTargeting" Visible="false"  />
+        <None Include="MsBuild/tools/*.*" Pack="true" PackagePath="tools" Visible="false"  />
         <None Include="$(SimpleGitVersionCorePath)/**/*" Pack="true" PackagePath="tools" Visible="false"  />
     </ItemGroup>
 
