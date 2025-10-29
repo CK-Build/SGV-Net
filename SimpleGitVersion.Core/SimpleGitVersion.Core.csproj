@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <TargetFrameworks>net8.0</TargetFrameworks>
-        <Description>Simple Git Version implementation based on LibGit2Sharp.</Description>
+        <Description>Simple Git Version implementation based on LibGit2Sharp. Used by SimpleGitVersion.MsBuild.</Description>
         <PackageTags>Versioning, SemVer, NuGet, CSemVer, InformationalVersion, Build, LibGit2Sharp</PackageTags>
         <Nullable>enable</Nullable>
         <OutputType>Exe</OutputType>
