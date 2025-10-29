@@ -35,11 +35,13 @@ public partial class CommitInfo
     public static string DefaultBuildConfigurationSelector( in InitialInfo commitInfo, SVersion finalVersion )
     {
         // Look for the RepositoryInfoOptionsBranch first.
-        PackageQuality q = commitInfo.FoundBranchOption?.UseReleaseBuildConfigurationFrom ?? commitInfo.Options.UseReleaseBuildConfigurationFrom;
-        return finalVersion.PackageQuality <= q ? "Debug" : "Release";
+        MinPackageQuality min = commitInfo.FoundBranchOption?.UseReleaseBuildConfigurationFrom ?? commitInfo.Options.UseReleaseBuildConfigurationFrom;
+        return (int)finalVersion.PackageQuality < (int)min
+                    ? "Debug"
+                    : "Release";
     }
 
-    class RepoCommitBuildInfo : ICommitBuildInfo
+    sealed class RepoCommitBuildInfo : ICommitBuildInfo
     {
         readonly CommitInfo _info;
 

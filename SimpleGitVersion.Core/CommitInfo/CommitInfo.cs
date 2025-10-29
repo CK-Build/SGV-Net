@@ -9,13 +9,12 @@ using System.Text;
 
 namespace SimpleGitVersion;
 
-
 /// <summary>
 /// Immutable object that describes the commit and all the CSemVer information.
 /// It can be obtained by calling static helper <see cref="LoadFromPath(string, RepositoryInfoOptions)"/>
 /// (a <see cref="Repository"/> is created and disposed) or by using its constructor.
 /// </summary>
-public partial class CommitInfo : ICommitInfo
+public sealed partial class CommitInfo : ICommitInfo
 {
     /// <summary>
     /// Gets the solution directory: the one that contains the .git folder.

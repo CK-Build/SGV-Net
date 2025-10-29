@@ -92,7 +92,7 @@ public class MSBuildTests
         ProcessRunner.RunProcess( TestHelper.Monitor, "git", "tag -d v1.2.3-alpha", testFolder, null )
             .ShouldBe( 0 );
 
-        ProcessRunner.RunProcess( TestHelper.Monitor, "git", "tag v0.1.0-gamma", testFolder, null )
+        ProcessRunner.RunProcess( TestHelper.Monitor, "git", "tag v0.1.0-rc", testFolder, null )
             .ShouldBe( 0 );
 
         using( var logs = GrandOutput.Default.ShouldNotBeNull().CreateMemoryCollector( 50 ) )
@@ -100,13 +100,13 @@ public class MSBuildTests
             ProcessRunner.RunProcess( TestHelper.Monitor, "dotnet", "build", testFolder, null )
                      .ShouldBe( 0 );
             logs.ExtractCurrentTexts()
-                .ShouldContain( "  | Tag: 0.1.0-g" )
-                .ShouldContain( "  |=> 0.1.0-g" );
+                .ShouldContain( "  | Tag: 0.1.0-r" )
+                .ShouldContain( "  |=> 0.1.0-r" );
         }
 
         builtVersion = InformationalVersion.ReadFromFile( builtDllPath );
         builtVersion.IsValidSyntax.ShouldBeTrue();
-        builtVersion.Version.ToString().ShouldBe( "0.1.0-g" );
+        builtVersion.Version.ToString().ShouldBe( "0.1.0-r" );
         builtVersion.CommitDate.ShouldBe( commitDateTime, TimeSpan.FromSeconds( 1 ) );
     }
 

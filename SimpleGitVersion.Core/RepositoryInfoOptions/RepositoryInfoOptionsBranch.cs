@@ -29,10 +29,10 @@ public class RepositoryInfoOptionsBranch
     /// <param name="e">The xml element.</param>
     public RepositoryInfoOptionsBranch( XElement e )
     {
-        Name = (string?)e.Attribute( SGVSchema.Name ) ?? (string?)e.Attribute( OldXmlSchema.Name ) ?? throw new XmlException( "Attribute Name is required on the Branch element." );
-        VersionName = (string?)e.Attribute( SGVSchema.VersionName ) ?? (string?)e.Attribute( OldXmlSchema.VersionName );
+        Name = (string?)e.Attribute( SGVSchema.Name ) ?? throw new XmlException( "Attribute Name is required on the Branch element." );
+        VersionName = (string?)e.Attribute( SGVSchema.VersionName );
 
-        var a = e.Attribute( SGVSchema.CIVersionMode ) ?? e.Attribute( OldXmlSchema.CIVersionMode );
+        var a = e.Attribute( SGVSchema.CIVersionMode );
         if( a != null )
         {
             if( !Enum.TryParse( a.Value, true, out CIBranchVersionMode mode ) )
@@ -45,10 +45,8 @@ public class RepositoryInfoOptionsBranch
         var s = (string?)e.Attribute( SGVSchema.UseReleaseBuildConfigurationFrom );
         if( s != null )
         {
-            PackageQuality q = RepositoryInfoOptions.ParsePackageQualityOrThrow( s, false );
-            UseReleaseBuildConfigurationFrom = q;
+            UseReleaseBuildConfigurationFrom = RepositoryInfoOptions.ParseMinPackageQualityOrThrow( s, false );
         }
-
     }
 
     /// <summary>
@@ -93,6 +91,6 @@ public class RepositoryInfoOptionsBranch
     /// When not null, this overrides the <see cref="RepositoryInfoOptions.UseReleaseBuildConfigurationFrom"/> value.
     /// </para>
     /// </summary>
-    public PackageQuality? UseReleaseBuildConfigurationFrom { get; set; }
+    public MinPackageQuality? UseReleaseBuildConfigurationFrom { get; set; }
 
 }
