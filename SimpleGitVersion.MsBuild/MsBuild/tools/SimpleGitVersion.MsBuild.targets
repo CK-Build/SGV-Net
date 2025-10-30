@@ -2,6 +2,10 @@
 
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
+    <PropertyGroup>
+        <SimpleGitVersionCheckConfigurationName Condition=" '$(SimpleGitVersionCheckBuildConfiguration)' == 'true' ">$(Configuration)</SimpleGitVersionCheckConfigurationName>
+    </PropertyGroup>
+    
     <UsingTask TaskName="GetSimpleGitVersionTask" AssemblyFile="$(MSBuildThisFileDirectory)..\lib\netstandard2.0\SimpleGitVersion.MsBuild.dll" />
     
     <Target Name="RunSimpleGitVersion">
@@ -15,7 +19,7 @@
 
     <Target Name="GetSimpleGitVersion" DependsOnTargets="RunSimpleGitVersion" BeforeTargets="$(SimpleGitVersionTargetsBefore)">
 
-        <GetSimpleGitVersionTask SGVFilePath="$(SimpleGitVersionFilePath)" >
+        <GetSimpleGitVersionTask SGVFilePath="$(SimpleGitVersionFilePath)" InputCheckBuildConfiguration="$(SimpleGitVersionCheckConfigurationName)" >
             <Output TaskParameter="Version" PropertyName="Version" />
             <Output TaskParameter="AssemblyVersion" PropertyName="AssemblyVersion" />
             <Output TaskParameter="FileVersion" PropertyName="FileVersion" />
