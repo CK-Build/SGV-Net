@@ -4,6 +4,7 @@ using CSemVer;
 using NUnit.Framework;
 using Shouldly;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using static CK.Testing.MonitorTestHelper;
 
@@ -62,9 +63,19 @@ public class MSBuildTests
 
         var commitDateTime = DateTime.UtcNow;
         //
-        // Specifying the author here avoids the "fatal: unable to auto-detect email address".
+        // Specifying the author/committer as environment variables
+        // here avoids the "fatal: unable to auto-detect email address".
         //
-        ProcessRunner.RunProcess( TestHelper.Monitor, "git", "commit -a -m \"Added SimpleGitVersion.MsBuild package.\" --author \"Snail Mail <>\" ", testFolder, null )
+        ProcessRunner.RunProcess( TestHelper.Monitor,
+                                  "git", "commit -a -m \"Added SimpleGitVersion.MsBuild package.\" ",
+                                  testFolder,
+                                  new Dictionary<string, string>
+                                  {
+                                      { "GIT_AUTHOR_NAME", "None" },
+                                      { "GIT_AUTHOR_EMAIL", "<none@none.com>" },
+                                      { "GIT_COMMITTER_NAME", "None" },
+                                      { "GIT_COMMITTER_EMAIL", "<none@none.com>" },
+                                  } )
             .ShouldBe( 0 );
 
         using( var logs = GrandOutput.Default.ShouldNotBeNull().CreateMemoryCollector( 50 ) )
