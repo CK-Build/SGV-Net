@@ -11,7 +11,7 @@ namespace SimpleGitVersion;
 /// <summary>
 /// Describes options for initializing <see cref="CommitInfo"/>.
 /// </summary>
-public class RepositoryInfoOptions
+public sealed class RepositoryInfoOptions
 {
     string? _remoteName;
 
@@ -20,25 +20,23 @@ public class RepositoryInfoOptions
     /// </summary>
     public RepositoryInfoOptions()
     {
-        UseReleaseBuildConfigurationFrom = PackageQuality.ReleaseCandidate;
+        UseReleaseBuildConfigurationFrom = MinPackageQuality.ReleaseCandidate;
         IgnoreModifiedFiles = new HashSet<string>( PathComparer.Default );
         Branches = new List<RepositoryInfoOptionsBranch>();
     }
 
     /// <summary>
     /// Initializes a new <see cref="RepositoryInfoOptions"/> from its Xml representation.
-    /// The element must be named <see cref="SGVSchema.SimpleGitVersion"/> or has a child
+    /// The element must be named <see cref="SGVSchema.SimpleGitVersion"/> or have a child
     /// element that is named SimpleGitVersion.
     /// </summary>
     /// <param name="e">The SimpleGitVersion XElement or its direct parent.</param>
     public RepositoryInfoOptions( XElement e )
         : this()
     {
-        var sgv = e.Attributes().Any( a => a.Value == OldXmlSchema.SVGNS )
-                    ? null
-                    : (e.Name == SGVSchema.SimpleGitVersion
-                        ? e
-                        : e.Element( SGVSchema.SimpleGitVersion ));
+        var sgv = e.Name == SGVSchema.SimpleGitVersion
+                    ? e
+                    : e.Element( SGVSchema.SimpleGitVersion );
         if( sgv != null )
         {
             IgnoreDirtyWorkingFolder = (bool?)sgv.Element( SGVSchema.Debug )?.Attribute( SGVSchema.IgnoreDirtyWorkingFolder ) ?? false;
@@ -49,14 +47,9 @@ public class RepositoryInfoOptions
             OnlyPatch = (bool?)sgv.Attribute( SGVSchema.OnlyPatch ) ?? false;
 
             var s = (string?)sgv.Attribute( SGVSchema.UseReleaseBuildConfigurationFrom );
-            if( s != null )
-            {
-                UseReleaseBuildConfigurationFrom = ParsePackageQualityOrThrow( s, true );
-            }
-            else
-            {
-                UseReleaseBuildConfigurationFrom = PackageQuality.ReleaseCandidate;
-            }
+            UseReleaseBuildConfigurationFrom = s != null
+                                                ? ParseMinPackageQualityOrThrow( s, true )
+                                                : MinPackageQuality.ReleaseCandidate;
 
             Branches.AddRange( sgv.Elements( SGVSchema.Branches )
                                   .Elements( SGVSchema.Branch )
@@ -64,27 +57,18 @@ public class RepositoryInfoOptions
             IgnoreModifiedFiles.UnionWith( sgv.Elements( SGVSchema.IgnoreModifiedFiles ).Elements( SGVSchema.Add ).Select( i => i.Value ) );
             RemoteName = (string?)sgv.Attribute( SGVSchema.RemoteName );
         }
-        else
-        {
-            XmlMigrationRequired = true;
-
-            IgnoreDirtyWorkingFolder = (bool?)e.Element( OldXmlSchema.Debug )?.Attribute( OldXmlSchema.IgnoreDirtyWorkingFolder ) ?? false;
-            StartingVersion = (string?)e.Element( OldXmlSchema.StartingVersionForCSemVer );
-            SingleMajor = (int?)e.Element( OldXmlSchema.SingleMajor );
-            OnlyPatch = (bool?)e.Element( OldXmlSchema.OnlyPatch ) ?? false;
-            Branches.AddRange( e.Elements( OldXmlSchema.Branches )
-                                .Elements( OldXmlSchema.Branch )
-                                .Select( b => new RepositoryInfoOptionsBranch( b ) ) );
-            IgnoreModifiedFiles.UnionWith( e.Elements( OldXmlSchema.IgnoreModifiedFiles ).Elements( OldXmlSchema.Add ).Select( i => i.Value ) );
-            RemoteName = (string?)e.Element( OldXmlSchema.RemoteName );
-        }
     }
 
-    internal static PackageQuality ParsePackageQualityOrThrow( string s, bool rcIsDefault )
+    internal static MinPackageQuality ParseMinPackageQualityOrThrow( string s, bool rcIsDefault )
     {
+        var span = s.AsSpan().Trim();
         var q = PackageQuality.ReleaseCandidate;
-        if( !PackageQualityExtension.TryMatch( s.Trim(), ref q ) )
+        if( !PackageQualityExtension.TryMatch( span, ref q ) )
         {
+            if( span.StartsWith( "None", StringComparison.OrdinalIgnoreCase ) )
+            {
+                return MinPackageQuality.None;
+            }
             var msg = $"Invalid UseReleaseBuildConfigurationFrom attribute value '{s}'. "
                     + $"When specified, it must be: "
                     + $"'{nameof( PackageQuality.CI )}' (always use \"Release\" build configuration), "
@@ -94,7 +78,7 @@ public class RepositoryInfoOptions
                     + $"or '{nameof( PackageQuality.Stable )}' (stable versions will always use \"Release\").";
             throw new XmlException( msg );
         }
-        return q;
+        return (MinPackageQuality)q;
     }
 
     /// <summary>
@@ -122,7 +106,7 @@ public class RepositoryInfoOptions
                                 OnlyPatch
                                     ? new XAttribute( SGVSchema.OnlyPatch, "true" )
                                     : null,
-                                UseReleaseBuildConfigurationFrom != PackageQuality.ReleaseCandidate
+                                UseReleaseBuildConfigurationFrom != MinPackageQuality.ReleaseCandidate
                                     ? new XAttribute( SGVSchema.UseReleaseBuildConfigurationFrom, UseReleaseBuildConfigurationFrom )
                                     : null,
                                 IgnoreModifiedFiles.Count > 0
@@ -135,11 +119,6 @@ public class RepositoryInfoOptions
                                     : null,
                                 RemoteName != "origin" ? new XAttribute( SGVSchema.RemoteName, RemoteName ) : null );
     }
-
-    /// <summary>
-    /// Gets whether the old xml schema has been detected.
-    /// </summary>
-    public bool XmlMigrationRequired { get; }
 
     /// <summary>
     /// Gets or sets the commit that will be analyzed: this is a "revparse spec" (commit sha, tag name, local or remote/branch, etc.)
@@ -200,13 +179,13 @@ public class RepositoryInfoOptions
     /// use "Release", the others will use "Debug".
     /// </para>
     /// <para>
-    /// <see cref="PackageQuality.Stable"/> is always in Release.
+    /// <see cref="PackageQuality.Stable"/> is always in Release unless <see cref="MinPackageQuality.None"/> is specified.
     /// </para>
     /// <para>
     /// The same property can be set at the branch level and overrides this one (<see cref="RepositoryInfoOptionsBranch.UseReleaseBuildConfigurationFrom"/>).
     /// </para>
     /// </summary>
-    public PackageQuality UseReleaseBuildConfigurationFrom { get; set; }
+    public MinPackageQuality UseReleaseBuildConfigurationFrom { get; set; }
 
     /// <summary>
     /// Gets or sets branches informations.

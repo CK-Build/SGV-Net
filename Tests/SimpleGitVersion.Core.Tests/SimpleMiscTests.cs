@@ -1,4 +1,4 @@
-using FluentAssertions;
+using AwesomeAssertions;
 using LibGit2Sharp;
 using NUnit.Framework;
 using System;
