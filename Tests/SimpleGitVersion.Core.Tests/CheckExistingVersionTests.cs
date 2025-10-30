@@ -1,5 +1,5 @@
 using CSemVer;
-using FluentAssertions;
+using AwesomeAssertions;
 using NUnit.Framework;
 using System.Linq;
 

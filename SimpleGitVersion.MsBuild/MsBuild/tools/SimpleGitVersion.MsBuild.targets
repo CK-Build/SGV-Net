@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+    <PropertyGroup>
+        <SimpleGitVersionCheckConfigurationName Condition=" '$(SimpleGitVersionCheckBuildConfiguration)' == 'true' ">$(Configuration)</SimpleGitVersionCheckConfigurationName>
+    </PropertyGroup>
+    
+    <UsingTask TaskName="GetSimpleGitVersionTask" AssemblyFile="$(MSBuildThisFileDirectory)..\lib\netstandard2.0\SimpleGitVersion.MsBuild.dll" />
+    
+    <Target Name="RunSimpleGitVersion">
+        <!-- The working directory is by default the project directory. No need to specify it. -->
+        <Exec
+            Command="dotnet &quot;$(MSBuildThisFileDirectory)SimpleGitVersion.Core.dll&quot; --out-file &quot;$(SimpleGitVersionFilePath)&quot;"
+            ConsoleToMsBuild="True"
+            IgnoreExitCode="True"
+            />
+    </Target>
+
+    <Target Name="GetSimpleGitVersion" DependsOnTargets="RunSimpleGitVersion" BeforeTargets="$(SimpleGitVersionTargetsBefore)">
+
+        <GetSimpleGitVersionTask SGVFilePath="$(SimpleGitVersionFilePath)" InputCheckBuildConfiguration="$(SimpleGitVersionCheckConfigurationName)" >
+            <Output TaskParameter="Version" PropertyName="Version" />
+            <Output TaskParameter="AssemblyVersion" PropertyName="AssemblyVersion" />
+            <Output TaskParameter="FileVersion" PropertyName="FileVersion" />
+            <Output TaskParameter="InformationalVersion" PropertyName="InformationalVersion" />
+            <Output TaskParameter="RemoteUrl" PropertyName="SimpleGitVersion_RemoteUrl" />
+        </GetSimpleGitVersionTask>
+
+        <PropertyGroup>
+            <RepositoryUrl Condition=" '$(RepositoryUrl)' == '' ">$SimpleGitVersion_RemoteUrl)</RepositoryUrl>
+        </PropertyGroup>
+
+    </Target>
+    
+</Project>
