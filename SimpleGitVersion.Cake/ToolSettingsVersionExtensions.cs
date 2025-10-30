@@ -19,7 +19,7 @@ public static class ToolSettingsSettingsVersionExtension
     /// <param name="info">The commit build information.</param>
     /// <param name="conf">Optional configuration to apply after version arguments have been injected.</param>
     /// <returns>This settings.</returns>
-    public static T AddVersionArguments<T>( this T @this, ICommitBuildInfo info, Action<T> conf = null ) where T : DotNetSettings
+    public static T AddVersionArguments<T>( this T @this, ICommitBuildInfo info, Action<T>? conf = null ) where T : DotNetSettings
     {
         AddVersionToolArguments( @this, info );
         conf?.Invoke( @this );
@@ -33,7 +33,7 @@ public static class ToolSettingsSettingsVersionExtension
     /// <param name="info">The commit build information.</param>
     /// <param name="conf">Optional configuration to apply after version arguments have been injected.</param>
     /// <returns>This settings.</returns>
-    public static MSBuildSettings AddVersionArguments( this MSBuildSettings @this, ICommitBuildInfo info, Action<MSBuildSettings> conf = null )
+    public static MSBuildSettings AddVersionArguments( this MSBuildSettings @this, ICommitBuildInfo info, Action<MSBuildSettings>? conf = null )
     {
         AddVersionToolArguments( @this, info );
         conf?.Invoke( @this );

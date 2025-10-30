@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 
-var logger = new Logger();
+var logger = new StringLogger();
 
 string? outPath = null;
 int idxOutDir = Array.IndexOf( args, "--out-file" );
@@ -69,43 +69,4 @@ if( outPath != null )
 Console.Write( logger.Conclude( finalBuildInfo ) );
 return info.Error != null ? -1 : 0;
 
-sealed class Logger : ILogger
-{
-    readonly StringBuilder _b;
-
-    public Logger()
-    {
-        _b = new StringBuilder( 4096 );
-        _b.Append( "SimpleGitVersion:" ).AppendLine();
-    }
-
-    void Append( string header, string prefix, string msg )
-    {
-        _b.Append( header );
-        var lines = msg.AsSpan().EnumerateLines();
-        if( lines.MoveNext() )
-        {
-            _b.Append( lines.Current ).AppendLine();
-            while( lines.MoveNext() )
-            {
-                _b.Append( prefix ).Append( lines.Current ).AppendLine();
-            }
-        }
-        else
-        {
-            _b.AppendLine();
-        }
-    }
-
-    public void Error( string msg ) => Append( "| [Error] ", "|         ", msg );
-
-    public void Info( string msg ) => Append( "| ", "| ", msg );
-
-    public void Warn( string msg ) => Append( "| [Warn] ", "|        ", msg );
-
-    public string Conclude( ICommitBuildInfo final ) => _b.Append( "|=> " )
-                                                          .Append( final.Version )
-                                                          .Append( " (Configuration: " ).Append( final.BuildConfiguration )
-                                                          .Append( ')' ).AppendLine().ToString();
-}
 

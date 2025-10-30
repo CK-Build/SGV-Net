@@ -1,11 +1,11 @@
-﻿using Cake.Core;
+using Cake.Core;
 using Cake.Core.IO;
 using System;
 
 namespace CodeCake;
 
 /// <summary>
-/// Provides extension methods ro <see cref="ICakeEnvironment"/>.
+/// Provides extension methods to <see cref="ICakeEnvironment"/>.
 /// </summary>
 public static class CakeEnvironmentExtension
 {
