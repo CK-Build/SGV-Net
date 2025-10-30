@@ -4,6 +4,7 @@
         <Description>Minimal Simple Git Version abstraction that enables to reason on new versions and configure a build.</Description>
         <PackageTags>Versioning, SemVer, NuGet, CSemVer, InformationalVersion, Build</PackageTags>
         <Nullable>enable</Nullable>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <LangVersion>13</LangVersion>
     </PropertyGroup>
     <ItemGroup>
