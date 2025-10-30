@@ -6,6 +6,7 @@
         <DevelopmentDependency>true</DevelopmentDependency>
         <LangVersion>13</LangVersion>
         <Nullable>disable</Nullable>
+        <GenerateDocumentationFile>false</GenerateDocumentationFile>
         <SimpleGitVersionCorePath>../SimpleGitVersion.Core/bin/$(Configuration)/net8.0</SimpleGitVersionCorePath>
     </PropertyGroup>
 

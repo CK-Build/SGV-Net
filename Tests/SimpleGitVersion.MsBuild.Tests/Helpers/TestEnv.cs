@@ -3,6 +3,8 @@ using CSemVer;
 using NUnit.Framework;
 using Shouldly;
 using System;
+using System.ComponentModel.Design;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -41,20 +43,42 @@ static partial class TestEnv
 
         NuGetHelper.ClearGlobalCache( TestHelper.Monitor, "SimpleGitVersion.MSBuild", null ).ShouldBeTrue();
 
+        //
         // Unfortunately: https://github.com/dotnet/msbuild/issues/4303#issuecomment-3460008540
-        ProcessRunner.RunProcess( TestHelper.Monitor.ParallelLogger,
-                                  "dotnet",
-                                  $"build -c {TestHelper.BuildConfiguration} --no-restore -tl:off --nologo",
-                                  TestHelper.SolutionFolder.AppendPart( "SimpleGitVersion.Core" ),
-                                  null )
-                     .ShouldBe( 0 );
-        ProcessRunner.RunProcess( TestHelper.Monitor.ParallelLogger,
-                                  "dotnet",
-                                  $"pack -c {TestHelper.BuildConfiguration} --no-restore -tl:off --nologo -o \"{_nugetSourcePath}\"",
-                                  TestHelper.SolutionFolder.AppendPart( "SimpleGitVersion.MSBuild" ),
-                                  null )
-                     .ShouldBe( 0 );
-
+        //
+        // So we MUST <GenerateDocumentationFile>true</GenerateDocumentationFile> here otherwise
+        // in CI builds, executing the test doesn't produce the .xml file and dotnet pack fails
+        // because it expects the xml file exist (and that is a good thing!).
+        //
+        // BUT: The build is also done with versions...
+        // => We MUST NOT recompile anything in CI.
+        //
+        // When debugging however, this is very helpful... So let's consider the fact that ONLY WHEN a
+        // debugger is attached, we rebuild all. 
+        if( Debugger.IsAttached )
+        {
+            ProcessRunner.RunProcess( TestHelper.Monitor.ParallelLogger,
+                                      "dotnet",
+                                      $"build -c {TestHelper.BuildConfiguration} --no-restore -tl:off --nologo",
+                                      TestHelper.SolutionFolder.AppendPart( "SimpleGitVersion.Core" ),
+                                      null )
+                         .ShouldBe( 0 );
+            ProcessRunner.RunProcess( TestHelper.Monitor.ParallelLogger,
+                                      "dotnet",
+                                      $"pack -c {TestHelper.BuildConfiguration} --no-restore -tl:off --nologo -o \"{_nugetSourcePath}\"",
+                                      TestHelper.SolutionFolder.AppendPart( "SimpleGitVersion.MSBuild" ),
+                                      null )
+                         .ShouldBe( 0 );
+        }
+        else
+        {
+            ProcessRunner.RunProcess( TestHelper.Monitor.ParallelLogger,
+                                      "dotnet",
+                                      $"pack -c {TestHelper.BuildConfiguration} --no-restore --no-build -tl:off --nologo -o \"{_nugetSourcePath}\"",
+                                      TestHelper.SolutionFolder.AppendPart( "SimpleGitVersion.MSBuild" ),
+                                      null )
+                         .ShouldBe( 0 );
+        }
         var packageName = Path.GetFileNameWithoutExtension( Directory.EnumerateFiles( _nugetSourcePath ).Single() );
         _sgvPackageVersion = SVersion.Parse( packageName["SimpleGitVersion.MSBuild.".Length..] );
     }
