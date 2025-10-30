@@ -61,7 +61,10 @@ public class MSBuildTests
         builtVersion.ToString().ShouldBe( "0.0.0-0/499d526ccd46f92c57293b56530ae1e8d2834ca2/2025-10-28 11:00:58Z" );
 
         var commitDateTime = DateTime.UtcNow;
-        ProcessRunner.RunProcess( TestHelper.Monitor, "git", "commit -a -m \"Added SimpleGitVersion.MsBuild package.\" ", testFolder, null )
+        //
+        // Specifying the author here avoids the "fatal: unable to auto-detect email address".
+        //
+        ProcessRunner.RunProcess( TestHelper.Monitor, "git", "commit -a -m \"Added SimpleGitVersion.MsBuild package.\" --author \"Snail Mail <>\" ", testFolder, null )
             .ShouldBe( 0 );
 
         using( var logs = GrandOutput.Default.ShouldNotBeNull().CreateMemoryCollector( 50 ) )
